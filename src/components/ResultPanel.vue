@@ -64,7 +64,9 @@ function onLookbackChange(value) {
 }
 
 const classAText = computed(() => props.result.classAFormatted.join(' '))
-const classBText = computed(() => props.result.classBFormatted.join(' '))
+const classBColdText = computed(() => (props.result.classBColdFormatted || []).join(' '))
+
+const COLD_HELP_TEXT = '冷号：选中开奖期数之前30期内，出现次数少于5次的号码'
 
 const copiedKey = ref('')
 const predictionRows = ref([createPredictionRow()])
@@ -133,11 +135,20 @@ function getOverlap(classItems) {
   return selectedPredictionNumbers.value.filter((num) => set.has(num))
 }
 
+function getNonOverlap(classItems) {
+  const set = new Set(classItems.map((item) => item.num))
+  return selectedPredictionNumbers.value.filter((num) => !set.has(num))
+}
+
 const overlapA = computed(() => getOverlap(props.result.classA))
 const overlapB = computed(() => getOverlap(props.result.classB))
+const nonOverlapA = computed(() => getNonOverlap(props.result.classA))
+const nonOverlapB = computed(() => getNonOverlap(props.result.classB))
 
 const overlapAText = computed(() => overlapA.value.map((num) => formatBall(num)).join(' '))
 const overlapBText = computed(() => overlapB.value.map((num) => formatBall(num)).join(' '))
+const nonOverlapAText = computed(() => nonOverlapA.value.map((num) => formatBall(num)).join(' '))
+const nonOverlapBText = computed(() => nonOverlapB.value.map((num) => formatBall(num)).join(' '))
 
 async function copyNumbers(key, text) {
   const ok = await copyText(text)
@@ -210,7 +221,15 @@ async function copyNumbers(key, text) {
       <article class="class-card class-a">
         <div class="class-title">
           <h3>A 类号码</h3>
-          <span class="badge">{{ result.classA.length }} 个</span>
+          <div class="class-title-meta">
+            <CopyButton
+              v-if="result.classA.length"
+              :copied="copiedKey === 'a'"
+              title="复制 A 类号码"
+              @click="copyNumbers('a', classAText)"
+            />
+            <span class="badge">{{ result.classA.length }} 个</span>
+          </div>
         </div>
         <p class="class-tip">在分析过程中被选中 2 次及以上</p>
         <div v-if="result.classA.length" class="ball-row">
@@ -225,42 +244,52 @@ async function copyNumbers(key, text) {
           </span>
         </div>
         <p v-else class="empty">暂无 A 类号码</p>
-        <p v-if="result.classA.length" class="number-text">
-          <span class="number-text-content">{{ classAText }}</span>
-          <CopyButton
-            :copied="copiedKey === 'a'"
-            title="复制 A 类号码"
-            @click="copyNumbers('a', classAText)"
-          />
-        </p>
       </article>
 
       <article class="class-card class-b">
         <div class="class-title">
-          <h3>B 类号码</h3>
-          <span class="badge">{{ result.classB.length }} 个</span>
+          <div class="class-title-left">
+            <h3>B 类号码</h3>
+            <button
+              type="button"
+              class="help-btn"
+              :title="COLD_HELP_TEXT"
+              aria-label="冷号说明"
+            >
+              ?
+            </button>
+          </div>
+          <div class="class-title-meta">
+            <CopyButton
+              v-if="result.classBCold?.length"
+              :copied="copiedKey === 'b-cold'"
+              title="复制 B 类冷号"
+              @click="copyNumbers('b-cold', classBColdText)"
+            />
+            <span class="badge">{{ result.classBCold?.length || 0 }} 个冷号</span>
+          </div>
         </div>
-        <p class="class-tip">在分析过程中仅被选中 1 次</p>
+        <p class="class-tip">在分析过程中仅被选中 1 次；冷号为基准期前 30 期内出现少于 5 次的号码</p>
         <div v-if="result.classB.length" class="ball-row">
           <span v-for="item in result.classB" :key="item.num" class="ball ball-b">
             {{ formatBall(item.num) }}
           </span>
         </div>
         <p v-else class="empty">暂无 B 类号码</p>
-        <p v-if="result.classB.length" class="number-text">
-          <span class="number-text-content">{{ classBText }}</span>
-          <CopyButton
-            :copied="copiedKey === 'b'"
-            title="复制 B 类号码"
-            @click="copyNumbers('b', classBText)"
-          />
-        </p>
       </article>
 
       <article class="class-card class-c">
         <div class="class-title">
           <h3>C 类对比</h3>
-          <span class="badge">预测区 vs A/B</span>
+          <div class="class-title-meta">
+            <CopyButton
+              v-if="selectedPredictionNumbers.length"
+              :copied="copiedKey === 'c-pred'"
+              title="复制预测号码"
+              @click="copyNumbers('c-pred', selectedPredictionText)"
+            />
+            <span class="badge">预测区 vs A/B</span>
+          </div>
         </div>
         <div class="class-c-select">
           <span class="class-c-label">选择预测行</span>
@@ -286,55 +315,90 @@ async function copyNumbers(key, text) {
         </div>
         <p v-else class="empty">所选预测行暂无号码，请先在走势图预测区选号</p>
 
-        <p v-if="selectedPredictionNumbers.length" class="number-text">
-          <span class="number-text-content">{{ selectedPredictionText }}</span>
-          <CopyButton
-            :copied="copiedKey === 'c-pred'"
-            title="复制预测号码"
-            @click="copyNumbers('c-pred', selectedPredictionText)"
-          />
-        </p>
+        <div class="overlap-grid">
+          <div class="overlap-section">
+            <div class="overlap-head">
+              <h4>与 A 类重复</h4>
+              <div class="overlap-head-meta">
+                <CopyButton
+                  v-if="overlapA.length"
+                  :copied="copiedKey === 'c-a'"
+                  title="复制与 A 类重复号码"
+                  @click="copyNumbers('c-a', overlapAText)"
+                />
+                <span class="overlap-count">{{ overlapA.length }} 个</span>
+              </div>
+            </div>
+            <div v-if="overlapA.length" class="ball-row">
+              <span v-for="num in overlapA" :key="`ca-${num}`" class="ball ball-a">
+                {{ formatBall(num) }}
+              </span>
+            </div>
+            <p v-else class="empty overlap-empty">无重复号码</p>
+          </div>
 
-        <div class="overlap-section">
-          <div class="overlap-head">
-            <h4>与 A 类重复</h4>
-            <span class="overlap-count">{{ overlapA.length }} 个</span>
+          <div class="overlap-section">
+            <div class="overlap-head">
+              <h4>与 A 类不重复</h4>
+              <div class="overlap-head-meta">
+                <CopyButton
+                  v-if="nonOverlapA.length"
+                  :copied="copiedKey === 'c-not-a'"
+                  title="复制与 A 类不重复号码"
+                  @click="copyNumbers('c-not-a', nonOverlapAText)"
+                />
+                <span class="overlap-count">{{ nonOverlapA.length }} 个</span>
+              </div>
+            </div>
+            <div v-if="nonOverlapA.length" class="ball-row">
+              <span v-for="num in nonOverlapA" :key="`cna-${num}`" class="ball ball-a">
+                {{ formatBall(num) }}
+              </span>
+            </div>
+            <p v-else class="empty overlap-empty">无不重复号码</p>
           </div>
-          <div v-if="overlapA.length" class="ball-row">
-            <span v-for="num in overlapA" :key="`ca-${num}`" class="ball ball-overlap-a">
-              {{ formatBall(num) }}
-            </span>
-          </div>
-          <p v-else class="empty overlap-empty">无重复号码</p>
-          <p v-if="overlapA.length" class="number-text compact">
-            <span class="number-text-content">{{ overlapAText }}</span>
-            <CopyButton
-              :copied="copiedKey === 'c-a'"
-              title="复制与 A 类重复号码"
-              @click="copyNumbers('c-a', overlapAText)"
-            />
-          </p>
-        </div>
 
-        <div class="overlap-section">
-          <div class="overlap-head">
-            <h4>与 B 类重复</h4>
-            <span class="overlap-count">{{ overlapB.length }} 个</span>
+          <div class="overlap-section">
+            <div class="overlap-head">
+              <h4>与 B 类重复</h4>
+              <div class="overlap-head-meta">
+                <CopyButton
+                  v-if="overlapB.length"
+                  :copied="copiedKey === 'c-b'"
+                  title="复制与 B 类重复号码"
+                  @click="copyNumbers('c-b', overlapBText)"
+                />
+                <span class="overlap-count">{{ overlapB.length }} 个</span>
+              </div>
+            </div>
+            <div v-if="overlapB.length" class="ball-row">
+              <span v-for="num in overlapB" :key="`cb-${num}`" class="ball ball-b">
+                {{ formatBall(num) }}
+              </span>
+            </div>
+            <p v-else class="empty overlap-empty">无重复号码</p>
           </div>
-          <div v-if="overlapB.length" class="ball-row">
-            <span v-for="num in overlapB" :key="`cb-${num}`" class="ball ball-overlap-b">
-              {{ formatBall(num) }}
-            </span>
+
+          <div class="overlap-section">
+            <div class="overlap-head">
+              <h4>与 B 类不重复</h4>
+              <div class="overlap-head-meta">
+                <CopyButton
+                  v-if="nonOverlapB.length"
+                  :copied="copiedKey === 'c-not-b'"
+                  title="复制与 B 类不重复号码"
+                  @click="copyNumbers('c-not-b', nonOverlapBText)"
+                />
+                <span class="overlap-count">{{ nonOverlapB.length }} 个</span>
+              </div>
+            </div>
+            <div v-if="nonOverlapB.length" class="ball-row">
+              <span v-for="num in nonOverlapB" :key="`cnb-${num}`" class="ball ball-b">
+                {{ formatBall(num) }}
+              </span>
+            </div>
+            <p v-else class="empty overlap-empty">无不重复号码</p>
           </div>
-          <p v-else class="empty overlap-empty">无重复号码</p>
-          <p v-if="overlapB.length" class="number-text compact">
-            <span class="number-text-content">{{ overlapBText }}</span>
-            <CopyButton
-              :copied="copiedKey === 'c-b'"
-              title="复制与 B 类重复号码"
-              @click="copyNumbers('c-b', overlapBText)"
-            />
-          </p>
         </div>
       </article>
     </div>
@@ -386,10 +450,59 @@ async function copyNumbers(key, text) {
   min-width: 220px;
 }
 
-.overlap-section {
+.class-title-meta,
+.overlap-head-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.class-title-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+}
+
+.help-btn:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.overlap-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 36px;
   margin-top: 16px;
+}
+
+.overlap-section {
   padding-top: 14px;
   border-top: 1px dashed var(--border);
+}
+
+@media (max-width: 720px) {
+  .overlap-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .overlap-head {

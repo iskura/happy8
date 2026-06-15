@@ -89,6 +89,48 @@ function addPeriodPicks(pickMap, sourceNumber, hitRecord, nextRecord, closestLis
   }))
 }
 
+/** 冷号统计窗口：选中开奖期之前的期数 */
+export const COLD_NUMBER_WINDOW = 30
+
+/** 冷号阈值：出现次数少于该值（即 < 5 次） */
+export const COLD_NUMBER_THRESHOLD = 5
+
+/**
+ * 冷号：选中开奖期之前 windowSize 期内，出现次数少于 threshold 次的号码
+ * @param {Array} records 按期号倒序（最新在前）
+ * @param {string|null} baseIssue 基准期号
+ */
+export function getColdNumbers(
+  records,
+  baseIssue = null,
+  windowSize = COLD_NUMBER_WINDOW,
+  threshold = COLD_NUMBER_THRESHOLD,
+) {
+  if (!records.length) return []
+
+  let currentIndex = 0
+  if (baseIssue != null && baseIssue !== '') {
+    currentIndex = records.findIndex((record) => record.issue === String(baseIssue))
+    if (currentIndex < 0) return []
+  }
+
+  const prior = records.slice(currentIndex + 1, currentIndex + 1 + windowSize)
+  const counts = new Map()
+  for (let num = 1; num <= 80; num += 1) counts.set(num, 0)
+
+  for (const record of prior) {
+    for (const num of record.numbers) {
+      counts.set(num, (counts.get(num) || 0) + 1)
+    }
+  }
+
+  const cold = []
+  for (let num = 1; num <= 80; num += 1) {
+    if ((counts.get(num) || 0) < threshold) cold.push(num)
+  }
+  return cold
+}
+
 /**
  * 核心选号逻辑
  * @param {Array} records 按期号倒序（最新在前）
@@ -198,6 +240,8 @@ export function analyzeNumbers(records, lookback = 9, baseIssue = null) {
   const allPicks = [...pickMap.values()].sort((a, b) => a.num - b.num)
   const classA = allPicks.filter((item) => item.count > 1)
   const classB = allPicks.filter((item) => item.count === 1)
+  const coldNumberSet = new Set(getColdNumbers(records, current.issue))
+  const classBCold = classB.filter((item) => coldNumberSet.has(item.num))
 
   return {
     current,
@@ -207,8 +251,11 @@ export function analyzeNumbers(records, lookback = 9, baseIssue = null) {
     sourceDetails,
     classA,
     classB,
+    classBCold,
+    coldNumbers: [...coldNumberSet].sort((a, b) => a - b),
     classAFormatted: classA.map((item) => formatBall(item.num)),
     classBFormatted: classB.map((item) => formatBall(item.num)),
+    classBColdFormatted: classBCold.map((item) => formatBall(item.num)),
     totalPicks: allPicks.length,
   }
 }

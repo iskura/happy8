@@ -43,11 +43,12 @@ const wrapStyle = computed(() => {
   return {
     '--col-count': count,
     '--num-col-w': `${numWidth}px`,
-    '--table-min-width': `calc(var(--issue-w) + var(--prize-w) + ${count} * ${numWidth}px)`,
+    '--table-min-width': `calc(var(--issue-w) + var(--prize-w) + ${count} * var(--num-col-w))`,
   }
 })
 
 const bodyScrollRef = ref(null)
+const tableWrapRef = ref(null)
 const scrollGutter = ref(0)
 let bodyResizeObserver = null
 
@@ -83,24 +84,44 @@ function updateScrollGutter() {
   scrollGutter.value = Math.max(0, el.offsetWidth - el.clientWidth)
 }
 
+function syncTableLayout() {
+  updateScrollGutter()
+
+  const wrap = tableWrapRef.value
+  const bodyEl = bodyScrollRef.value
+  if (!wrap || !bodyEl) return
+
+  const count = columnHeaders.value.length
+  if (!count) return
+
+  const styles = getComputedStyle(wrap)
+  const issueW = parseFloat(styles.getPropertyValue('--issue-w')) || 88
+  const prizeW = parseFloat(styles.getPropertyValue('--prize-w')) || 96
+  const minNumW = props.chart.columnCount <= 10 ? 36 : 22
+  const tableWidth = bodyEl.clientWidth
+  const numColW = Math.max(minNumW, (tableWidth - issueW - prizeW) / count)
+
+  wrap.style.setProperty('--num-col-w', `${numColW}px`)
+}
+
 watch(
-  () => [props.chart.rows?.length, freeze.value.head, freeze.value.pred, freeze.value.stats],
-  () => nextTick(updateScrollGutter),
+  () => [props.chart.rows?.length, freeze.value.head, freeze.value.pred, freeze.value.stats, props.chart.columnCount],
+  () => nextTick(syncTableLayout),
 )
 
 onMounted(() => {
   nextTick(() => {
-    updateScrollGutter()
+    syncTableLayout()
     if (typeof ResizeObserver !== 'undefined' && bodyScrollRef.value) {
-      bodyResizeObserver = new ResizeObserver(() => updateScrollGutter())
+      bodyResizeObserver = new ResizeObserver(() => syncTableLayout())
       bodyResizeObserver.observe(bodyScrollRef.value)
     }
   })
-  window.addEventListener('resize', updateScrollGutter)
+  window.addEventListener('resize', syncTableLayout)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateScrollGutter)
+  window.removeEventListener('resize', syncTableLayout)
   bodyResizeObserver?.disconnect()
 })
 
@@ -119,8 +140,6 @@ watch(
 function toggleFreeze(key) {
   freeze.value[key] = !freeze.value[key]
 }
-
-const useSplitLayout = computed(() => freeze.value.head || freeze.value.pred || freeze.value.stats)
 
 const statRows = computed(() => [
   { key: 'appearCount', label: '出现次数' },
@@ -262,6 +281,7 @@ function isSegmentLine(index) {
 
 <template>
   <div
+    ref="tableWrapRef"
     class="distribution-wrap"
     :class="{ 'cols-narrow': chart.columnCount <= 10 }"
     :style="wrapStyle"
@@ -333,39 +353,10 @@ function isSegmentLine(index) {
 
     <div v-if="!chart.rows?.length" class="empty-chart">没有符合筛选条件的开奖数据</div>
 
-    <div v-else class="distribution-scroll" :class="{ 'is-unified': !useSplitLayout }">
+    <div v-else ref="bodyScrollRef" class="distribution-scroll">
       <div class="distribution-h-scroll">
         <div class="table-suite">
-          <div v-if="freeze.head" class="table-head" :style="{ paddingRight: `${scrollGutter}px` }">
-            <table class="distribution-table">
-              <colgroup>
-                <col class="col-issue-def" />
-                <col class="col-prize-def" />
-                <col
-                  v-for="(header, index) in columnHeaders"
-                  :key="`col-head-${index}`"
-                  class="col-num-def"
-                />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th class="sticky-col col-issue">期号<br>日期</th>
-                  <th class="sticky-col col-prize">开奖号码</th>
-                  <th
-                    v-for="(header, index) in columnHeaders"
-                    :key="`h-${index}`"
-                    class="col-num"
-                    :class="{ 'zone-head': chart.zoneEvery && (index + 1) % chart.zoneEvery === 0 }"
-                  >
-                    {{ header }}
-                  </th>
-                </tr>
-              </thead>
-            </table>
-          </div>
-
-          <div ref="bodyScrollRef" class="distribution-body-scroll">
-            <table class="distribution-table table-body">
+          <table class="distribution-table table-body">
               <colgroup>
                 <col class="col-issue-def" />
                 <col class="col-prize-def" />
@@ -375,7 +366,7 @@ function isSegmentLine(index) {
                   class="col-num-def"
                 />
               </colgroup>
-              <thead v-if="!freeze.head">
+              <thead :class="{ 'is-frozen': freeze.head }">
                 <tr>
                   <th class="sticky-col col-issue">期号<br>日期</th>
                   <th class="sticky-col col-prize">开奖号码</th>
@@ -458,9 +449,12 @@ function isSegmentLine(index) {
                 </tr>
               </tfoot>
             </table>
-          </div>
 
-          <div v-if="freeze.pred || freeze.stats" class="distribution-bottom-fixed" :style="{ paddingRight: `${scrollGutter}px` }">
+          <div
+            v-if="freeze.pred || freeze.stats"
+            class="distribution-bottom-fixed"
+            :class="{ 'is-sticky': freeze.pred || freeze.stats }"
+          >
             <table v-if="freeze.pred" class="distribution-table table-pred">
               <colgroup>
                 <col class="col-issue-def" />
@@ -708,48 +702,28 @@ function isSegmentLine(index) {
 }
 
 .distribution-scroll {
-  display: flex;
-  flex-direction: column;
   width: 100%;
   max-height: 75vh;
+  overflow: auto;
+  scrollbar-gutter: stable;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: #fff;
-  overflow: hidden;
 }
 
 .distribution-h-scroll {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.table-suite {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
   width: 100%;
   min-width: var(--table-min-width);
 }
 
-.table-head {
-  flex-shrink: 0;
-  z-index: 12;
-  background: #fff;
-  box-shadow: 0 1px 0 var(--border-strong);
+.table-suite {
+  width: 100%;
+  min-width: var(--table-min-width);
 }
 
-.distribution-scroll.is-unified .distribution-body-scroll {
-  flex: 1;
-}
-
-.distribution-bottom-fixed {
-  flex-shrink: 0;
+.distribution-bottom-fixed.is-sticky {
+  position: sticky;
+  bottom: 0;
   z-index: 11;
   background: #fff;
   box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.08);
@@ -757,14 +731,6 @@ function isSegmentLine(index) {
 
 .table-foot {
   border-top: 2px solid var(--border-strong);
-}
-
-.distribution-body-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-gutter: stable;
 }
 
 .distribution-table {
@@ -778,7 +744,20 @@ function isSegmentLine(index) {
 
 .col-issue-def { width: var(--issue-w); }
 .col-prize-def { width: var(--prize-w); }
-.col-num-def { min-width: var(--num-col-w); }
+.col-num-def { width: var(--num-col-w); }
+
+.distribution-table thead.is-frozen th {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: #f8fafc;
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+
+.distribution-table thead.is-frozen .sticky-col {
+  z-index: 16;
+  background: #f8fafc;
+}
 
 .distribution-table :is(th, td) {
   padding: 0;
@@ -806,7 +785,15 @@ function isSegmentLine(index) {
   background: #fff;
 }
 
-thead .sticky-col { z-index: 5; background: #f8fafc; }
+thead .sticky-col {
+  z-index: 5;
+  background: #f8fafc;
+}
+
+tbody .sticky-col,
+tfoot .sticky-col {
+  z-index: 4;
+}
 
 .col-issue {
   left: 0;

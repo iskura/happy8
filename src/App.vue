@@ -152,13 +152,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="app">
     <header class="hero">
-      <div class="hero-content">
-        <p class="eyebrow">快乐8 · 邻号跨度选号</p>
-        <h1>快乐8选号分析工具</h1>
-        <p class="subtitle">
-          在选号结果中指定基准期号与追溯期数，按「邻号最小跨度 + 反向跨度」规则生成 A/B 类候选号
-        </p>
-      </div>
+      <h1>快乐8选号分析工具</h1>
       <div class="hero-actions">
         <button class="btn" :disabled="loading" @click="loadData">
           {{ loading ? '加载中...' : '刷新数据' }}

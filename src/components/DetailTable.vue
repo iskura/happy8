@@ -45,8 +45,9 @@ function adjacentSet(row) {
   return new Set(row.adjacentList.map((pick) => pick.adjacent))
 }
 
-function ballClass(num, row) {
+function ballClass(num, row, sourceNumber) {
   if (adjacentSet(row).has(num)) return 'is-adjacent'
+  if (num === sourceNumber) return 'is-source-ref'
   return ''
 }
 
@@ -105,7 +106,16 @@ function statusClass(status) {
                 <th>命中期号</th>
                 <th>状态</th>
                 <th>下一期</th>
-                <th>下一期开奖号</th>
+                <th class="next-draw-col-head">
+                  <div class="col-head-main">
+                    <span class="col-head-title">下一期开奖号</span>
+                    <span class="col-head-hint">
+                      <span class="legend-item"><i class="legend-dot is-source-ref" />源号（比对基准）</span>
+                      <span class="legend-item"><i class="legend-dot is-adjacent" />最近邻号</span>
+                      <span class="legend-item"><i class="legend-dot" />下一期开奖号码</span>
+                    </span>
+                  </div>
+                </th>
                 <th>最近邻号</th>
                 <th>跨度</th>
                 <th>反向号码</th>
@@ -146,16 +156,11 @@ function statusClass(status) {
                         v-for="num in row.nextNumbers"
                         :key="num"
                         class="draw-ball"
-                        :class="ballClass(num, row)"
+                        :class="ballClass(num, row, item.sourceNumber)"
                         :title="ballTitle(num, row, item.sourceNumber)"
                       >
                         {{ formatBall(num) }}
                       </span>
-                    </div>
-                    <div class="draw-legend">
-                      <span class="legend-item"><i class="legend-dot is-source-ref" />源号（比对基准）</span>
-                      <span class="legend-item"><i class="legend-dot is-adjacent" />最近邻号</span>
-                      <span class="legend-item"><i class="legend-dot" />下一期开奖号码</span>
                     </div>
                   </div>
                   <span v-else class="empty-cell">—</span>
@@ -245,6 +250,10 @@ function statusClass(status) {
   color: #1677ff;
 }
 
+.table-wrap {
+  margin-top: 0;
+}
+
 .step-cell {
   font-weight: 700;
   color: var(--text);
@@ -297,6 +306,29 @@ tbody tr.status-skip {
 
 .numbers-cell {
   min-width: 320px;
+}
+
+.next-draw-col-head {
+  line-height: 1.3;
+}
+
+.col-head-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.col-head-title {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.col-head-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .next-draw {
@@ -359,12 +391,6 @@ tbody tr.status-skip {
   background: #2563eb;
   color: #fff;
   box-shadow: 0 0 0 2px #dbeafe;
-}
-
-.draw-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 .legend-item {
