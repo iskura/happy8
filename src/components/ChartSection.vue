@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import ChartToolbar from './ChartToolbar.vue'
-import DistributionChart from './DistributionChart.vue'
+import TrendTable from './trend/TrendTable.vue'
 import OmissionSummary from './OmissionSummary.vue'
 import { filterRecords } from '../utils/recordFilter.js'
 import { buildChart } from '../utils/charts/index.js'
@@ -45,7 +45,7 @@ const chart = computed(() =>
     historyRecords: props.records,
   }),
 )
-const isSummary = computed(() => activeChart.value === 'ylqs')
+const isSummary = computed(() => chart.value.kind === 'summary')
 
 const availableDates = computed(() => {
   const set = new Set(props.records.map((record) => record.date).filter(Boolean))
@@ -79,7 +79,7 @@ function applyFilters() {
     />
 
     <OmissionSummary v-if="isSummary" :data="chart" />
-    <DistributionChart v-else :chart="chart" :marks="marks" v-model:row-order="rowOrder" />
+    <TrendTable v-else :chart="chart" :marks="marks" v-model:row-order="rowOrder" />
   </section>
 </template>
 

@@ -49,23 +49,13 @@ const HZW_HEADERS = [
   '升',
   '平',
   '降',
-  ...TAIL_HEADERS.map((h) => `幅${h}`),
+  ...TAIL_HEADERS,
   '金',
   '木',
   '水',
   '火',
   '土',
 ]
-
-export function groupStartsFromHeaderGroups(groups) {
-  let col = 1
-  const separators = []
-  for (let i = 0; i < groups.length; i += 1) {
-    if (i > 0 && groups[i].separatorBefore !== false) separators.push(col)
-    col += groups[i].colspan
-  }
-  return separators
-}
 
 function trendOptions(options = {}) {
   return options.rowOrder ? { rowOrder: options.rowOrder } : {}
@@ -108,6 +98,9 @@ export function buildSumTailChart(records, options = {}) {
       if (col >= HZW_COL.ROAD && col < HZW_COL.SPJ) {
         return String(col - HZW_COL.ROAD)
       }
+      if (col >= HZW_COL.ZF && col < HZW_COL.WX) {
+        return String(col - HZW_COL.ZF)
+      }
       return HZW_HEADERS[col - 1]
     },
     zoneEvery: 5,
@@ -117,7 +110,7 @@ export function buildSumTailChart(records, options = {}) {
     ...chart,
     headerGroups: HZW_HEADER_GROUPS,
     predictionColumns: 10,
-    zoneEveryMaxCol: 10,
-    groupSeparators: groupStartsFromHeaderGroups(HZW_HEADER_GROUPS),
+    zoneEveryMaxCol: 14,
+    zoneBoundaries: [6, 11, 13, 15, 17, 20, 23, 33],
   }
 }

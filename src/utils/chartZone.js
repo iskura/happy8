@@ -1,4 +1,6 @@
 export function isZoneBoundaryCol(colNum, chart) {
+  if (chart.zoneBoundaries?.includes(colNum)) return true
+
   const zoneEvery = chart.zoneEvery || 0
   if (!zoneEvery || colNum <= 1) return false
   const zoneMax = chart.zoneEveryMaxCol ?? chart.columnCount

@@ -9,6 +9,7 @@ const props = defineProps({
   predictionRows: { type: Array, required: true },
   activeRowId: { type: String, default: '' },
   copiedKey: { type: String, default: '' },
+  marks: { type: Object, default: () => ({}) },
   isPredictionCol: { type: Function, required: true },
   isPredictionSelected: { type: Function, required: true },
 })
@@ -63,8 +64,7 @@ const emit = defineEmits([
         class="col-num pred-cell"
         :class="{
           selected: isPredictionCol(num) && isPredictionSelected(predRow.id, num),
-          'zone-line': isZoneBoundaryCol(num, chart),
-          'group-separator': chart.groupSeparators?.includes(num),
+          'zone-line': marks.zoneLine && isZoneBoundaryCol(num, chart),
           inactive: activeRowId !== predRow.id,
           'pred-readonly': !isPredictionCol(num),
         }"

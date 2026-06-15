@@ -8,6 +8,7 @@ const props = defineProps({
   indicatorHelpItem: { type: Object, default: null },
   statCellValue: { type: Function, required: true },
   statMode: { type: String, default: 'page' },
+  marks: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['show-tip', 'hide-tip', 'update:statMode'])
@@ -19,8 +20,7 @@ function setStatMode(mode) {
 function statCellClass(index) {
   const colNum = index + 1
   return {
-    'zone-head': isZoneBoundaryCol(colNum, props.chart),
-    'group-separator': props.chart.groupSeparators?.includes(colNum),
+    'zone-line': props.marks.zoneLine && isZoneBoundaryCol(colNum, props.chart),
   }
 }
 </script>

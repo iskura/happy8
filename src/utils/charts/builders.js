@@ -13,7 +13,6 @@ import {
   isTailBig,
 } from './metrics.js'
 import {
-  BOSE_MAP,
   BAGUA_GROUPS,
   getWuxingBySum,
   getWuxingByTail,
@@ -21,6 +20,7 @@ import {
 } from './groups.js'
 import { buildTrendChart, buildOmissionSummary } from './trendBase.js'
 import { buildSumTailChart } from './hzwChart.js'
+import { getChartRegistryEntry, resolveChartUi } from '../../config/chartRegistry.js'
 
 const TAIL_HEADERS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 const tailCol = (value) => tail(value) + 1
@@ -241,65 +241,31 @@ const BUILDERS = {
   },
 }
 
-export const CHART_INDICATOR_HELP = {
-  hmfb: '号码分布：横向 01–80 为号码列，红球为当期开出，灰字为连续遗漏期数。',
-  hzw: [
-    '和值尾：20个开奖号之和的个位（0-9）。',
-    '和值尾大小：小数（0-4）大数（5-9）。',
-    '和值尾奇偶：偶数（0，2，4，6，8）奇数（1，3，5，7，9）。',
-    '和值尾质合：合数（0，4，6，8，9）质数（1，2，3，5，7）。',
-    '和值尾012路：0路（0，3，6，9）1路（1，4，7）2路（2，5，8）。',
-    '和值尾升平降：本期和值尾大于上期和值尾称为升，与上期相同称为平，小于上期称为降。',
-    '和值尾振幅：本期和值尾与上期和值尾差值的绝对值。',
-    '和值五行：金（210-695）木（696-763）水（764-855）火（856-923）土（924-1410）。',
-  ],
-  kdw: '跨度尾：最大号减最小号之差的个位（0-9）。',
-  jzw: '均值尾：和值除以 20 取整后的个位（0-9）。',
-  hkhw: '和跨和尾：和值加跨度之和的个位（0-9）。',
-  hkcw: '和跨差尾：和值减跨度之差的个位（0-9）。',
-  zdhw: '最大号尾数：当期最大开奖号的个位（0-9）。',
-  zxhw: '最小号尾数：当期最小开奖号的个位（0-9）。',
-  jo: '奇偶分布：每期开奖号码中奇数的个数（0-20）。',
-  jofb: '奇偶分布2：每期开奖号码中偶数的个数（0-20）。',
-  wsfb: '尾分布：按号码尾数 0-9 分组统计命中。',
-  spj: '升平降：本期和值尾大于上期为升，相同为平，小于为降。',
-  wsdx: '尾数大小：和值尾小数（0-4）大数（5-9）。',
-  wxls: '五行（洛书）：金（210-695）木（696-763）水（764-855）火（856-923）土（924-1410）。',
-  wxyj: '五行（易经）：按和值尾对应金木水火土。',
-}
+/** @deprecated 请使用 chartRegistry */
+export const CHART_INDICATOR_HELP = Object.fromEntries(
+  Object.entries(getChartRegistryEntries()).map(([id, entry]) => [id, entry.indicatorHelp]),
+)
 
-export const CHART_META = {
-  hmfb: { title: '走势图', desc: '横向 01–80 为号码列，红球为当期开出，灰字为连续遗漏期数' },
-  hzw: { title: '快乐8和值尾走势图', desc: '和值尾 0-9 及大小、奇偶、质合、012路、升平降、振幅、五行' },
-  kdw: { title: '快乐8跨度尾走势图', desc: '最大号减最小号之差的个位走势' },
-  jzw: { title: '快乐8均值尾走势图', desc: '和值除以 20 取整后的个位走势' },
-  hkhw: { title: '快乐8和跨和尾走势图', desc: '和值加跨度的个位走势' },
-  hkcw: { title: '快乐8和跨差尾走势图', desc: '和值减跨度之差的个位走势' },
-  zdhw: { title: '快乐8最大号尾数走势图', desc: '当期最大开奖号的个位走势' },
-  zxhw: { title: '快乐8最小号尾数走势图', desc: '当期最小开奖号的个位走势' },
-  hlfb: { title: '快乐8行列分布走势图', desc: '8 行 × 10 列号码分布，每 10 个号码一分区' },
-  jo: { title: '快乐8奇偶分布走势图', desc: '每期奇数号码个数（0-20）走势' },
-  jofb: { title: '快乐8奇偶分布2走势图', desc: '每期偶数号码个数（0-20）走势' },
-  zt: { title: '快乐8字头走势图', desc: '按号码字头（0-8 字）统计命中' },
-  zt2: { title: '快乐8字头2走势图', desc: '按号码字头分组统计命中' },
-  wsfb: { title: '快乐8尾分布走势图', desc: '按号码尾数 0-9 分组统计命中' },
-  bose: { title: '快乐8波色走势图', desc: '红蓝绿波色号码分布' },
-  spj: { title: '快乐8升平降走势图', desc: '和值尾相比上期的升、平、降' },
-  wsdx: { title: '快乐8尾数大小走势图', desc: '和值尾大小（0-4 小，5-9 大）' },
-  bg: { title: '快乐8八卦走势图', desc: '按八卦分区统计号码命中' },
-  rlt: { title: '快乐8热力图', desc: '号码分布热力展示' },
-  wxls: { title: '快乐8五行(洛书)走势图', desc: '按和值区间对应五行' },
-  wxyj: { title: '快乐8五行(易经)走势图', desc: '按和值尾对应五行' },
-  dwfb: { title: '快乐8对望分布图', desc: '开奖号及其对望号（81-n）同时标注' },
-  ylqs: { title: '快乐8遗漏期数及出号个数', desc: '各号码在统计期内的出现次数与遗漏' },
+/** @deprecated 请使用 chartRegistry */
+export const CHART_META = Object.fromEntries(
+  Object.entries(getChartRegistryEntries()).map(([id, entry]) => [
+    id,
+    { title: entry.title, desc: entry.desc },
+  ]),
+)
+
+function getChartRegistryEntries() {
+  return Object.fromEntries(
+    Object.keys(BUILDERS).map((id) => [id, getChartRegistryEntry(id)]),
+  )
 }
 
 export function buildChart(chartId, records, options = {}) {
-  const builder = BUILDERS[chartId] || BUILDERS.hmfb
+  const registryEntry = getChartRegistryEntry(chartId)
+  const builderKey = registryEntry.builderKey || chartId
+  const builder = BUILDERS[builderKey] || BUILDERS.hmfb
   const data = builder(records, options)
-  const meta = CHART_META[chartId] || CHART_META.hmfb
-  const rawHelp = CHART_INDICATOR_HELP[chartId]
-  const indicatorHelp = rawHelp ?? (meta.desc || '')
+
   const statsColumnOffset = data.statsColumnOffset ?? 0
   const statsColumnCount = data.statsColumnCount ?? data.columnCount - statsColumnOffset
 
@@ -313,8 +279,11 @@ export function buildChart(chartId, records, options = {}) {
   return {
     ...data,
     id: chartId,
-    ...meta,
-    indicatorHelp,
+    kind: registryEntry.kind,
+    title: registryEntry.title,
+    desc: registryEntry.desc,
+    indicatorHelp: registryEntry.indicatorHelp,
+    ui: resolveChartUi(registryEntry, data),
     statsColumnOffset,
     statsColumnCount,
     historyStats,

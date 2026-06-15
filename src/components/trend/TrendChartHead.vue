@@ -8,6 +8,7 @@ const props = defineProps({
   issueColMode: { type: String, default: 'issue' },
   frozen: { type: Boolean, default: false },
   headerGroups: { type: Array, default: () => [] },
+  marks: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['update:issueColMode'])
@@ -22,8 +23,7 @@ function setIssueMode(mode) {
 function colHeadClass(index) {
   const colNum = index + 1
   return {
-    'zone-head': isZoneBoundaryCol(colNum, props.chart),
-    'group-separator': props.chart.groupSeparators?.includes(colNum),
+    'zone-head': props.marks.zoneLine && isZoneBoundaryCol(colNum, props.chart),
   }
 }
 
@@ -90,7 +90,7 @@ onBeforeUnmount(() => {
         :key="`group-${group.label}`"
         :colspan="group.colspan"
         class="col-group-head"
-        :class="{ 'group-separator': index > 0 && group.separatorBefore !== false }"
+        :class="{ 'zone-head': marks.zoneLine && index > 0 }"
       >
         {{ group.label }}
       </th>
