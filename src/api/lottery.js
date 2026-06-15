@@ -10,10 +10,6 @@ function resolveUrl(path) {
   return new URL(path, window.location.href).href
 }
 
-function getLiveUrl() {
-  return resolveUrl('api/kl8.txt')
-}
-
 function getLocalUrl() {
   return resolveUrl('data/kl8.txt')
 }
@@ -75,23 +71,24 @@ async function fetchText(url) {
 }
 
 /**
- * 优先通过同源代理实时拉取，失败时回退到 data/kl8.txt 离线缓存
+ * 1. 直连乐彩网（乐彩网已开放 CORS，Cloudflare 部署也无需每天构建）
+ * 2. 失败时使用打包内的 data/kl8.txt 离线兜底
  */
 export async function fetchLotteryData() {
   const errors = []
 
   if (!isFileProtocol()) {
     try {
-      const text = await fetchText(getLiveUrl())
+      const text = await fetchText(UPSTREAM_URL)
       return {
         records: parseKl8Text(text),
-        source: 'remote',
+        source: 'upstream',
       }
-    } catch (liveError) {
-      errors.push(`实时: ${liveError.message}`)
+    } catch (upstreamError) {
+      errors.push(`直连: ${upstreamError.message}`)
     }
   } else {
-    errors.push('实时: 直接打开本地 HTML 文件无法联网拉取，请运行 npm run serve')
+    errors.push('直连: 直接打开本地 HTML 文件无法联网，请运行 npm run serve')
   }
 
   try {
@@ -101,14 +98,14 @@ export async function fetchLotteryData() {
       source: 'local',
       warning: isFileProtocol()
         ? '当前为离线打开，已使用本地缓存数据。如需最新数据请运行 npm run serve'
-        : `实时数据不可用，已使用本地缓存（${errors.join('；')}）`,
+        : `乐彩网不可用，已使用本地缓存（${errors.join('；')}）`,
     }
   } catch (localError) {
     errors.push(`缓存: ${localError.message}`)
   }
 
   throw new Error(
-    `无法获取开奖数据：${errors.join('；')}。请确认已启动带代理的服务（npm run dev 或 npm run serve），或运行 npm run fetch-data 更新缓存`,
+    `无法获取开奖数据：${errors.join('；')}。请确认网络可访问乐彩网，或运行 npm run fetch-data 更新缓存`,
   )
 }
 
