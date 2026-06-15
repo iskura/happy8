@@ -22,7 +22,6 @@ const props = defineProps({
   marks: { type: Object, default: () => ({}) },
   rowOrder: { type: String, default: 'asc' },
   drawTool: { type: Object, default: null },
-  isDrawing: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:rowOrder'])
@@ -119,6 +118,13 @@ const latestDrawHitSet = computed(() => {
 function isLatestDrawHit(num) {
   return latestDrawHitSet.value.has(num)
 }
+
+const showDrawOverlay = computed(() => {
+  if (!props.drawTool) return false
+  const tool = props.drawTool.activeTool
+  const drawing = Boolean(tool && !['clear', 'undo'].includes(tool))
+  return drawing || props.drawTool.shapes?.length > 0
+})
 </script>
 
 <template>
@@ -242,9 +248,8 @@ function isLatestDrawHit(num) {
           </div>
 
           <TableDrawOverlay
-            v-if="drawTool"
+            v-if="showDrawOverlay"
             :draw-tool="drawTool"
-            :is-drawing="isDrawing"
             :target-ref="tableSuiteRef"
             :content-key="chart.rows?.length ?? 0"
           />

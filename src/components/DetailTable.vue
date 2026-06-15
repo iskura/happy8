@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { formatBall } from '../utils/format.js'
 
 const props = defineProps({
@@ -26,12 +26,26 @@ const hitCount = computed(() =>
   ),
 )
 
+const allExpanded = computed(() => {
+  if (!props.sourceDetails.length) return false
+  return props.sourceDetails.every(
+    (item) => expandedMap.value[item.sourceNumber] === true,
+  )
+})
+
+watch(
+  () => props.sourceDetails.map((item) => item.sourceNumber).join(','),
+  () => {
+    expandedMap.value = {}
+  },
+)
+
 function rowKey(sourceNumber, row) {
   return `${sourceNumber}-${row.lookbackStep}`
 }
 
 function isExpanded(sourceNumber) {
-  return expandedMap.value[sourceNumber] !== false
+  return expandedMap.value[sourceNumber] === true
 }
 
 function toggleSource(sourceNumber) {
@@ -39,6 +53,15 @@ function toggleSource(sourceNumber) {
     ...expandedMap.value,
     [sourceNumber]: !isExpanded(sourceNumber),
   }
+}
+
+function toggleAll() {
+  const next = !allExpanded.value
+  const map = {}
+  for (const item of props.sourceDetails) {
+    map[item.sourceNumber] = next
+  }
+  expandedMap.value = map
 }
 
 function adjacentSet(row) {
@@ -76,9 +99,14 @@ function statusClass(status) {
           基准期 {{ baseIssue }} · 每个源号码固定展示 {{ lookback }} 期追溯过程，便于逐步核对
         </p>
       </div>
-      <span class="panel-count">
-        {{ sourceDetails.length }} 个源号 · 共 {{ sourceDetails.length * lookback }} 行 · 有效计算 {{ hitCount }} 行
-      </span>
+      <div class="panel-header-actions">
+        <button type="button" class="detail-toggle-all-btn" @click="toggleAll">
+          {{ allExpanded ? '全部收起' : '全部展开' }}
+        </button>
+        <span class="panel-count">
+          {{ sourceDetails.length }} 个源号 · 共 {{ sourceDetails.length * lookback }} 行 · 有效计算 {{ hitCount }} 行
+        </span>
+      </div>
     </header>
 
     <div class="source-list">
@@ -205,6 +233,31 @@ function statusClass(status) {
 <style scoped>
 .detail-panel {
   margin-top: 18px;
+}
+
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.detail-toggle-all-btn {
+  border: 1px solid #d8dee9;
+  background: #fff;
+  color: var(--text-soft);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.detail-toggle-all-btn:hover {
+  border-color: #1677ff;
+  color: #1677ff;
+  background: #f0f7ff;
 }
 
 .source-list {

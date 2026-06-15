@@ -10,12 +10,13 @@
 
 .distribution-scroll {
   width: 100%;
-  max-height: 75vh;
+  max-height: var(--chart-scroll-max-height, 92vh);
   overflow: auto;
   scrollbar-gutter: stable;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: #fff;
+  cursor: default;
 }
 
 .distribution-h-scroll {
@@ -349,28 +350,29 @@ tfoot .sticky-col {
 }
 
 .layer-1 {
-  background: #f8fafc !important;
-}
-
-.layer-2 {
-  background: #f1f5f9 !important;
+  background: #eef2f7 !important;
   color: #64748b !important;
 }
 
+.layer-2 {
+  background: #e4eaf1 !important;
+  color: #5c6b80 !important;
+}
+
 .layer-3 {
-  background: #e2e8f0 !important;
-  color: #475569 !important;
+  background: #d8e0ea !important;
+  color: #536275 !important;
 }
 
 .layer-4 {
-  background: #fef3c7 !important;
-  color: #b45309 !important;
+  background: #cad4e0 !important;
+  color: #4a5869 !important;
 }
 
 .layer-5 {
-  background: #fee2e2 !important;
-  color: #dc2626 !important;
-  font-weight: 700;
+  background: #bcc7d6 !important;
+  color: #3f4d5e !important;
+  font-weight: 600;
 }
 
 .bose-red.cell-hit {

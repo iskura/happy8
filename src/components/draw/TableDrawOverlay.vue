@@ -1,11 +1,15 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, unref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, unref, watch } from 'vue'
 
 const props = defineProps({
   drawTool: { type: Object, required: true },
-  isDrawing: { type: Boolean, default: false },
   targetRef: { type: Object, default: null },
   contentKey: { type: [String, Number], default: '' },
+})
+
+const hitLayerActive = computed(() => {
+  const tool = props.drawTool?.activeTool
+  return Boolean(tool && !['clear', 'undo'].includes(tool))
 })
 
 const overlayRef = ref(null)
@@ -68,7 +72,7 @@ function finishShape(shape) {
 }
 
 function onPointerDown(event) {
-  if (!props.isDrawing) return
+  if (!hitLayerActive.value) return
   if (event.button !== 0) return
 
   const tool = props.drawTool.activeTool
@@ -178,16 +182,14 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', syncSize)
   resizeObserver?.disconnect()
-  document.body.style.removeProperty('cursor')
 })
 
 watch(
-  () => props.isDrawing,
+  hitLayerActive,
   (value) => {
     if (!value) {
       drawing = false
       draft.value = null
-      document.body.style.removeProperty('cursor')
     }
   },
 )
@@ -330,7 +332,7 @@ watch(
   </div>
 
   <div
-    v-if="isDrawing"
+    v-if="hitLayerActive"
     ref="overlayRef"
     class="table-draw-hitlayer"
     :style="{ width: `${size.width}px`, height: `${size.height}px` }"

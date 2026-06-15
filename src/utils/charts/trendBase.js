@@ -11,10 +11,10 @@ export function getOmissionLevel(omission) {
 
 export function getOmissionLayer(omission) {
   if (omission <= 0) return 0
-  if (omission <= 3) return 1
-  if (omission <= 7) return 2
-  if (omission <= 11) return 3
-  if (omission <= 15) return 4
+  if (omission <= 5) return 1
+  if (omission <= 10) return 2
+  if (omission <= 15) return 3
+  if (omission <= 20) return 4
   return 5
 }
 

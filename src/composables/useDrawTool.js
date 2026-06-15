@@ -59,6 +59,7 @@ export function useDrawTool(chartId) {
     chartId,
     (id) => {
       drawTool.shapes = loadShapes(id)
+      drawTool.activeTool = ''
     },
     { immediate: true },
   )

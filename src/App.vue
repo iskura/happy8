@@ -1,6 +1,12 @@
 <script setup>
-import { ref, onBeforeUnmount, onMounted } from 'vue'
-import { fetchLotteryData } from './api/lottery.js'
+import { computed, ref, onBeforeUnmount, onMounted } from 'vue'
+import {
+  loadLotteryDataLocalFirst,
+  refreshLotteryDataFromUpstream,
+} from './api/lottery.js'
+import { useLotteryAutoRefresh } from './composables/useLotteryAutoRefresh.js'
+import { getScheduleLabel, shouldAutoRefresh } from './utils/lotteryCache.js'
+import { notifyError, notifySuccess } from './utils/uiMessage.js'
 import { analyzeNumbers } from './utils/numberPicker.js'
 import ResultPanel from './components/ResultPanel.vue'
 import DetailTable from './components/DetailTable.vue'
@@ -11,17 +17,30 @@ const SESSION_START_KEY = 'happy8-session-start'
 const REST_SHOWN_KEY = 'happy8-rest-shown'
 
 const loading = ref(true)
+const refreshing = ref(false)
 const error = ref('')
 const records = ref([])
 const result = ref(null)
 const lookback = ref(9)
 const selectedIssue = ref('')
+const dataSource = ref('')
+const dataUpdatedAt = ref('')
 const showRestReminder = ref(false)
 const showLoveModal = ref(false)
 const loveModalShake = ref(false)
 
+const refreshScheduleLabel = getScheduleLabel()
+
+const dataSourceLabel = computed(() => {
+  if (dataSource.value === 'cache') return '本地缓存'
+  if (dataSource.value === 'bundled') return '内置数据'
+  if (dataSource.value === 'upstream') return '最新数据'
+  return ''
+})
+
 let restReminderTimer = null
 let loveShakeTimer = null
+let autoRefreshRunning = false
 
 function getMaxLookback(issue = selectedIssue.value) {
   if (!records.value.length) return 0
@@ -51,21 +70,26 @@ function runAnalysis() {
   )
 }
 
+function applyLotteryData(data) {
+  records.value = data.records
+  dataSource.value = data.source
+  dataUpdatedAt.value = data.updatedAtText || ''
+  selectedIssue.value = records.value[0]?.issue || ''
+
+  if (records.value.length < lookback.value + 1) {
+    throw new Error(`数据不足，至少需要 ${lookback.value + 1} 期`)
+  }
+
+  runAnalysis()
+}
+
 async function loadData() {
   loading.value = true
   error.value = ''
 
   try {
-    const data = await fetchLotteryData()
-    records.value = data.records
-
-    selectedIssue.value = records.value[0]?.issue || ''
-
-    if (records.value.length < lookback.value + 1) {
-      throw new Error(`数据不足，至少需要 ${lookback.value + 1} 期`)
-    }
-
-    runAnalysis()
+    const data = await loadLotteryDataLocalFirst()
+    applyLotteryData(data)
   } catch (err) {
     error.value = err.message || '加载失败'
     result.value = null
@@ -73,6 +97,44 @@ async function loadData() {
     loading.value = false
   }
 }
+
+async function refreshData(options = {}) {
+  const { silent = false, scheduled = false } = options
+  if (refreshing.value || autoRefreshRunning) return
+
+  refreshing.value = true
+  autoRefreshRunning = true
+  error.value = ''
+
+  try {
+    const data = await refreshLotteryDataFromUpstream()
+    applyLotteryData(data)
+
+    if (!silent) {
+      notifySuccess(`已更新 ${data.records.length} 期开奖数据`)
+    } else if (scheduled) {
+      notifySuccess(`已到 ${refreshScheduleLabel}，已自动更新开奖数据`)
+    }
+  } catch (err) {
+    const message = err.message || '刷新失败'
+    if (!silent) {
+      error.value = message
+      notifyError(message)
+    }
+  } finally {
+    refreshing.value = false
+    autoRefreshRunning = false
+  }
+}
+
+async function tryScheduledRefresh() {
+  if (!shouldAutoRefresh()) return
+  await refreshData({ silent: true, scheduled: true })
+}
+
+const { checkSchedule } = useLotteryAutoRefresh(() => {
+  tryScheduledRefresh()
+})
 
 function rerunAnalysis() {
   if (!records.value.length) return
@@ -137,10 +199,12 @@ function answerLove(choice) {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
   setupLoveModal()
-  loadData()
+  await loadData()
   setupRestReminder()
+  await tryScheduledRefresh()
+  checkSchedule()
 })
 
 onBeforeUnmount(() => {
@@ -154,8 +218,17 @@ onBeforeUnmount(() => {
     <header class="hero">
       <h1>快乐8选号分析工具</h1>
       <div class="hero-actions">
-        <button class="btn" :disabled="loading" @click="loadData">
-          {{ loading ? '加载中...' : '刷新数据' }}
+        <p v-if="dataUpdatedAt" class="data-meta">
+          更新于 {{ dataUpdatedAt }}
+          <template v-if="dataSourceLabel"> · {{ dataSourceLabel }}</template>
+          · {{ refreshScheduleLabel }} 自动更新
+        </p>
+        <button
+          class="btn"
+          :disabled="loading || refreshing"
+          @click="refreshData()"
+        >
+          {{ refreshing ? '更新中...' : '刷新数据' }}
         </button>
       </div>
     </header>
@@ -222,6 +295,20 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.data-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
 .love-modal-backdrop {
   position: fixed;
   inset: 0;

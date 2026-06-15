@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { getCellMarkClass } from '../../utils/chartMarks.js'
-import { getOmissionLevel, getOmissionLayer } from '../../utils/charts/index.js'
+import { getOmissionLayer } from '../../utils/charts/index.js'
 import { isZoneBoundaryCol } from '../../utils/chartZone.js'
 import { formatBall } from '../../utils/format.js'
 
@@ -50,6 +50,13 @@ export function useTrendStats(chart, ui) {
 }
 
 export function useTrendCellClasses(chart, marks, ui) {
+  const omissionLayerKeys = computed(() => buildCurrentOmissionLayerKeys(chart.value.rows))
+
+  function shouldApplyOmissionLayer(cell, row) {
+    if (cell.type !== 'miss') return false
+    return omissionLayerKeys.value.has(`${row.issue}__${cell.num}`)
+  }
+
   function cellClasses(cell, row) {
     const classes = [cell.cellClass].filter(Boolean)
 
@@ -58,10 +65,15 @@ export function useTrendCellClasses(chart, marks, ui) {
       const heatmap = ui.value?.heatmap || chart.value.isHeatmap
       if (heatmap) classes.push(`heat-${Math.min(cell.num % 5, 4)}`)
     } else if (marks.value.omission !== false) {
-      classes.push('cell-miss', `miss-${getOmissionLevel(cell.omission)}`)
-      if (marks.value.omissionLayer) classes.push(`layer-${getOmissionLayer(cell.omission)}`)
+      classes.push('cell-miss')
+      if (marks.value.omissionLayer && shouldApplyOmissionLayer(cell, row)) {
+        classes.push(`layer-${getOmissionLayer(cell.omission)}`)
+      }
     } else {
       classes.push('cell-hide-miss')
+      if (marks.value.omissionLayer && shouldApplyOmissionLayer(cell, row)) {
+        classes.push(`layer-${getOmissionLayer(cell.omission)}`)
+      }
     }
 
     classes.push(...getCellMarkClass(cell, row.marks, marks.value))
@@ -95,4 +107,38 @@ export function useTrendCellClasses(chart, marks, ui) {
     isSegmentLine,
     formatIssueDate,
   }
+}
+
+function buildCurrentOmissionLayerKeys(rows) {
+  const keys = new Set()
+  if (!rows?.length) return keys
+
+  let latestRow = rows[0]
+  for (const row of rows) {
+    if (Number(row.issue) > Number(latestRow.issue)) latestRow = row
+  }
+
+  const sortedRows = [...rows].sort((a, b) => Number(a.issue) - Number(b.issue))
+  const latestIndex = sortedRows.findIndex((row) => row.issue === latestRow.issue)
+  if (latestIndex < 0) return keys
+
+  for (const cell of latestRow.cells) {
+    const num = cell.num
+    const latestCell = latestRow.cells.find((item) => item.num === num)
+    if (!latestCell || latestCell.type === 'hit') continue
+
+    let expected = latestCell.omission
+    for (let i = latestIndex; i >= 0; i -= 1) {
+      const row = sortedRows[i]
+      const rowCell = row.cells.find((item) => item.num === num)
+      if (!rowCell || rowCell.type === 'hit') break
+      if (rowCell.omission !== expected) break
+
+      keys.add(`${row.issue}__${num}`)
+      if (expected <= 1) break
+      expected -= 1
+    }
+  }
+
+  return keys
 }

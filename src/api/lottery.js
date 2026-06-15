@@ -1,6 +1,11 @@
 import { sortRecordsByIssue } from '../utils/sortRecords.js'
+import {
+  formatCacheTime,
+  readLotteryCache,
+  writeLotteryCache,
+} from '../utils/lotteryCache.js'
 
-const UPSTREAM_URL = 'https://data.17500.cn/kl8_desc.txt'
+export const UPSTREAM_URL = 'https://data.17500.cn/kl8_desc.txt'
 
 function resolveUrl(path) {
   if (typeof window === 'undefined') {
@@ -70,43 +75,53 @@ async function fetchText(url) {
   return text
 }
 
+function buildResult(text, source, updatedAt) {
+  return {
+    records: parseKl8Text(text),
+    source,
+    updatedAt,
+    updatedAtText: formatCacheTime(updatedAt),
+  }
+}
+
 /**
- * 1. 直连乐彩网（乐彩网已开放 CORS，Cloudflare 部署也无需每天构建）
- * 2. 失败时使用打包内的 data/kl8.txt 离线兜底
+ * 优先读取本地：浏览器缓存 > 站点内置 data/kl8.txt
  */
-export async function fetchLotteryData() {
+export async function loadLotteryDataLocalFirst() {
   const errors = []
 
-  if (!isFileProtocol()) {
-    try {
-      const text = await fetchText(UPSTREAM_URL)
-      return {
-        records: parseKl8Text(text),
-        source: 'upstream',
-      }
-    } catch (upstreamError) {
-      errors.push(`直连: ${upstreamError.message}`)
-    }
-  } else {
-    errors.push('直连: 直接打开本地 HTML 文件无法联网，请运行 npm run serve')
+  const cached = readLotteryCache()
+  if (cached?.text && isValidKl8Text(cached.text)) {
+    return buildResult(cached.text, 'cache', cached.updatedAt)
   }
 
   try {
     const text = await fetchText(getLocalUrl())
-    return {
-      records: parseKl8Text(text),
-      source: 'local',
-      warning: isFileProtocol()
-        ? '当前为离线打开，已使用本地缓存数据。如需最新数据请运行 npm run serve'
-        : `乐彩网不可用，已使用本地缓存（${errors.join('；')}）`,
-    }
+    const saved = writeLotteryCache(text, 'bundled')
+    return buildResult(text, 'bundled', saved.updatedAt)
   } catch (localError) {
-    errors.push(`缓存: ${localError.message}`)
+    errors.push(`内置缓存: ${localError.message}`)
   }
 
   throw new Error(
-    `无法获取开奖数据：${errors.join('；')}。请确认网络可访问乐彩网，或运行 npm run fetch-data 更新缓存`,
+    `无法读取本地开奖数据：${errors.join('；')}。请检查网络后手动刷新，或运行 npm run fetch-data 更新内置数据`,
   )
 }
 
-export { UPSTREAM_URL }
+/**
+ * 从乐彩网拉取最新数据并写入浏览器本地缓存
+ */
+export async function refreshLotteryDataFromUpstream() {
+  if (isFileProtocol()) {
+    throw new Error('直接打开本地 HTML 文件无法联网，请运行 npm run serve')
+  }
+
+  const text = await fetchText(UPSTREAM_URL)
+  const saved = writeLotteryCache(text, 'upstream')
+  return buildResult(text, 'upstream', saved.updatedAt)
+}
+
+/** @deprecated 请使用 loadLotteryDataLocalFirst */
+export async function fetchLotteryData() {
+  return loadLotteryDataLocalFirst()
+}
