@@ -70,14 +70,13 @@ function applyFilters() {
       v-model:active-chart="activeChart"
       v-model:filters="filters"
       v-model:marks="marks"
-      v-model:row-order="rowOrder"
       :max-period="records.length"
       :available-dates="availableDates"
       @apply="applyFilters"
     />
 
     <OmissionSummary v-if="isSummary" :data="chart" />
-    <DistributionChart v-else :chart="chart" :marks="marks" />
+    <DistributionChart v-else :chart="chart" :marks="marks" v-model:row-order="rowOrder" />
   </section>
 </template>
 

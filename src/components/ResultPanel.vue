@@ -1,8 +1,18 @@
 <script setup>
-import { computed } from 'vue'
-import { formatBall } from '../utils/format.js'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { formatBall, copyText } from '../utils/format.js'
+import {
+  createPredictionRow,
+  loadCClassRowIndex,
+  loadPredictionRows,
+  PREDICTION_CHART_ID,
+  PREDICTION_UPDATE_EVENT,
+  saveCClassRowIndex,
+} from '../utils/predictionStorage.js'
 import IssueSelect from './IssueSelect.vue'
 import LookbackSelect from './LookbackSelect.vue'
+import SearchSelect from './SearchSelect.vue'
+import CopyButton from './CopyButton.vue'
 
 const props = defineProps({
   result: {
@@ -52,6 +62,91 @@ function onLookbackChange(value) {
   emit('update:lookback', value)
   emit('lookback-change', value)
 }
+
+const classAText = computed(() => props.result.classAFormatted.join(' '))
+const classBText = computed(() => props.result.classBFormatted.join(' '))
+
+const copiedKey = ref('')
+const predictionRows = ref([createPredictionRow()])
+const selectedPredIndex = ref(loadCClassRowIndex())
+
+function reloadPredictionRows() {
+  const saved = loadPredictionRows(PREDICTION_CHART_ID)
+  predictionRows.value = saved?.length ? saved : [createPredictionRow()]
+  if (selectedPredIndex.value > predictionRows.value.length) {
+    selectedPredIndex.value = Math.max(1, predictionRows.value.length)
+  }
+}
+
+function handlePredictionUpdate(event) {
+  if (!event.detail?.chartId || event.detail.chartId === PREDICTION_CHART_ID) {
+    reloadPredictionRows()
+  }
+}
+
+onMounted(() => {
+  reloadPredictionRows()
+  window.addEventListener(PREDICTION_UPDATE_EVENT, handlePredictionUpdate)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener(PREDICTION_UPDATE_EVENT, handlePredictionUpdate)
+})
+
+watch(selectedPredIndex, (value) => {
+  saveCClassRowIndex(value)
+})
+
+watch(
+  predictionRows,
+  () => {
+    if (selectedPredIndex.value > predictionRows.value.length) {
+      selectedPredIndex.value = Math.max(1, predictionRows.value.length)
+    }
+  },
+  { deep: true },
+)
+
+const predictionOptions = computed(() =>
+  predictionRows.value.map((row, index) => {
+    const preview = row.numbers.length
+      ? row.numbers.map((num) => formatBall(num)).join(' ')
+      : '空'
+    return {
+      value: index + 1,
+      label: `第 ${index + 1} 行 · ${preview}`,
+    }
+  }),
+)
+
+const selectedPredictionNumbers = computed(() => {
+  const row = predictionRows.value[selectedPredIndex.value - 1]
+  return [...(row?.numbers || [])].sort((a, b) => a - b)
+})
+
+const selectedPredictionText = computed(() =>
+  selectedPredictionNumbers.value.map((num) => formatBall(num)).join(' '),
+)
+
+function getOverlap(classItems) {
+  const set = new Set(classItems.map((item) => item.num))
+  return selectedPredictionNumbers.value.filter((num) => set.has(num))
+}
+
+const overlapA = computed(() => getOverlap(props.result.classA))
+const overlapB = computed(() => getOverlap(props.result.classB))
+
+const overlapAText = computed(() => overlapA.value.map((num) => formatBall(num)).join(' '))
+const overlapBText = computed(() => overlapB.value.map((num) => formatBall(num)).join(' '))
+
+async function copyNumbers(key, text) {
+  const ok = await copyText(text)
+  if (!ok) return
+  copiedKey.value = key
+  window.setTimeout(() => {
+    if (copiedKey.value === key) copiedKey.value = ''
+  }, 1500)
+}
 </script>
 
 <template>
@@ -96,6 +191,10 @@ function onLookbackChange(value) {
         <div class="stat-label">B 类 · 仅选 1 次</div>
         <div class="stat-value">{{ result.classB.length }}</div>
       </div>
+      <div class="stat-card stat-c">
+        <div class="stat-label">C 类 · 预测对比</div>
+        <div class="stat-value">{{ overlapA.length + overlapB.length }}</div>
+      </div>
     </div>
 
     <div class="current-draw">
@@ -126,7 +225,14 @@ function onLookbackChange(value) {
           </span>
         </div>
         <p v-else class="empty">暂无 A 类号码</p>
-        <p v-if="result.classA.length" class="number-text">{{ result.classAFormatted.join(', ') }}</p>
+        <p v-if="result.classA.length" class="number-text">
+          <span class="number-text-content">{{ classAText }}</span>
+          <CopyButton
+            :copied="copiedKey === 'a'"
+            title="复制 A 类号码"
+            @click="copyNumbers('a', classAText)"
+          />
+        </p>
       </article>
 
       <article class="class-card class-b">
@@ -141,14 +247,103 @@ function onLookbackChange(value) {
           </span>
         </div>
         <p v-else class="empty">暂无 B 类号码</p>
-        <p v-if="result.classB.length" class="number-text">{{ result.classBFormatted.join(', ') }}</p>
+        <p v-if="result.classB.length" class="number-text">
+          <span class="number-text-content">{{ classBText }}</span>
+          <CopyButton
+            :copied="copiedKey === 'b'"
+            title="复制 B 类号码"
+            @click="copyNumbers('b', classBText)"
+          />
+        </p>
+      </article>
+
+      <article class="class-card class-c">
+        <div class="class-title">
+          <h3>C 类对比</h3>
+          <span class="badge">预测区 vs A/B</span>
+        </div>
+        <div class="class-c-select">
+          <span class="class-c-label">选择预测行</span>
+          <SearchSelect
+            v-model="selectedPredIndex"
+            class="class-c-picker"
+            placeholder="选择预测区第几行"
+            search-placeholder="搜索行号或号码..."
+            :options="predictionOptions"
+            :disabled="disabled || !predictionOptions.length"
+          />
+        </div>
+        <p class="class-tip">对比所选预测行与 A/B 类的重复号码</p>
+
+        <div v-if="selectedPredictionNumbers.length" class="ball-row">
+          <span
+            v-for="num in selectedPredictionNumbers"
+            :key="`pred-${num}`"
+            class="ball ball-c"
+          >
+            {{ formatBall(num) }}
+          </span>
+        </div>
+        <p v-else class="empty">所选预测行暂无号码，请先在走势图预测区选号</p>
+
+        <p v-if="selectedPredictionNumbers.length" class="number-text">
+          <span class="number-text-content">{{ selectedPredictionText }}</span>
+          <CopyButton
+            :copied="copiedKey === 'c-pred'"
+            title="复制预测号码"
+            @click="copyNumbers('c-pred', selectedPredictionText)"
+          />
+        </p>
+
+        <div class="overlap-section">
+          <div class="overlap-head">
+            <h4>与 A 类重复</h4>
+            <span class="overlap-count">{{ overlapA.length }} 个</span>
+          </div>
+          <div v-if="overlapA.length" class="ball-row">
+            <span v-for="num in overlapA" :key="`ca-${num}`" class="ball ball-overlap-a">
+              {{ formatBall(num) }}
+            </span>
+          </div>
+          <p v-else class="empty overlap-empty">无重复号码</p>
+          <p v-if="overlapA.length" class="number-text compact">
+            <span class="number-text-content">{{ overlapAText }}</span>
+            <CopyButton
+              :copied="copiedKey === 'c-a'"
+              title="复制与 A 类重复号码"
+              @click="copyNumbers('c-a', overlapAText)"
+            />
+          </p>
+        </div>
+
+        <div class="overlap-section">
+          <div class="overlap-head">
+            <h4>与 B 类重复</h4>
+            <span class="overlap-count">{{ overlapB.length }} 个</span>
+          </div>
+          <div v-if="overlapB.length" class="ball-row">
+            <span v-for="num in overlapB" :key="`cb-${num}`" class="ball ball-overlap-b">
+              {{ formatBall(num) }}
+            </span>
+          </div>
+          <p v-else class="empty overlap-empty">无重复号码</p>
+          <p v-if="overlapB.length" class="number-text compact">
+            <span class="number-text-content">{{ overlapBText }}</span>
+            <CopyButton
+              :copied="copiedKey === 'c-b'"
+              title="复制与 B 类重复号码"
+              @click="copyNumbers('c-b', overlapBText)"
+            />
+          </p>
+        </div>
       </article>
     </div>
 
     <div class="summary">
       共产生 <strong>{{ result.totalPicks }}</strong> 个候选号码，
       A 类 <strong>{{ result.classA.length }}</strong> 个，
-      B 类 <strong>{{ result.classB.length }}</strong> 个
+      B 类 <strong>{{ result.classB.length }}</strong> 个，
+      C 类重复合计 <strong>{{ overlapA.length + overlapB.length }}</strong> 个
     </div>
   </section>
 </template>
@@ -169,5 +364,56 @@ function onLookbackChange(value) {
 .panel-desc strong {
   color: var(--primary);
   font-weight: 600;
+}
+
+.class-c-select {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+
+.class-c-label {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.class-c-picker {
+  flex: 1;
+  min-width: 220px;
+}
+
+.overlap-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.overlap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.overlap-head h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.overlap-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.overlap-empty {
+  margin: 0;
 }
 </style>
