@@ -68,7 +68,7 @@ function onLookbackChange(value) {
 }
 
 const classAText = computed(() => props.result.classAFormatted.join(' '))
-const classBColdText = computed(() => (props.result.classBColdFormatted || []).join(' '))
+const classBText = computed(() => props.result.classBFormatted.join(' '))
 
 const COLD_HELP_TEXT = '冷号：选中开奖期数之前30期内，出现次数少于5次的号码'
 const COLD_HELP_STAT = { key: 'cold', help: COLD_HELP_TEXT }
@@ -321,12 +321,12 @@ function addClassToPrediction(key, classItems) {
               @click="addClassToPrediction('b-pred', result.classB)"
             />
             <CopyButton
-              v-if="result.classBCold?.length"
-              :copied="copiedKey === 'b-cold'"
-              title="复制 B 类冷号"
-              @click="copyNumbers('b-cold', classBColdText)"
+              v-if="result.classB.length"
+              :copied="copiedKey === 'b'"
+              title="复制 B 类号码"
+              @click="copyNumbers('b', classBText)"
             />
-            <span class="badge">{{ result.classBCold?.length || 0 }} 个冷号</span>
+            <span class="badge">{{ result.classB.length }} 个</span>
           </div>
         </div>
         <p class="class-tip">在分析过程中仅被选中 1 次；冷号为基准期前 30 期内出现少于 5 次的号码</p>
