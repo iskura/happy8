@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { formatBall, copyText } from '../utils/format.js'
 import { getCellMarkClass } from '../utils/chartMarks.js'
 import { getOmissionLevel, getOmissionLayer } from '../utils/charts/index.js'
@@ -37,11 +37,19 @@ const columnNumbers = computed(() =>
   Array.from({ length: columnHeaders.value.length }, (_, i) => i + 1),
 )
 
-const tableMinWidth = computed(() => {
+const wrapStyle = computed(() => {
   const count = columnHeaders.value.length
   const numWidth = props.chart.columnCount <= 10 ? 36 : 22
-  return `calc(var(--issue-w) + var(--prize-w) + ${count} * ${numWidth}px)`
+  return {
+    '--col-count': count,
+    '--num-col-w': `${numWidth}px`,
+    '--table-min-width': `calc(var(--issue-w) + var(--prize-w) + ${count} * ${numWidth}px)`,
+  }
 })
+
+const bodyScrollRef = ref(null)
+const scrollGutter = ref(0)
+let bodyResizeObserver = null
 
 function setRowOrder(order) {
   emit('update:rowOrder', order)
@@ -64,6 +72,36 @@ const freeze = ref({
   pred: true,
   stats: true,
   ...loadFreezeState(),
+})
+
+function updateScrollGutter() {
+  const el = bodyScrollRef.value
+  if (!el) {
+    scrollGutter.value = 0
+    return
+  }
+  scrollGutter.value = Math.max(0, el.offsetWidth - el.clientWidth)
+}
+
+watch(
+  () => [props.chart.rows?.length, freeze.value.head, freeze.value.pred, freeze.value.stats],
+  () => nextTick(updateScrollGutter),
+)
+
+onMounted(() => {
+  nextTick(() => {
+    updateScrollGutter()
+    if (typeof ResizeObserver !== 'undefined' && bodyScrollRef.value) {
+      bodyResizeObserver = new ResizeObserver(() => updateScrollGutter())
+      bodyResizeObserver.observe(bodyScrollRef.value)
+    }
+  })
+  window.addEventListener('resize', updateScrollGutter)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateScrollGutter)
+  bodyResizeObserver?.disconnect()
 })
 
 watch(
@@ -226,7 +264,7 @@ function isSegmentLine(index) {
   <div
     class="distribution-wrap"
     :class="{ 'cols-narrow': chart.columnCount <= 10 }"
-    :style="{ '--col-count': chart.columnCount || 80 }"
+    :style="wrapStyle"
   >
     <div class="distribution-toolbar">
       <div class="legend-items">
@@ -297,34 +335,36 @@ function isSegmentLine(index) {
 
     <div v-else class="distribution-scroll" :class="{ 'is-unified': !useSplitLayout }">
       <div class="distribution-h-scroll">
-        <div class="table-suite" :style="{ minWidth: tableMinWidth }">
-          <table v-if="freeze.head" class="distribution-table table-head">
-            <colgroup>
-              <col class="col-issue-def" />
-              <col class="col-prize-def" />
-              <col
-                v-for="(header, index) in columnHeaders"
-                :key="`col-head-${index}`"
-                class="col-num-def"
-              />
-            </colgroup>
-            <thead>
-              <tr>
-                <th class="sticky-col col-issue">期号<br>日期</th>
-                <th class="sticky-col col-prize">开奖号码</th>
-                <th
+        <div class="table-suite">
+          <div v-if="freeze.head" class="table-head" :style="{ paddingRight: `${scrollGutter}px` }">
+            <table class="distribution-table">
+              <colgroup>
+                <col class="col-issue-def" />
+                <col class="col-prize-def" />
+                <col
                   v-for="(header, index) in columnHeaders"
-                  :key="`h-${index}`"
-                  class="col-num"
-                  :class="{ 'zone-head': chart.zoneEvery && (index + 1) % chart.zoneEvery === 0 }"
-                >
-                  {{ header }}
-                </th>
-              </tr>
-            </thead>
-          </table>
+                  :key="`col-head-${index}`"
+                  class="col-num-def"
+                />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="sticky-col col-issue">期号<br>日期</th>
+                  <th class="sticky-col col-prize">开奖号码</th>
+                  <th
+                    v-for="(header, index) in columnHeaders"
+                    :key="`h-${index}`"
+                    class="col-num"
+                    :class="{ 'zone-head': chart.zoneEvery && (index + 1) % chart.zoneEvery === 0 }"
+                  >
+                    {{ header }}
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
 
-          <div class="distribution-body-scroll">
+          <div ref="bodyScrollRef" class="distribution-body-scroll">
             <table class="distribution-table table-body">
               <colgroup>
                 <col class="col-issue-def" />
@@ -420,7 +460,7 @@ function isSegmentLine(index) {
             </table>
           </div>
 
-          <div v-if="freeze.pred || freeze.stats" class="distribution-bottom-fixed">
+          <div v-if="freeze.pred || freeze.stats" class="distribution-bottom-fixed" :style="{ paddingRight: `${scrollGutter}px` }">
             <table v-if="freeze.pred" class="distribution-table table-pred">
               <colgroup>
                 <col class="col-issue-def" />
@@ -681,6 +721,7 @@ function isSegmentLine(index) {
 .distribution-h-scroll {
   flex: 1;
   min-height: 0;
+  width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   display: flex;
@@ -692,6 +733,8 @@ function isSegmentLine(index) {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  width: 100%;
+  min-width: var(--table-min-width);
 }
 
 .table-head {
@@ -699,13 +742,6 @@ function isSegmentLine(index) {
   z-index: 12;
   background: #fff;
   box-shadow: 0 1px 0 var(--border-strong);
-}
-
-.distribution-body-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .distribution-scroll.is-unified .distribution-body-scroll {
@@ -719,16 +755,21 @@ function isSegmentLine(index) {
   box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.08);
 }
 
-.prediction-zone {
-  border-top: 2px solid #93c5fd;
-}
-
 .table-foot {
   border-top: 2px solid var(--border-strong);
 }
 
+.distribution-body-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
 .distribution-table {
   width: 100%;
+  min-width: var(--table-min-width);
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
@@ -737,7 +778,7 @@ function isSegmentLine(index) {
 
 .col-issue-def { width: var(--issue-w); }
 .col-prize-def { width: var(--prize-w); }
-.col-num-def { width: auto; }
+.col-num-def { min-width: var(--num-col-w); }
 
 .distribution-table :is(th, td) {
   padding: 0;
@@ -874,7 +915,7 @@ thead .sticky-col { z-index: 5; background: #f8fafc; }
 .distribution-table tbody:not(.prediction-zone) tr:hover .sticky-col { background: #f8fafc; }
 
 .prediction-zone {
-  border-top: none;
+  border-top: 2px solid #93c5fd;
 }
 
 .prediction-row td {

@@ -1,10 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onBeforeUnmount, onMounted } from 'vue'
 import { fetchLotteryData } from './api/lottery.js'
 import { analyzeNumbers } from './utils/numberPicker.js'
 import ResultPanel from './components/ResultPanel.vue'
 import DetailTable from './components/DetailTable.vue'
 import ChartSection from './components/ChartSection.vue'
+
+const REST_REMIND_MS = 60 * 60 * 1000
+const SESSION_START_KEY = 'happy8-session-start'
+const REST_SHOWN_KEY = 'happy8-rest-shown'
 
 const loading = ref(true)
 const error = ref('')
@@ -12,6 +16,12 @@ const records = ref([])
 const result = ref(null)
 const lookback = ref(9)
 const selectedIssue = ref('')
+const showRestReminder = ref(false)
+const showLoveModal = ref(false)
+const loveModalShake = ref(false)
+
+let restReminderTimer = null
+let loveShakeTimer = null
 
 function getMaxLookback(issue = selectedIssue.value) {
   if (!records.value.length) return 0
@@ -76,7 +86,67 @@ function rerunAnalysis() {
   }
 }
 
-onMounted(loadData)
+function getSessionStart() {
+  const stored = sessionStorage.getItem(SESSION_START_KEY)
+  if (stored) return Number(stored)
+  const now = Date.now()
+  sessionStorage.setItem(SESSION_START_KEY, String(now))
+  return now
+}
+
+function openRestReminder() {
+  if (sessionStorage.getItem(REST_SHOWN_KEY)) return
+  showRestReminder.value = true
+  sessionStorage.setItem(REST_SHOWN_KEY, '1')
+}
+
+function setupRestReminder() {
+  if (sessionStorage.getItem(REST_SHOWN_KEY)) return
+
+  const remaining = REST_REMIND_MS - (Date.now() - getSessionStart())
+  if (remaining <= 0) {
+    openRestReminder()
+    return
+  }
+
+  restReminderTimer = window.setTimeout(openRestReminder, remaining)
+}
+
+function dismissRestReminder() {
+  showRestReminder.value = false
+}
+
+function setupLoveModal() {
+  showLoveModal.value = true
+}
+
+function answerLove(choice) {
+  if (choice === 'yes') {
+    showLoveModal.value = false
+    return
+  }
+
+  showLoveModal.value = true
+  loveModalShake.value = false
+  window.requestAnimationFrame(() => {
+    loveModalShake.value = true
+    if (loveShakeTimer) window.clearTimeout(loveShakeTimer)
+    loveShakeTimer = window.setTimeout(() => {
+      loveModalShake.value = false
+    }, 520)
+  })
+}
+
+onMounted(() => {
+  setupLoveModal()
+  loadData()
+  setupRestReminder()
+})
+
+onBeforeUnmount(() => {
+  if (restReminderTimer) window.clearTimeout(restReminderTimer)
+  if (loveShakeTimer) window.clearTimeout(loveShakeTimer)
+})
 </script>
 
 <template>
@@ -131,5 +201,137 @@ onMounted(loadData)
       <p>规则说明：对每个开奖号，在之前 N 期内找到曾开出该号的期次，取其次一期开奖号中与该号跨度最小的邻号入选，再按相同跨度反向选号。重复入选为 A 类，仅 1 次为 B 类。</p>
       <p class="disclaimer">开奖数据仅供参考，请以官方公告为准。</p>
     </footer>
+
+    <div v-if="showLoveModal" class="love-modal-backdrop">
+      <div
+        class="love-modal"
+        :class="{ shake: loveModalShake }"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="love-modal-title"
+      >
+        <p id="love-modal-title" class="love-modal-text">老婆，你爱我吗？</p>
+        <div class="love-modal-actions">
+          <button type="button" class="btn love-btn-yes" @click="answerLove('yes')">爱</button>
+          <button type="button" class="btn love-btn-no" @click="answerLove('no')">不爱</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showRestReminder" class="rest-modal-backdrop" @click.self="dismissRestReminder">
+      <div class="rest-modal" role="dialog" aria-modal="true" aria-labelledby="rest-modal-title">
+        <p id="rest-modal-title" class="rest-modal-text">老婆别看了，休息下。给我发消息了！</p>
+        <button type="button" class="btn rest-modal-btn" @click="dismissRestReminder">好的</button>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.love-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.love-modal {
+  width: min(100%, 360px);
+  padding: 32px 24px 24px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+  text-align: center;
+}
+
+.love-modal.shake {
+  animation: love-shake 0.5s ease;
+}
+
+@keyframes love-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+
+.love-modal-text {
+  margin: 0 0 24px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.love-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.love-btn-yes {
+  min-width: 100px;
+  background: linear-gradient(135deg, #fb7185, #e11d48);
+  border: none;
+  color: #fff;
+}
+
+.love-btn-yes:hover {
+  filter: brightness(1.05);
+}
+
+.love-btn-no {
+  min-width: 100px;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+}
+
+.love-btn-no:hover {
+  background: #e2e8f0;
+}
+
+.rest-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.rest-modal {
+  width: min(100%, 360px);
+  padding: 28px 24px 22px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  text-align: center;
+}
+
+.rest-modal-text {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.rest-modal-btn {
+  min-width: 120px;
+}
+</style>
