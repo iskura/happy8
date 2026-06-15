@@ -14,6 +14,7 @@ export function usePredictionRows(chartId) {
   const activeRowId = ref('')
   const copiedKey = ref('')
   const mergeSelectedRowIds = ref([])
+  const omissionDisplayRowIds = ref([])
 
   const showMergeDialog = computed(
     () => mergeSelectedRowIds.value.length >= 2,
@@ -98,10 +99,12 @@ export function usePredictionRows(chartId) {
       predictionRows.value = [emptyRow]
       activeRowId.value = emptyRow.id
       clearMergeSelection()
+      clearOmissionDisplay()
       return
     }
     predictionRows.value = predictionRows.value.filter((_, index) => index !== rowIndex)
     mergeSelectedRowIds.value = mergeSelectedRowIds.value.filter((id) => id !== removed.id)
+    omissionDisplayRowIds.value = omissionDisplayRowIds.value.filter((id) => id !== removed.id)
     if (activeRowId.value === removed.id) {
       const nextIndex = Math.min(rowIndex, predictionRows.value.length - 1)
       activeRowId.value = predictionRows.value[nextIndex]?.id || ''
@@ -167,6 +170,22 @@ export function usePredictionRows(chartId) {
     mergeSelectedRowIds.value = [...mergeSelectedRowIds.value, rowId]
   }
 
+  function clearOmissionDisplay() {
+    omissionDisplayRowIds.value = []
+  }
+
+  function isOmissionRowSelected(rowId) {
+    return omissionDisplayRowIds.value.includes(rowId)
+  }
+
+  function toggleOmissionRowSelect(rowId) {
+    if (isOmissionRowSelected(rowId)) {
+      omissionDisplayRowIds.value = omissionDisplayRowIds.value.filter((id) => id !== rowId)
+      return
+    }
+    omissionDisplayRowIds.value = [...omissionDisplayRowIds.value, rowId]
+  }
+
   function collectUnionNumbers(rowIds) {
     const union = new Set()
     for (const id of rowIds) {
@@ -228,6 +247,8 @@ export function usePredictionRows(chartId) {
     isPredictionCol,
     isMergeRowSelected,
     toggleMergeRowSelect,
+    isOmissionRowSelected,
+    toggleOmissionRowSelect,
     mergeRowsKeepSources,
     mergeRowsAndDeleteSources,
     cancelMergeSelection,

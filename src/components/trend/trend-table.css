@@ -461,36 +461,66 @@ tfoot .sticky-col {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   padding: 0 1px;
 }
 
-.pred-merge-dot {
+.pred-marker-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pred-marker-dot {
   width: 8px;
   height: 8px;
+  min-width: 8px;
+  min-height: 8px;
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: #facc15;
-  box-shadow: 0 0 0 1px #ca8a04;
+  box-sizing: border-box;
+  display: block;
+  line-height: 0;
+  font-size: 0;
   opacity: 0;
   cursor: pointer;
   flex-shrink: 0;
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.pred-merge-dot {
+  background: #facc15;
+  box-shadow: 0 0 0 1px #ca8a04;
+}
+
+.pred-omit-dot {
+  background: #fca5a5;
+  box-shadow: 0 0 0 1px #ef4444;
 }
 
 .prediction-row:hover .pred-merge-dot,
-.pred-merge-dot.is-pinned {
+.prediction-row:hover .pred-omit-dot,
+.pred-merge-dot.is-pinned,
+.pred-omit-dot.is-pinned {
   opacity: 1;
 }
 
 .pred-merge-dot.is-pinned {
   background: #eab308;
-  transform: scale(1.1);
+}
+
+.pred-omit-dot.is-pinned {
+  background: #f87171;
 }
 
 .prediction-row.merge-marked .sticky-col {
   box-shadow: inset 3px 0 0 #facc15;
+}
+
+.prediction-row.omit-marked .sticky-col {
+  box-shadow: inset 3px 0 0 #f87171;
 }
 
 .pred-controls :is(.icon-copy-btn) {
@@ -501,15 +531,6 @@ tfoot .sticky-col {
 .pred-controls :is(.icon-copy-btn) .icon-copy-svg {
   width: 11px;
   height: 11px;
-}
-
-.pred-seq {
-  flex-shrink: 0;
-  min-width: 14px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #1d4ed8;
-  text-align: center;
 }
 
 .pred-action-btn {
@@ -557,6 +578,14 @@ tfoot .sticky-col {
 
 .pred-cell.selected {
   background: #f0f9ff;
+}
+
+.pred-cell.pred-omit-low {
+  background: #fee2e2 !important;
+}
+
+.pred-cell.pred-omit-high {
+  background: #fecaca !important;
 }
 
 .pred-ball {

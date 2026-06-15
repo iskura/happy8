@@ -77,6 +77,8 @@ const {
   isPredictionCol,
   isMergeRowSelected,
   toggleMergeRowSelect,
+  isOmissionRowSelected,
+  toggleOmissionRowSelect,
   mergeRowsKeepSources,
   mergeRowsAndDeleteSources,
   cancelMergeSelection,
@@ -89,6 +91,7 @@ const {
   displayHit,
   isSegmentLine,
   formatIssueDate,
+  currentOmissionByNum,
 } = useTrendCellClasses(chartRef, marksRef, ui)
 
 const issueColMode = ref('issue')
@@ -117,6 +120,10 @@ const latestDrawHitSet = computed(() => {
 
 function isLatestDrawHit(num) {
   return latestDrawHitSet.value.has(num)
+}
+
+function getPredictionOmission(num) {
+  return currentOmissionByNum.value.get(num) || 0
 }
 
 const showDrawOverlay = computed(() => {
@@ -177,12 +184,15 @@ const showDrawOverlay = computed(() => {
               :is-prediction-col="checkPredictionCol"
               :is-prediction-selected="isPredictionSelected"
               :is-merge-row-selected="isMergeRowSelected"
+              :is-omission-row-selected="isOmissionRowSelected"
+              :get-prediction-omission="getPredictionOmission"
               :is-latest-draw-hit="isLatestDrawHit"
               @add-row-below="addPredictionRowBelow"
               @remove-row="removePredictionRow"
               @toggle-cell="togglePredictionCell"
               @copy-row="copyPredictionRow"
               @toggle-merge-row="toggleMergeRowSelect"
+              @toggle-omit-row="toggleOmissionRowSelect"
             />
           </table>
 
@@ -222,12 +232,15 @@ const showDrawOverlay = computed(() => {
                 :is-prediction-col="checkPredictionCol"
                 :is-prediction-selected="isPredictionSelected"
                 :is-merge-row-selected="isMergeRowSelected"
+                :is-omission-row-selected="isOmissionRowSelected"
+                :get-prediction-omission="getPredictionOmission"
                 :is-latest-draw-hit="isLatestDrawHit"
                 @add-row-below="addPredictionRowBelow"
                 @remove-row="removePredictionRow"
                 @toggle-cell="togglePredictionCell"
                 @copy-row="copyPredictionRow"
                 @toggle-merge-row="toggleMergeRowSelect"
+                @toggle-omit-row="toggleOmissionRowSelect"
               />
             </table>
 
