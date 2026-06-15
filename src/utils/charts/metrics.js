@@ -52,3 +52,17 @@ export function getTrend(prev, current) {
 export function isTailBig(tailValue) {
   return tailValue >= 5
 }
+
+const PRIME_SUM_TAIL = new Set([1, 2, 3, 5, 7])
+
+export function isSumTailEven(sumTail) {
+  return sumTail % 2 === 0
+}
+
+export function isSumTailPrime(sumTail) {
+  return PRIME_SUM_TAIL.has(sumTail)
+}
+
+export function sumTailRoad(sumTail) {
+  return sumTail % 3
+}

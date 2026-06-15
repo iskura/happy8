@@ -250,14 +250,16 @@ async function copyNumbers(key, text) {
         <div class="class-title">
           <div class="class-title-left">
             <h3>B 类号码</h3>
-            <button
-              type="button"
-              class="help-btn"
-              :title="COLD_HELP_TEXT"
-              aria-label="冷号说明"
-            >
-              ?
-            </button>
+            <span class="help-wrap">
+              <button
+                type="button"
+                class="help-btn"
+                aria-label="冷号说明"
+              >
+                ?
+              </button>
+              <span class="help-tip" role="tooltip">{{ COLD_HELP_TEXT }}</span>
+            </span>
           </div>
           <div class="class-title-meta">
             <CopyButton
@@ -481,10 +483,57 @@ async function copyNumbers(key, text) {
   cursor: help;
 }
 
-.help-btn:hover {
+.help-btn:hover,
+.help-wrap:focus-within .help-btn {
   border-color: #16a34a;
   color: #16a34a;
   background: #f0fdf4;
+}
+
+.help-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.help-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: max-content;
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(4px);
+}
+
+.help-tip::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.help-wrap:hover .help-tip,
+.help-wrap:focus-within .help-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .overlap-grid {

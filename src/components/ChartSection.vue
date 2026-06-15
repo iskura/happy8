@@ -40,7 +40,10 @@ const rowOrder = ref('asc')
 
 const filteredRecords = computed(() => filterRecords(props.records, filters.value))
 const chart = computed(() =>
-  buildChart(activeChart.value, filteredRecords.value, { rowOrder: rowOrder.value }),
+  buildChart(activeChart.value, filteredRecords.value, {
+    rowOrder: rowOrder.value,
+    historyRecords: props.records,
+  }),
 )
 const isSummary = computed(() => activeChart.value === 'ylqs')
 

@@ -72,7 +72,8 @@ export function buildTrendChart(records, config) {
   const chronological = [...newestFirst].reverse()
   const omissionState = Array.from({ length: columnCount + 1 }, () => 0)
   const omissionSums = Array.from({ length: columnCount + 1 }, () => 0)
-  const omissionHitCounts = Array.from({ length: columnCount + 1 }, () => 0)
+  const appearCounts = Array.from({ length: columnCount + 1 }, () => 0)
+  const maxOmissionTrack = Array.from({ length: columnCount + 1 }, () => 0)
   const maxConsecutive = Array.from({ length: columnCount + 1 }, () => 0)
   const currentStreak = Array.from({ length: columnCount + 1 }, () => 0)
   const rows = []
@@ -84,10 +85,9 @@ export function buildTrendChart(records, config) {
 
     for (let col = 1; col <= columnCount; col += 1) {
       if (activeSet.has(col)) {
-        if (omissionState[col] > 0) {
-          omissionSums[col] += omissionState[col]
-          omissionHitCounts[col] += 1
-        }
+        omissionSums[col] += omissionState[col]
+        appearCounts[col] += 1
+        maxOmissionTrack[col] = Math.max(maxOmissionTrack[col], omissionState[col])
         omissionState[col] = 0
         currentStreak[col] += 1
         maxConsecutive[col] = Math.max(maxConsecutive[col], currentStreak[col])
@@ -100,6 +100,7 @@ export function buildTrendChart(records, config) {
         })
       } else {
         omissionState[col] += 1
+        maxOmissionTrack[col] = Math.max(maxOmissionTrack[col], omissionState[col])
         currentStreak[col] = 0
         cells.push({
           type: 'miss',
@@ -128,13 +129,6 @@ export function buildTrendChart(records, config) {
       : attachMarksToRows(rows, columnCount, 'asc')
   const stats = createStats(columnCount)
 
-  for (const row of displayRows) {
-    for (const cell of row.cells) {
-      if (cell.type === 'hit') stats.appearCount[cell.num] += 1
-      else stats.maxOmission[cell.num] = Math.max(stats.maxOmission[cell.num], cell.omission)
-    }
-  }
-
   const latestRow = rows[rows.length - 1]
   if (latestRow) {
     for (const cell of latestRow.cells) {
@@ -143,8 +137,11 @@ export function buildTrendChart(records, config) {
   }
 
   for (let col = 1; col <= columnCount; col += 1) {
-    const hitCount = omissionHitCounts[col] || 0
-    stats.avgOmission[col] = hitCount ? Math.round(omissionSums[col] / hitCount) : 0
+    stats.appearCount[col] = appearCounts[col]
+    stats.maxOmission[col] = maxOmissionTrack[col]
+    stats.avgOmission[col] = appearCounts[col]
+      ? Math.round(omissionSums[col] / appearCounts[col])
+      : 0
     stats.maxConsecutive[col] = maxConsecutive[col] || 0
     const avg = stats.avgOmission[col]
     stats.desireRatio[col] = avg > 0 ? Math.round(stats.currentOmission[col] / avg) : 0
@@ -169,21 +166,18 @@ export function buildOmissionSummary(records) {
   const omissionState = Array.from({ length: 81 }, () => 0)
   const appearCount = Array.from({ length: 81 }, () => 0)
   const omissionSums = Array.from({ length: 81 }, () => 0)
-  const omissionHitCounts = Array.from({ length: 81 }, () => 0)
   const maxOmission = Array.from({ length: 81 }, () => 0)
 
   for (const record of chronological) {
     for (let num = 1; num <= 80; num += 1) {
       if (record.numbers.includes(num)) {
-        if (omissionState[num] > 0) {
-          omissionSums[num] += omissionState[num]
-          omissionHitCounts[num] += 1
-        }
+        omissionSums[num] += omissionState[num]
         maxOmission[num] = Math.max(maxOmission[num], omissionState[num])
         omissionState[num] = 0
         appearCount[num] += 1
       } else {
         omissionState[num] += 1
+        maxOmission[num] = Math.max(maxOmission[num], omissionState[num])
       }
     }
   }
@@ -194,8 +188,8 @@ export function buildOmissionSummary(records) {
       num,
       appearCount: appearCount[num],
       currentOmission: omissionState[num],
-      avgOmission: omissionHitCounts[num]
-        ? Math.round(omissionSums[num] / omissionHitCounts[num])
+      avgOmission: appearCount[num]
+        ? Math.round(omissionSums[num] / appearCount[num])
         : 0,
       maxOmission: maxOmission[num],
     })

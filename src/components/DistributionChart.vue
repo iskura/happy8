@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { formatBall, copyText } from '../utils/format.js'
 import { getCellMarkClass } from '../utils/chartMarks.js'
 import { getOmissionLevel, getOmissionLayer } from '../utils/charts/index.js'
+import { isZoneBoundaryCol } from '../utils/chartZone.js'
 import {
   createPredictionRow,
   loadPredictionRows,
@@ -10,6 +11,12 @@ import {
   savePredictionRows,
 } from '../utils/predictionStorage.js'
 import CopyButton from './CopyButton.vue'
+import TrendChartHead from './trend/TrendChartHead.vue'
+import TrendChartPrediction from './trend/TrendChartPrediction.vue'
+import TrendChartStats from './trend/TrendChartStats.vue'
+import './trend/trend-table.css'
+
+const ISSUE_COL_WIDTH = 120
 
 const props = defineProps({
   chart: {
@@ -37,13 +44,16 @@ const columnNumbers = computed(() =>
   Array.from({ length: columnHeaders.value.length }, (_, i) => i + 1),
 )
 
+const headerGroups = computed(() => props.chart.headerGroups || [])
+
 const wrapStyle = computed(() => {
   const count = columnHeaders.value.length
   const numWidth = props.chart.columnCount <= 10 ? 36 : 22
   return {
     '--col-count': count,
+    '--issue-w': `${ISSUE_COL_WIDTH}px`,
     '--num-col-w': `${numWidth}px`,
-    '--table-min-width': `calc(var(--issue-w) + var(--prize-w) + ${count} * var(--num-col-w))`,
+    '--table-min-width': `calc(var(--issue-w) + ${count} * var(--num-col-w))`,
   }
 })
 
@@ -94,12 +104,10 @@ function syncTableLayout() {
   const count = columnHeaders.value.length
   if (!count) return
 
-  const styles = getComputedStyle(wrap)
-  const issueW = parseFloat(styles.getPropertyValue('--issue-w')) || 88
-  const prizeW = parseFloat(styles.getPropertyValue('--prize-w')) || 96
+  const issueW = ISSUE_COL_WIDTH
   const minNumW = props.chart.columnCount <= 10 ? 36 : 22
   const tableWidth = bodyEl.clientWidth
-  const numColW = Math.max(minNumW, (tableWidth - issueW - prizeW) / count)
+  const numColW = Math.max(minNumW, (tableWidth - issueW) / count)
 
   wrap.style.setProperty('--num-col-w', `${numColW}px`)
 }
@@ -118,10 +126,14 @@ onMounted(() => {
     }
   })
   window.addEventListener('resize', syncTableLayout)
+  window.addEventListener('resize', hideStatTip)
+  window.addEventListener('scroll', hideStatTip, true)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', syncTableLayout)
+  window.removeEventListener('resize', hideStatTip)
+  window.removeEventListener('scroll', hideStatTip, true)
   bodyResizeObserver?.disconnect()
 })
 
@@ -141,14 +153,131 @@ function toggleFreeze(key) {
   freeze.value[key] = !freeze.value[key]
 }
 
+const issueColMode = ref('issue')
+const statTip = ref(null)
+const statTipRef = ref(null)
+
+function showStatTip(event, stat) {
+  const rect = event.currentTarget.getBoundingClientRect()
+  const anchorX = rect.left + rect.width / 2
+  const text = Array.isArray(stat.help) ? stat.help.join('\n') : stat.help
+  statTip.value = {
+    key: stat.key,
+    text,
+    anchorX,
+    x: anchorX,
+    y: rect.top,
+    anchorBottom: rect.bottom,
+    placement: 'top',
+    arrowOffset: 0,
+  }
+  nextTick(adjustStatTipPosition)
+}
+
+function adjustStatTipPosition() {
+  const el = statTipRef.value
+  if (!el || !statTip.value) return
+
+  const margin = 10
+  const gap = 8
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const tipRect = el.getBoundingClientRect()
+
+  const anchorX = statTip.value.anchorX
+  let { x, y, anchorBottom } = statTip.value
+  let placement = 'top'
+
+  const halfW = tipRect.width / 2
+  if (x - halfW < margin) x = margin + halfW
+  if (x + halfW > vw - margin) x = vw - margin - halfW
+
+  const spaceAbove = y - margin
+  const spaceBelow = vh - anchorBottom - margin
+  const needH = tipRect.height + gap
+
+  if (spaceAbove < needH && spaceBelow >= needH) {
+    placement = 'bottom'
+    y = anchorBottom
+  } else if (spaceAbove < needH && spaceBelow < needH) {
+    placement = 'top'
+    y = Math.max(margin + needH, y)
+  }
+
+  const maxArrowOffset = Math.max(0, halfW - 10)
+  const arrowOffset = Math.max(
+    -maxArrowOffset,
+    Math.min(maxArrowOffset, anchorX - x),
+  )
+
+  statTip.value = { ...statTip.value, x, y, placement, arrowOffset }
+}
+
+function hideStatTip() {
+  statTip.value = null
+}
+
+const statMode = ref('page')
+
+const activeStats = computed(() => {
+  if (statMode.value === 'history' && props.chart.historyStats) {
+    return props.chart.historyStats
+  }
+  return props.chart.stats
+})
+
+const statsRange = computed(() => {
+  const offset = props.chart.statsColumnOffset ?? 0
+  const count = props.chart.statsColumnCount ?? props.chart.columnCount - offset
+  return { start: offset + 1, end: offset + count }
+})
+
+function statCellValue(statKey, colNum) {
+  const { start, end } = statsRange.value
+  if (colNum < start || colNum > end) return ''
+  return activeStats.value?.[statKey]?.[colNum] ?? ''
+}
+
+const indicatorHelpItem = computed(() => {
+  const help = props.chart.indicatorHelp
+  if (!help || (Array.isArray(help) && !help.length)) return null
+  return { key: 'indicator', help }
+})
+
 const statRows = computed(() => [
-  { key: 'appearCount', label: '出现次数' },
-  { key: 'currentOmission', label: '当前遗漏' },
-  { key: 'avgOmission', label: '平均遗漏' },
-  { key: 'maxOmission', label: '最大遗漏' },
-  { key: 'maxConsecutive', label: '最大连出' },
-  { key: 'desireRatio', label: '欲出几率' },
+  {
+    key: 'appearCount',
+    label: '出现次数',
+    help: '统计期数内实际出现的次数。',
+  },
+  {
+    key: 'avgOmission',
+    label: '平均遗漏',
+    help: '统计期数内遗漏的平均值（除不尽四舍五入取整）。计算公式：平均遗漏 = 每次遗漏期数之和 / 出现次数。',
+  },
+  {
+    key: 'maxOmission',
+    label: '最大遗漏',
+    help: '统计期数内遗漏的最大值。',
+  },
+  {
+    key: 'maxConsecutive',
+    label: '最大连出',
+    help: '统计期数内连续开出的最大值。',
+  },
+  {
+    key: 'desireRatio',
+    label: '欲出几率',
+    help: '当前遗漏 / 平均遗漏（除不尽四舍五入取整）。',
+  },
 ])
+
+watch(
+  () => props.chart.id,
+  () => {
+    statMode.value = 'page'
+  },
+)
 
 const predictionRows = ref([createPredictionRow()])
 const activeRowId = ref('')
@@ -248,6 +377,12 @@ function formatIssueDate(row) {
   }
 }
 
+function isPredictionCol(num) {
+  const limit = props.chart.predictionColumns
+  if (!limit) return true
+  return num <= limit
+}
+
 function cellClasses(cell, row) {
   const classes = [cell.cellClass].filter(Boolean)
 
@@ -264,9 +399,14 @@ function cellClasses(cell, row) {
   classes.push(...getCellMarkClass(cell, row.marks, props.marks))
 
   const zoneEvery = props.chart.zoneEvery || 0
-  if (props.marks.zoneLine && zoneEvery > 0 && cell.num % zoneEvery === 0) {
+  if (props.marks.zoneLine && zoneEvery > 0 && isZoneBoundaryCol(cell.num, props.chart)) {
     classes.push('zone-line')
   }
+
+  if (props.chart.groupSeparators?.includes(cell.num)) {
+    classes.push('group-separator')
+  }
+
   return classes
 }
 
@@ -283,7 +423,6 @@ function isSegmentLine(index) {
   <div
     ref="tableWrapRef"
     class="distribution-wrap"
-    :class="{ 'cols-narrow': chart.columnCount <= 10 }"
     :style="wrapStyle"
   >
     <div class="distribution-toolbar">
@@ -359,27 +498,20 @@ function isSegmentLine(index) {
           <table class="distribution-table table-body">
               <colgroup>
                 <col class="col-issue-def" />
-                <col class="col-prize-def" />
                 <col
                   v-for="(header, index) in columnHeaders"
                   :key="`col-body-${index}`"
                   class="col-num-def"
                 />
               </colgroup>
-              <thead :class="{ 'is-frozen': freeze.head }">
-                <tr>
-                  <th class="sticky-col col-issue">期号<br>日期</th>
-                  <th class="sticky-col col-prize">开奖号码</th>
-                  <th
-                    v-for="(header, index) in columnHeaders"
-                    :key="`h-scroll-${index}`"
-                    class="col-num"
-                    :class="{ 'zone-head': chart.zoneEvery && (index + 1) % chart.zoneEvery === 0 }"
-                  >
-                    {{ header }}
-                  </th>
-                </tr>
-              </thead>
+              <TrendChartHead
+                :chart="chart"
+                :column-headers="columnHeaders"
+                :issue-col-mode="issueColMode"
+                :frozen="freeze.head"
+                :header-groups="headerGroups"
+                @update:issue-col-mode="issueColMode = $event"
+              />
               <tbody>
                 <tr
                   v-for="(row, index) in chart.rows"
@@ -388,12 +520,9 @@ function isSegmentLine(index) {
                 >
                   <td class="sticky-col col-issue">
                     <div class="issue-cell">
-                      <span class="issue-no">{{ formatIssueDate(row).issue }}</span>
-                      <span class="issue-date">{{ formatIssueDate(row).date }} {{ formatIssueDate(row).weekday }}</span>
+                      <span v-if="issueColMode === 'issue'" class="issue-no">{{ formatIssueDate(row).issue }}</span>
+                      <span v-else class="issue-date">{{ formatIssueDate(row).date }} {{ formatIssueDate(row).weekday }}</span>
                     </div>
-                  </td>
-                  <td class="sticky-col col-prize" :title="row.numbersText">
-                    <span class="prize-text">{{ row.numbersText }}</span>
                   </td>
                   <td
                     v-for="cell in row.cells"
@@ -406,48 +535,33 @@ function isSegmentLine(index) {
                   </td>
                 </tr>
               </tbody>
-              <tbody v-if="!freeze.pred" class="prediction-zone">
-                <tr
-                  v-for="(predRow, rowIndex) in predictionRows"
-                  :key="`scroll-${predRow.id}`"
-                  class="prediction-row"
-                  :class="{ active: activeRowId === predRow.id }"
-                >
-                  <td class="sticky-col col-issue">
-                    <div class="pred-controls">
-                      <span class="pred-seq">{{ rowIndex + 1 }}</span>
-                      <button type="button" class="pred-action-btn add" title="在此行下方新增" @click="addPredictionRowBelow(rowIndex)">+</button>
-                      <button type="button" class="pred-action-btn del" title="删除此行" @click="removePredictionRow(rowIndex)">−</button>
-                    </div>
-                  </td>
-                  <td class="sticky-col col-prize pred-copy-cell">
-                    <CopyButton size="sm" :copied="copiedKey === predRow.id" :disabled="!predRow.numbers.length" title="复制所选号码" @click="copyPredictionRow(predRow.id)" />
-                  </td>
-                  <td
-                    v-for="num in columnNumbers"
-                    :key="`scroll-${predRow.id}-${num}`"
-                    class="col-num pred-cell"
-                    :class="{ selected: isPredictionSelected(predRow.id, num), 'zone-line': chart.zoneEvery && num % chart.zoneEvery === 0, inactive: activeRowId !== predRow.id }"
-                    @click="togglePredictionCell(predRow.id, num)"
-                  >
-                    <span v-if="isPredictionSelected(predRow.id, num)" class="pred-ball">{{ columnHeaders[num - 1] }}</span>
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot v-if="!freeze.stats">
-                <tr v-for="stat in statRows" :key="`scroll-${stat.key}`" class="dist-stats-row">
-                  <td class="sticky-col col-issue dist-stats-label">{{ stat.label }}</td>
-                  <td class="sticky-col col-prize dist-stats-label" />
-                  <td
-                    v-for="(_, index) in columnHeaders"
-                    :key="`scroll-${stat.key}-${index}`"
-                    class="col-num stat-cell"
-                    :class="{ 'stat-omit-hot': stat.key === 'currentOmission' && chart.stats[stat.key][index + 1] >= 10 }"
-                  >
-                    {{ chart.stats[stat.key][index + 1] }}
-                  </td>
-                </tr>
-              </tfoot>
+              <TrendChartPrediction
+                v-if="!freeze.pred"
+                :chart="chart"
+                :column-headers="columnHeaders"
+                :column-numbers="columnNumbers"
+                :prediction-rows="predictionRows"
+                :active-row-id="activeRowId"
+                :copied-key="copiedKey"
+                :is-prediction-col="isPredictionCol"
+                :is-prediction-selected="isPredictionSelected"
+                @add-row-below="addPredictionRowBelow"
+                @remove-row="removePredictionRow"
+                @toggle-cell="togglePredictionCell"
+                @copy-row="copyPredictionRow"
+              />
+              <TrendChartStats
+                v-if="!freeze.stats"
+                :chart="chart"
+                :column-headers="columnHeaders"
+                :stat-rows="statRows"
+                :indicator-help-item="indicatorHelpItem"
+                :stat-cell-value="statCellValue"
+                :stat-mode="statMode"
+                @show-tip="showStatTip"
+                @hide-tip="hideStatTip"
+                @update:stat-mode="statMode = $event"
+              />
             </table>
 
           <div
@@ -458,114 +572,74 @@ function isSegmentLine(index) {
             <table v-if="freeze.pred" class="distribution-table table-pred">
               <colgroup>
                 <col class="col-issue-def" />
-                <col class="col-prize-def" />
                 <col
                   v-for="(header, index) in columnHeaders"
                   :key="`col-pred-${index}`"
                   class="col-num-def"
                 />
               </colgroup>
-              <tbody class="prediction-zone">
-                <tr
-                  v-for="(predRow, rowIndex) in predictionRows"
-                  :key="predRow.id"
-                  class="prediction-row"
-                  :class="{ active: activeRowId === predRow.id }"
-                >
-                  <td class="sticky-col col-issue">
-                    <div class="pred-controls">
-                      <span class="pred-seq">{{ rowIndex + 1 }}</span>
-                      <button
-                        type="button"
-                        class="pred-action-btn add"
-                        title="在此行下方新增"
-                        @click="addPredictionRowBelow(rowIndex)"
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        class="pred-action-btn del"
-                        title="删除此行"
-                        @click="removePredictionRow(rowIndex)"
-                      >
-                        −
-                      </button>
-                    </div>
-                  </td>
-                  <td class="sticky-col col-prize pred-copy-cell">
-                    <CopyButton
-                      size="sm"
-                      :copied="copiedKey === predRow.id"
-                      :disabled="!predRow.numbers.length"
-                      title="复制所选号码"
-                      @click="copyPredictionRow(predRow.id)"
-                    />
-                  </td>
-                  <td
-                    v-for="num in columnNumbers"
-                    :key="`${predRow.id}-${num}`"
-                    class="col-num pred-cell"
-                    :class="{
-                      selected: isPredictionSelected(predRow.id, num),
-                      'zone-line': chart.zoneEvery && num % chart.zoneEvery === 0,
-                      inactive: activeRowId !== predRow.id,
-                    }"
-                    @click="togglePredictionCell(predRow.id, num)"
-                  >
-                    <span v-if="isPredictionSelected(predRow.id, num)" class="pred-ball">
-                      {{ columnHeaders[num - 1] }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
+              <TrendChartPrediction
+                :chart="chart"
+                :column-headers="columnHeaders"
+                :column-numbers="columnNumbers"
+                :prediction-rows="predictionRows"
+                :active-row-id="activeRowId"
+                :copied-key="copiedKey"
+                :is-prediction-col="isPredictionCol"
+                :is-prediction-selected="isPredictionSelected"
+                @add-row-below="addPredictionRowBelow"
+                @remove-row="removePredictionRow"
+                @toggle-cell="togglePredictionCell"
+                @copy-row="copyPredictionRow"
+              />
             </table>
 
             <table v-if="freeze.stats" class="distribution-table table-foot">
               <colgroup>
                 <col class="col-issue-def" />
-                <col class="col-prize-def" />
                 <col
                   v-for="(header, index) in columnHeaders"
                   :key="`col-foot-${index}`"
                   class="col-num-def"
                 />
               </colgroup>
-              <tfoot>
-                <tr v-for="stat in statRows" :key="stat.key" class="dist-stats-row">
-                  <td class="sticky-col col-issue dist-stats-label">{{ stat.label }}</td>
-                  <td class="sticky-col col-prize dist-stats-label" />
-                  <td
-                    v-for="(_, index) in columnHeaders"
-                    :key="`${stat.key}-${index}`"
-                    class="col-num stat-cell"
-                    :class="{
-                      'stat-omit-hot': stat.key === 'currentOmission' && chart.stats[stat.key][index + 1] >= 10,
-                    }"
-                  >
-                    {{ chart.stats[stat.key][index + 1] }}
-                  </td>
-                </tr>
-              </tfoot>
+              <TrendChartStats
+                :chart="chart"
+                :column-headers="columnHeaders"
+                :stat-rows="statRows"
+                :indicator-help-item="indicatorHelpItem"
+                :stat-cell-value="statCellValue"
+                :stat-mode="statMode"
+                @show-tip="showStatTip"
+                @hide-tip="hideStatTip"
+                @update:stat-mode="statMode = $event"
+              />
             </table>
           </div>
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="statTip"
+        ref="statTipRef"
+        class="stat-help-popover"
+        :class="{ 'is-bottom': statTip.placement === 'bottom' }"
+        role="tooltip"
+        :style="{
+          left: `${statTip.x}px`,
+          top: `${statTip.y}px`,
+          '--arrow-offset': `${statTip.arrowOffset}px`,
+        }"
+      >
+        {{ statTip.text }}
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
-.distribution-wrap {
-  --issue-w: 88px;
-  --prize-w: 96px;
-}
-
-.distribution-wrap.cols-narrow {
-  --issue-w: 80px;
-  --prize-w: 88px;
-}
-
 .distribution-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -692,344 +766,46 @@ function isSegmentLine(index) {
 .legend-dot.bose-red { background: #fecaca; }
 .legend-dot.bose-blue { background: #bfdbfe; }
 .legend-dot.bose-green { background: #bbf7d0; }
+</style>
 
-.empty-chart {
-  padding: 40px;
-  text-align: center;
-  color: var(--text-dim);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
-}
-
-.distribution-scroll {
-  width: 100%;
-  max-height: 75vh;
-  overflow: auto;
-  scrollbar-gutter: stable;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: #fff;
-}
-
-.distribution-h-scroll {
-  width: 100%;
-  min-width: var(--table-min-width);
-}
-
-.table-suite {
-  width: 100%;
-  min-width: var(--table-min-width);
-}
-
-.distribution-bottom-fixed.is-sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 11;
-  background: #fff;
-  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.08);
-}
-
-.table-foot {
-  border-top: 2px solid var(--border-strong);
-}
-
-.distribution-table {
-  width: 100%;
-  min-width: var(--table-min-width);
-  table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 10px;
-}
-
-.col-issue-def { width: var(--issue-w); }
-.col-prize-def { width: var(--prize-w); }
-.col-num-def { width: var(--num-col-w); }
-
-.distribution-table thead.is-frozen th {
-  position: sticky;
-  top: 0;
-  z-index: 12;
-  background: #f8fafc;
-  box-shadow: 0 1px 0 var(--border-strong);
-}
-
-.distribution-table thead.is-frozen .sticky-col {
-  z-index: 16;
-  background: #f8fafc;
-}
-
-.distribution-table :is(th, td) {
-  padding: 0;
-  text-align: center;
-  border-right: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f1f5f9;
-  overflow: hidden;
-}
-
-.distribution-table thead th {
-  background: #f8fafc;
-  color: var(--text-dim);
-  font-weight: 700;
+<style scoped>
+.stat-help-popover {
+  position: fixed;
+  z-index: 10001;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 20px));
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #f8fafc;
   font-size: 11px;
-  line-height: 1.2;
-  padding: 4px 1px;
-  border-bottom: 1px solid var(--border-strong);
-}
-
-.zone-head { border-left: 1px solid #cbd5e1 !important; }
-
-.sticky-col {
-  position: sticky;
-  z-index: 2;
-  background: #fff;
-}
-
-thead .sticky-col {
-  z-index: 5;
-  background: #f8fafc;
-}
-
-tbody .sticky-col,
-tfoot .sticky-col {
-  z-index: 4;
-}
-
-.col-issue {
-  left: 0;
+  font-weight: 500;
+  line-height: 1.45;
   text-align: left;
-  padding: 3px 4px !important;
-  vertical-align: middle;
+  white-space: pre-line;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 8px));
 }
 
-.issue-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  line-height: 1.15;
+.stat-help-popover.is-bottom {
+  transform: translate(-50%, 8px);
 }
 
-.issue-no {
-  font-weight: 700;
-  color: var(--text);
-  font-size: 10px;
+.stat-help-popover::after {
+  content: '';
+  position: absolute;
+  left: calc(50% + var(--arrow-offset, 0px));
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
 }
 
-.issue-date {
-  color: var(--text-dim);
-  font-size: 9px;
-  white-space: nowrap;
+.stat-help-popover.is-bottom::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #1e293b;
 }
-
-.col-prize {
-  left: var(--issue-w);
-  text-align: left;
-  padding: 3px 4px !important;
-  vertical-align: middle;
-}
-
-.prize-text {
-  display: block;
-  font-size: 9px;
-  line-height: 1.25;
-  color: var(--text-soft);
-  white-space: normal;
-  word-break: break-all;
-}
-
-.hit-ball {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #e11d48;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: none;
-}
-
-.miss-value {
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.col-num {
-  height: 26px;
-  vertical-align: middle;
-  padding: 0 !important;
-}
-
-.zone-line { border-left: 1px solid #e2e8f0 !important; }
-.segment-line td { border-top: 2px solid #cbd5e1 !important; }
-
-.cell-hit { background: #fff5f5; }
-.cell-miss { background: #fff; color: #94a3b8; }
-.cell-hide-miss { background: #fff; }
-.cell-miss.miss-mid { background: #fffbeb; color: #d97706; }
-.cell-miss.miss-high { background: #fef2f2; color: #dc2626; font-weight: 700; }
-
-.layer-1 { background: #f8fafc !important; }
-.layer-2 { background: #f1f5f9 !important; color: #64748b !important; }
-.layer-3 { background: #e2e8f0 !important; color: #475569 !important; }
-.layer-4 { background: #fef3c7 !important; color: #b45309 !important; }
-.layer-5 { background: #fee2e2 !important; color: #dc2626 !important; font-weight: 700; }
-
-.bose-red.cell-hit { background: #fef2f2 !important; }
-.bose-blue.cell-hit { background: #eff6ff !important; }
-.bose-green.cell-hit { background: #f0fdf4 !important; }
-
-.heat-0.cell-hit { background: #fff7ed; }
-.heat-1.cell-hit { background: #ffedd5; }
-.heat-2.cell-hit { background: #fed7aa; }
-.heat-3.cell-hit { background: #fdba74; }
-.heat-4.cell-hit { background: #fb923c; }
-
-.mark-repeat.cell-hit .hit-ball {
-  outline: 1px solid #2563eb;
-  outline-offset: 0;
-}
-
-.mark-consecutive.cell-hit { background: #ecfdf5 !important; }
-.mark-edge { background: #fefce8 !important; }
-
-.distribution-table tbody:not(.prediction-zone) tr:hover td { background-color: #f8fafc; }
-.distribution-table tbody:not(.prediction-zone) tr:hover .cell-hit { background-color: #ffe4e6; }
-.distribution-table tbody:not(.prediction-zone) tr:hover .sticky-col { background: #f8fafc; }
-
-.prediction-zone {
-  border-top: 2px solid #93c5fd;
-}
-
-.prediction-row td {
-  background: #f0f9ff;
-}
-
-.prediction-row.active td {
-  background: #e0f2fe;
-}
-
-.prediction-row .sticky-col {
-  background: #e0f2fe;
-}
-
-.prediction-row.active .sticky-col {
-  background: #bae6fd;
-}
-
-.pred-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 3px 2px;
-}
-
-.pred-seq {
-  flex-shrink: 0;
-  min-width: 16px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #1d4ed8;
-  text-align: center;
-}
-
-.pred-action-btn {
-  height: 22px;
-  padding: 0 5px;
-  border: 1px solid #93c5fd;
-  border-radius: 4px;
-  background: #fff;
-  color: #2563eb;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.pred-action-btn.add,
-.pred-action-btn.del {
-  min-width: 22px;
-  padding: 0;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.pred-action-btn:hover {
-  background: #dbeafe;
-}
-
-.pred-copy-cell {
-  text-align: center;
-  vertical-align: middle;
-}
-
-.pred-cell {
-  cursor: pointer;
-  background: #f0f9ff;
-}
-
-.pred-cell.inactive {
-  opacity: 0.72;
-}
-
-.pred-cell.inactive.selected {
-  opacity: 1;
-}
-
-.pred-cell:hover {
-  background: #dbeafe;
-}
-
-.pred-cell.selected {
-  background: #bfdbfe;
-}
-
-.pred-ball {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #2563eb;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.dist-stats-row :is(td, th) {
-  background: #f8fafc !important;
-  font-weight: 600;
-  font-size: 11px;
-  color: var(--text-soft);
-  padding: 4px 0 !important;
-  border-top: 2px solid var(--border-strong);
-  text-align: center !important;
-  vertical-align: middle;
-}
-
-.dist-stats-label {
-  text-align: center !important;
-  padding: 4px 2px !important;
-  color: var(--text) !important;
-  font-weight: 700 !important;
-  font-size: 10px !important;
-  background: #f1f5f9 !important;
-  white-space: nowrap;
-}
-
-.stat-cell {
-  font-variant-numeric: tabular-nums;
-  text-align: center !important;
-}
-
-.stat-omit-hot { color: #dc2626 !important; font-weight: 800; }
 </style>
