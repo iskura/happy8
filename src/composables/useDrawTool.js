@@ -24,16 +24,21 @@ function saveShapes(chartId, shapes) {
 
 export function useDrawTool(chartId) {
   const drawTool = reactive({
-    activeTool: 'rect',
+    activeTool: '',
     color: DEFAULT_DRAW_COLOR,
     shapes: [],
     selectTool(toolId) {
       if (toolId === 'clear') {
         drawTool.shapes = []
+        drawTool.activeTool = ''
         return
       }
       if (toolId === 'undo') {
         drawTool.shapes = drawTool.shapes.slice(0, -1)
+        return
+      }
+      if (drawTool.activeTool === toolId) {
+        drawTool.activeTool = ''
         return
       }
       drawTool.activeTool = toolId

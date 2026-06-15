@@ -12,7 +12,8 @@ import TrendTableColgroup from './TrendTableColgroup.vue'
 import TrendTableBody from './TrendTableBody.vue'
 import TrendChartHead from './TrendChartHead.vue'
 import TrendChartPrediction from './TrendChartPrediction.vue'
-import TrendChartStats from './TrendChartStats.vue'
+import ChartStatsSection from './ChartStatsSection.vue'
+import PredictionMergeDialog from './PredictionMergeDialog.vue'
 import TableDrawOverlay from '../draw/TableDrawOverlay.vue'
 import './trend-table.css'
 
@@ -75,6 +76,13 @@ const {
   togglePredictionCell,
   copyPredictionRow,
   isPredictionCol,
+  isMergeRowSelected,
+  toggleMergeRowSelect,
+  mergeRowsKeepSources,
+  mergeRowsAndDeleteSources,
+  cancelMergeSelection,
+  showMergeDialog,
+  mergeSelectedRowIds,
 } = usePredictionRows(chartId)
 
 const {
@@ -95,6 +103,22 @@ function setRowOrder(order) {
 function checkPredictionCol(num) {
   return isPredictionCol(num, predictionMaxColumns.value)
 }
+
+const latestDrawHitSet = computed(() => {
+  const rows = props.chart.rows
+  if (!rows?.length) return new Set()
+
+  let latest = rows[0]
+  for (let i = 1; i < rows.length; i += 1) {
+    if (Number(rows[i].issue) > Number(latest.issue)) latest = rows[i]
+  }
+
+  return new Set(latest.activeCols || latest.numbers || [])
+})
+
+function isLatestDrawHit(num) {
+  return latestDrawHitSet.value.has(num)
+}
 </script>
 
 <template>
@@ -109,7 +133,7 @@ function checkPredictionCol(num) {
 
     <div v-if="!chart.rows?.length" class="empty-chart">没有符合筛选条件的开奖数据</div>
 
-    <div v-else ref="bodyScrollRef" class="distribution-scroll" :class="{ 'is-drawing': isDrawing }">
+    <div v-else ref="bodyScrollRef" class="distribution-scroll">
       <div class="distribution-h-scroll draw-layer-wrap">
         <div ref="tableSuiteRef" class="table-suite">
           <table class="distribution-table table-body">
@@ -146,25 +170,30 @@ function checkPredictionCol(num) {
               :marks="marks"
               :is-prediction-col="checkPredictionCol"
               :is-prediction-selected="isPredictionSelected"
+              :is-merge-row-selected="isMergeRowSelected"
+              :is-latest-draw-hit="isLatestDrawHit"
               @add-row-below="addPredictionRowBelow"
               @remove-row="removePredictionRow"
               @toggle-cell="togglePredictionCell"
               @copy-row="copyPredictionRow"
-            />
-            <TrendChartStats
-              v-if="!freeze.stats"
-              :chart="chart"
-              :column-headers="columnHeaders"
-              :stat-rows="statRows"
-              :indicator-help-item="indicatorHelpItem"
-              :stat-cell-value="statCellValue"
-              :stat-mode="statMode"
-              :marks="marks"
-              @show-tip="showStatTip"
-              @hide-tip="hideStatTip"
-              @update:stat-mode="statMode = $event"
+              @toggle-merge-row="toggleMergeRowSelect"
             />
           </table>
+
+          <ChartStatsSection
+            v-if="!freeze.stats"
+            :chart="chart"
+            :column-headers="columnHeaders"
+            :stat-rows="statRows"
+            :indicator-help-item="indicatorHelpItem"
+            :stat-cell-value="statCellValue"
+            :stat-mode="statMode"
+            :marks="marks"
+            col-key-prefix="col-stats"
+            @show-tip="showStatTip"
+            @hide-tip="hideStatTip"
+            @update:stat-mode="statMode = $event"
+          />
 
           <div
             v-if="freeze.pred || freeze.stats"
@@ -186,31 +215,30 @@ function checkPredictionCol(num) {
                 :marks="marks"
                 :is-prediction-col="checkPredictionCol"
                 :is-prediction-selected="isPredictionSelected"
+                :is-merge-row-selected="isMergeRowSelected"
+                :is-latest-draw-hit="isLatestDrawHit"
                 @add-row-below="addPredictionRowBelow"
                 @remove-row="removePredictionRow"
                 @toggle-cell="togglePredictionCell"
                 @copy-row="copyPredictionRow"
+                @toggle-merge-row="toggleMergeRowSelect"
               />
             </table>
 
-            <table v-if="freeze.stats" class="distribution-table table-foot">
-              <TrendTableColgroup
-                :column-count="columnHeaders.length"
-                col-key-prefix="col-foot"
-              />
-              <TrendChartStats
-                :chart="chart"
-                :column-headers="columnHeaders"
-                :stat-rows="statRows"
-                :indicator-help-item="indicatorHelpItem"
-                :stat-cell-value="statCellValue"
-                :stat-mode="statMode"
-                :marks="marks"
-                @show-tip="showStatTip"
-                @hide-tip="hideStatTip"
-                @update:stat-mode="statMode = $event"
-              />
-            </table>
+            <ChartStatsSection
+              v-if="freeze.stats"
+              :chart="chart"
+              :column-headers="columnHeaders"
+              :stat-rows="statRows"
+              :indicator-help-item="indicatorHelpItem"
+              :stat-cell-value="statCellValue"
+              :stat-mode="statMode"
+              :marks="marks"
+              col-key-prefix="col-foot"
+              @show-tip="showStatTip"
+              @hide-tip="hideStatTip"
+              @update:stat-mode="statMode = $event"
+            />
           </div>
 
           <TableDrawOverlay
@@ -218,10 +246,19 @@ function checkPredictionCol(num) {
             :draw-tool="drawTool"
             :is-drawing="isDrawing"
             :target-ref="tableSuiteRef"
+            :content-key="chart.rows?.length ?? 0"
           />
         </div>
       </div>
     </div>
+
+    <PredictionMergeDialog
+      v-if="showMergeDialog"
+      :count="mergeSelectedRowIds.length"
+      @merge="mergeRowsKeepSources"
+      @delete-merge="mergeRowsAndDeleteSources"
+      @cancel="cancelMergeSelection"
+    />
 
     <Teleport to="body">
       <div
@@ -285,9 +322,5 @@ function checkPredictionCol(num) {
 
 .draw-layer-wrap {
   position: relative;
-}
-
-.distribution-scroll.is-drawing {
-  cursor: crosshair;
 }
 </style>

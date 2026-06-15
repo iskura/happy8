@@ -21,6 +21,13 @@ export function useTrendTableLayout({
     scrollGutter.value = Math.max(0, el.offsetWidth - el.clientWidth)
   }
 
+  function resetBodyScroll() {
+    const el = bodyScrollRef.value
+    if (!el) return
+    el.scrollTop = 0
+    el.scrollLeft = 0
+  }
+
   function syncTableLayout() {
     updateScrollGutter()
 
@@ -40,11 +47,19 @@ export function useTrendTableLayout({
     const numColW = Math.max(minNumW, (tableWidth - issueColWidth) / count)
 
     wrap.style.setProperty('--num-col-w', `${numColW}px`)
+    wrap.style.setProperty('--scrollport-w', `${bodyEl.clientWidth}px`)
   }
 
   watch(
+    () => chart.value.rows?.length,
+    () => nextTick(() => {
+      resetBodyScroll()
+      syncTableLayout()
+    }),
+  )
+
+  watch(
     () => [
-      chart.value.rows?.length,
       freeze.value.head,
       freeze.value.pred,
       freeze.value.stats,

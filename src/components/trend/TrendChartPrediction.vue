@@ -12,6 +12,8 @@ const props = defineProps({
   marks: { type: Object, default: () => ({}) },
   isPredictionCol: { type: Function, required: true },
   isPredictionSelected: { type: Function, required: true },
+  isMergeRowSelected: { type: Function, required: true },
+  isLatestDrawHit: { type: Function, default: () => false },
 })
 
 const emit = defineEmits([
@@ -19,6 +21,7 @@ const emit = defineEmits([
   'remove-row',
   'toggle-cell',
   'copy-row',
+  'toggle-merge-row',
 ])
 </script>
 
@@ -28,10 +31,21 @@ const emit = defineEmits([
       v-for="(predRow, rowIndex) in predictionRows"
       :key="predRow.id"
       class="prediction-row"
-      :class="{ active: activeRowId === predRow.id }"
+      :class="{
+        active: activeRowId === predRow.id,
+        'merge-marked': isMergeRowSelected(predRow.id),
+      }"
     >
       <td class="sticky-col col-issue">
         <div class="pred-controls">
+          <button
+            type="button"
+            class="pred-merge-dot"
+            :class="{ 'is-pinned': isMergeRowSelected(predRow.id) }"
+            title="标记参与合集"
+            aria-label="标记参与合集"
+            @click.stop="emit('toggle-merge-row', predRow.id)"
+          />
           <span class="pred-seq">{{ rowIndex + 1 }}</span>
           <button
             type="button"
@@ -73,6 +87,7 @@ const emit = defineEmits([
         <span
           v-if="isPredictionCol(num) && isPredictionSelected(predRow.id, num)"
           class="pred-ball"
+          :class="{ 'hit-latest': isLatestDrawHit(num) }"
         >
           {{ columnHeaders[num - 1] }}
         </span>

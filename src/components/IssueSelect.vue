@@ -19,20 +19,54 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  clearable: {
+    type: Boolean,
+    default: false,
+  },
+  placeholder: {
+    type: String,
+    default: '',
+  },
+  searchPlaceholder: {
+    type: String,
+    default: '搜索期号或日期',
+  },
+  tone: {
+    type: String,
+    default: 'default',
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
-const options = computed(() =>
-  props.records.map((record) => ({
+const resolvedTone = computed(() => {
+  if (props.tone !== 'default') return props.tone
+  return props.embedded ? 'accent' : 'default'
+})
+
+const resolvedPlaceholder = computed(() => {
+  if (props.placeholder) return props.placeholder
+  return props.embedded ? '期号' : '搜索期号或日期'
+})
+
+const options = computed(() => {
+  const list = props.records.map((record) => ({
     value: record.issue,
-    label: props.embedded
+    label: props.embedded || props.tone === 'filter'
       ? record.issue
       : `${record.issue}（${record.date}）`,
-  })),
-)
+  }))
+
+  if (props.clearable) {
+    return [{ value: '', label: '不限' }, ...list]
+  }
+
+  return list
+})
 
 function filterOption(input, option) {
+  if (option?.value === '') return true
+
   const keyword = input.trim()
   if (!keyword) return true
   const record = props.records.find((item) => item.issue === option?.value)
@@ -54,11 +88,15 @@ function handleChange(value) {
     :model-value="modelValue"
     :options="options"
     :filter-option="filterOption"
-    :placeholder="embedded ? '期号' : '搜索期号或日期'"
-    search-placeholder="搜索期号或日期"
+    :placeholder="resolvedPlaceholder"
+    :search-placeholder="searchPlaceholder"
     :disabled="disabled || !records.length"
-    :embedded="embedded"
-    :class="embedded ? 'issue-embed' : 'issue-block'"
+    :tone="resolvedTone"
+    :class="{
+      'issue-block': resolvedTone === 'default',
+      'issue-embed': resolvedTone === 'accent',
+      'issue-filter': resolvedTone === 'filter',
+    }"
     @update:model-value="handleChange"
   />
 </template>
@@ -70,5 +108,9 @@ function handleChange(value) {
 
 .issue-embed {
   width: 108px;
+}
+
+.issue-filter {
+  width: 100px;
 }
 </style>

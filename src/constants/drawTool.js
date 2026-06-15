@@ -4,7 +4,6 @@ export const DRAW_TOOLS = [
   { id: 'line', label: '直线' },
   { id: 'arrow', label: '箭头' },
   { id: 'curve', label: '曲线' },
-  { id: 'text', label: '文字' },
   { id: 'clear', label: '清除' },
   { id: 'undo', label: '撤销' },
 ]

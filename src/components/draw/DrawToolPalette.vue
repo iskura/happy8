@@ -244,10 +244,6 @@ if (typeof window !== 'undefined') {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 22'%3E%3Cpath d='M4 16 Q10 4 24 8' fill='none' stroke='%23334155' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
-.draw-tool-panel .icon-text {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 22'%3E%3Crect x='5' y='3' width='18' height='16' fill='none' stroke='%23334155' stroke-width='1.2'/%3E%3Ctext x='14' y='15' text-anchor='middle' font-size='11' font-weight='700' fill='%23334155'%3ET%3C/text%3E%3C/svg%3E");
-}
-
 .draw-tool-panel .icon-clear {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 22'%3E%3Cpath d='M8 10 L20 10 L18 18 L10 18 Z' fill='none' stroke='%23334155' stroke-width='1.3'/%3E%3Cpath d='M10 10 L12 6 L16 6 L18 10' fill='none' stroke='%23334155' stroke-width='1.3'/%3E%3C/svg%3E");
 }

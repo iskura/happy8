@@ -6,8 +6,10 @@ import {
   WEEKDAY_OPTIONS,
   MARK_OPTIONS,
 } from '../constants/chartTypes.js'
+import { notifyInfo } from '../utils/uiMessage.js'
 import LookbackSelect from './LookbackSelect.vue'
 import DateRangePicker from './DateRangePicker.vue'
+import IssueSelect from './IssueSelect.vue'
 import DrawToolPalette from './draw/DrawToolPalette.vue'
 
 const props = defineProps({
@@ -17,6 +19,7 @@ const props = defineProps({
   activeChart: { type: String, default: 'hmfb' },
   maxPeriod: { type: Number, default: 1000 },
   availableDates: { type: Array, default: () => [] },
+  records: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['update:filters', 'update:marks', 'update:activeChart', 'apply'])
@@ -34,6 +37,31 @@ function selectChart(chart) {
 
 function patchFilters(patch) {
   emit('update:filters', { ...props.filters, ...patch })
+}
+
+function normalizeIssueRange(start, end) {
+  if (!start || !end || start <= end) {
+    return { issueStart: start, issueEnd: end, swapped: false }
+  }
+  return { issueStart: end, issueEnd: start, swapped: true }
+}
+
+function updateIssueStart(value) {
+  const { issueStart, issueEnd, swapped } = normalizeIssueRange(
+    value,
+    props.filters.issueEnd,
+  )
+  patchFilters({ issueStart, issueEnd })
+  if (swapped) notifyInfo(`期号范围已自动调整为 ${issueStart} - ${issueEnd}`)
+}
+
+function updateIssueEnd(value) {
+  const { issueStart, issueEnd, swapped } = normalizeIssueRange(
+    props.filters.issueStart,
+    value,
+  )
+  patchFilters({ issueStart, issueEnd })
+  if (swapped) notifyInfo(`期号范围已自动调整为 ${issueStart} - ${issueEnd}`)
 }
 
 function toggleWeekday(value) {
@@ -126,16 +154,24 @@ function applyFilters() {
 
       <div class="filter-group issue-range">
         <label>期号：</label>
-        <input
-          :value="filters.issueStart"
+        <IssueSelect
+          :model-value="filters.issueStart"
+          :records="records"
+          clearable
+          tone="filter"
           placeholder="起始"
-          @input="patchFilters({ issueStart: $event.target.value })"
+          search-placeholder="搜索起始期号"
+          @update:model-value="updateIssueStart"
         />
         <span>-</span>
-        <input
-          :value="filters.issueEnd"
+        <IssueSelect
+          :model-value="filters.issueEnd"
+          :records="records"
+          clearable
+          tone="filter"
           placeholder="结束"
-          @input="patchFilters({ issueEnd: $event.target.value })"
+          search-placeholder="搜索结束期号"
+          @update:model-value="updateIssueEnd"
         />
         <button class="filter-btn primary" @click="applyFilters">查看</button>
         <button class="filter-btn" @click="showSamePeriod = !showSamePeriod">
@@ -307,14 +343,6 @@ function applyFilters() {
 .filter-btn.sm {
   min-width: 36px;
   padding: 3px 6px;
-}
-
-.issue-range input {
-  width: 72px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-strong);
-  border-radius: 4px;
-  font-size: 12px;
 }
 
 .issue-range {

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -26,6 +26,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  tone: {
+    type: String,
+    default: '',
+  },
   allowCustom: {
     type: Boolean,
     default: false,
@@ -39,8 +43,14 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const rootRef = ref(null)
+const listRef = ref(null)
 const open = ref(false)
 const keyword = ref('')
+
+const resolvedTone = computed(() => {
+  if (props.tone) return props.tone
+  return props.embedded ? 'accent' : 'default'
+})
 
 const displayText = computed(() => {
   const matched = props.options.find((option) => option.value === props.modelValue)
@@ -62,6 +72,18 @@ const filteredOptions = computed(() => {
     String(option.value ?? '').toLowerCase().includes(lower)
     || String(option.label ?? '').toLowerCase().includes(lower)
   ))
+})
+
+function resetListScroll() {
+  if (listRef.value) listRef.value.scrollTop = 0
+}
+
+watch(keyword, () => {
+  resetListScroll()
+})
+
+watch(filteredOptions, () => {
+  resetListScroll()
 })
 
 function toggleOpen() {
@@ -122,7 +144,7 @@ onBeforeUnmount(() => {
   <div
     ref="rootRef"
     class="search-select"
-    :class="{ embedded, open, disabled }"
+    :class="[resolvedTone, { open, disabled }]"
   >
     <button
       type="button"
@@ -143,17 +165,26 @@ onBeforeUnmount(() => {
         :placeholder="searchPlaceholder"
         @keydown="handleSearchKeydown"
       />
-      <ul v-if="filteredOptions.length" class="search-select-list">
-        <li
-          v-for="option in filteredOptions"
-          :key="option.value"
-          class="search-select-option"
-          :class="{ active: option.value === modelValue }"
-          @mousedown.prevent="selectOption(option)"
+      <div
+        v-if="filteredOptions.length"
+        ref="listRef"
+        class="search-select-list-wrap"
+      >
+        <ul
+          :key="keyword"
+          class="search-select-list"
         >
-          {{ option.label }}
-        </li>
-      </ul>
+          <li
+            v-for="(option, index) in filteredOptions"
+            :key="`${option.value}__${index}`"
+            class="search-select-option"
+            :class="{ active: option.value === modelValue }"
+            @mousedown.prevent="selectOption(option)"
+          >
+            {{ option.label }}
+          </li>
+        </ul>
+      </div>
       <p v-else class="search-select-empty">无匹配项</p>
       <p v-if="allowCustom" class="search-select-tip">输入后按 Enter 确认</p>
     </div>
@@ -166,7 +197,14 @@ onBeforeUnmount(() => {
   min-width: 140px;
 }
 
-.search-select.embedded {
+.search-select.embedded,
+.search-select.accent {
+  display: inline-block;
+  min-width: auto;
+  vertical-align: middle;
+}
+
+.search-select.filter {
   display: inline-block;
   min-width: auto;
   vertical-align: middle;
@@ -188,13 +226,24 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 
-.search-select.embedded .search-select-trigger {
+.search-select.embedded .search-select-trigger,
+.search-select.accent .search-select-trigger {
   min-height: 28px;
   padding: 2px 8px;
   border-color: #fecdd3;
   background: #fff1f2;
   font-weight: 700;
   color: #e11d48;
+}
+
+.search-select.filter .search-select-trigger {
+  min-height: 28px;
+  padding: 4px 8px;
+  border-color: var(--border-strong);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text);
 }
 
 .search-select-trigger:disabled {
@@ -248,12 +297,17 @@ onBeforeUnmount(() => {
   border-color: #1677ff;
 }
 
-.search-select-list {
+.search-select-list-wrap {
   max-height: 220px;
-  margin: 8px 0 0;
+  margin-top: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.search-select-list {
+  margin: 0;
   padding: 0;
   list-style: none;
-  overflow-y: auto;
 }
 
 .search-select-option {

@@ -79,6 +79,7 @@ function applyFilters() {
       :draw-tool="drawTool"
       :max-period="records.length"
       :available-dates="availableDates"
+      :records="records"
       @apply="applyFilters"
     />
 

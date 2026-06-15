@@ -1,7 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { formatBall, copyText } from '../utils/format.js'
+import { notifyError, notifySuccess } from '../utils/uiMessage.js'
 import {
+  appendPredictionRow,
   createPredictionRow,
   loadCClassRowIndex,
   loadPredictionRows,
@@ -13,6 +15,7 @@ import IssueSelect from './IssueSelect.vue'
 import LookbackSelect from './LookbackSelect.vue'
 import SearchSelect from './SearchSelect.vue'
 import CopyButton from './CopyButton.vue'
+import PredictionRowButton from './PredictionRowButton.vue'
 import { useStatTip } from '../composables/trend/useStatTip.js'
 
 const props = defineProps({
@@ -81,6 +84,7 @@ function isColdNumber(num) {
 }
 
 const copiedKey = ref('')
+const addedPredKey = ref('')
 const predictionRows = ref([createPredictionRow()])
 const selectedPredIndex = ref(loadCClassRowIndex())
 
@@ -164,11 +168,36 @@ const nonOverlapBText = computed(() => nonOverlapB.value.map((num) => formatBall
 
 async function copyNumbers(key, text) {
   const ok = await copyText(text)
-  if (!ok) return
+  if (!ok) {
+    notifyError('复制失败')
+    return
+  }
   copiedKey.value = key
+  notifySuccess('复制成功')
   window.setTimeout(() => {
     if (copiedKey.value === key) copiedKey.value = ''
   }, 1500)
+}
+
+function addNumbersToPrediction(key, numbers) {
+  if (props.disabled || !numbers.length) return
+
+  const result = appendPredictionRow(PREDICTION_CHART_ID, numbers)
+  if (!result) return
+
+  selectedPredIndex.value = result.index
+  saveCClassRowIndex(result.index)
+  reloadPredictionRows()
+
+  addedPredKey.value = key
+  notifySuccess(`已生成预测第 ${result.index} 行（${numbers.length} 个号码）`)
+  window.setTimeout(() => {
+    if (addedPredKey.value === key) addedPredKey.value = ''
+  }, 1500)
+}
+
+function addClassToPrediction(key, classItems) {
+  addNumbersToPrediction(key, classItems.map((item) => item.num))
 }
 </script>
 
@@ -234,6 +263,13 @@ async function copyNumbers(key, text) {
         <div class="class-title">
           <h3>A 类号码</h3>
           <div class="class-title-meta">
+            <PredictionRowButton
+              v-if="result.classA.length"
+              :added="addedPredKey === 'a-pred'"
+              :disabled="disabled"
+              title="生成预测行并填入 A 类号码"
+              @click="addClassToPrediction('a-pred', result.classA)"
+            />
             <CopyButton
               v-if="result.classA.length"
               :copied="copiedKey === 'a'"
@@ -277,6 +313,13 @@ async function copyNumbers(key, text) {
             </span>
           </div>
           <div class="class-title-meta">
+            <PredictionRowButton
+              v-if="result.classB.length"
+              :added="addedPredKey === 'b-pred'"
+              :disabled="disabled"
+              title="生成预测行并填入 B 类号码"
+              @click="addClassToPrediction('b-pred', result.classB)"
+            />
             <CopyButton
               v-if="result.classBCold?.length"
               :copied="copiedKey === 'b-cold'"
@@ -343,6 +386,13 @@ async function copyNumbers(key, text) {
             <div class="overlap-head">
               <h4>与 A 类重复</h4>
               <div class="overlap-head-meta">
+                <PredictionRowButton
+                  v-if="overlapA.length"
+                  :added="addedPredKey === 'c-a-pred'"
+                  :disabled="disabled"
+                  title="生成预测行并填入与 A 类重复号码"
+                  @click="addNumbersToPrediction('c-a-pred', overlapA)"
+                />
                 <CopyButton
                   v-if="overlapA.length"
                   :copied="copiedKey === 'c-a'"
@@ -364,6 +414,13 @@ async function copyNumbers(key, text) {
             <div class="overlap-head">
               <h4>与 A 类不重复</h4>
               <div class="overlap-head-meta">
+                <PredictionRowButton
+                  v-if="nonOverlapA.length"
+                  :added="addedPredKey === 'c-not-a-pred'"
+                  :disabled="disabled"
+                  title="生成预测行并填入与 A 类不重复号码"
+                  @click="addNumbersToPrediction('c-not-a-pred', nonOverlapA)"
+                />
                 <CopyButton
                   v-if="nonOverlapA.length"
                   :copied="copiedKey === 'c-not-a'"
@@ -385,6 +442,13 @@ async function copyNumbers(key, text) {
             <div class="overlap-head">
               <h4>与 B 类重复</h4>
               <div class="overlap-head-meta">
+                <PredictionRowButton
+                  v-if="overlapB.length"
+                  :added="addedPredKey === 'c-b-pred'"
+                  :disabled="disabled"
+                  title="生成预测行并填入与 B 类重复号码"
+                  @click="addNumbersToPrediction('c-b-pred', overlapB)"
+                />
                 <CopyButton
                   v-if="overlapB.length"
                   :copied="copiedKey === 'c-b'"
@@ -411,6 +475,13 @@ async function copyNumbers(key, text) {
             <div class="overlap-head">
               <h4>与 B 类不重复</h4>
               <div class="overlap-head-meta">
+                <PredictionRowButton
+                  v-if="nonOverlapB.length"
+                  :added="addedPredKey === 'c-not-b-pred'"
+                  :disabled="disabled"
+                  title="生成预测行并填入与 B 类不重复号码"
+                  @click="addNumbersToPrediction('c-not-b-pred', nonOverlapB)"
+                />
                 <CopyButton
                   v-if="nonOverlapB.length"
                   :copied="copiedKey === 'c-not-b'"

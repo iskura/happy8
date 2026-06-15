@@ -5,17 +5,12 @@ const props = defineProps({
   drawTool: { type: Object, required: true },
   isDrawing: { type: Boolean, default: false },
   targetRef: { type: Object, default: null },
+  contentKey: { type: [String, Number], default: '' },
 })
 
 const overlayRef = ref(null)
 const size = ref({ width: 0, height: 0 })
 const draft = ref(null)
-const textInput = ref({
-  visible: false,
-  x: 0,
-  y: 0,
-  value: '',
-})
 
 let resizeObserver = null
 let drawing = false
@@ -27,9 +22,10 @@ function getTargetEl() {
 function syncSize() {
   const el = getTargetEl()
   if (!el) return
+  // 仅用 offset 尺寸，避免 overlay 高度参与 scrollHeight 形成「缩表后仍有大段空白」
   size.value = {
-    width: Math.max(el.offsetWidth, el.scrollWidth),
-    height: Math.max(el.offsetHeight, el.scrollHeight),
+    width: el.offsetWidth,
+    height: el.offsetHeight,
   }
 }
 
@@ -56,13 +52,12 @@ function normalizeBox(start, end) {
 
 function finishShape(shape) {
   if (!shape) return
-  const minSize = shape.type === 'text' ? 0 : 4
+  const minSize = 4
   const isLineLike = shape.type === 'line' || shape.type === 'arrow'
   const lineLength = isLineLike
     ? Math.hypot(shape.x2 - shape.x1, shape.y2 - shape.y1)
     : 0
   const valid =
-    shape.type === 'text' ||
     shape.points?.length > 2 ||
     (isLineLike ? lineLength >= minSize : shape.w >= minSize || shape.h >= minSize)
 
@@ -79,16 +74,6 @@ function onPointerDown(event) {
   const tool = props.drawTool.activeTool
   const color = props.drawTool.color
   const point = localPoint(event)
-
-  if (tool === 'text') {
-    textInput.value = { visible: true, x: point.x, y: point.y, value: '' }
-    nextTick(() => {
-      overlayRef.value?.querySelector('.draw-text-input')?.focus()
-    })
-    event.preventDefault()
-    event.stopPropagation()
-    return
-  }
 
   drawing = true
   draft.value = {
@@ -153,26 +138,6 @@ function onPointerUp(event) {
   event?.preventDefault()
 }
 
-function commitText() {
-  const value = textInput.value.value.trim()
-  if (value) {
-    props.drawTool.addShape({
-      type: 'text',
-      color: props.drawTool.color,
-      x: textInput.value.x,
-      y: textInput.value.y,
-      text: value,
-    })
-  }
-  textInput.value.visible = false
-  textInput.value.value = ''
-}
-
-function cancelText() {
-  textInput.value.visible = false
-  textInput.value.value = ''
-}
-
 function lineEndpoints(shape) {
   if (shape.x1 != null) {
     return {
@@ -213,7 +178,19 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', syncSize)
   resizeObserver?.disconnect()
+  document.body.style.removeProperty('cursor')
 })
+
+watch(
+  () => props.isDrawing,
+  (value) => {
+    if (!value) {
+      drawing = false
+      draft.value = null
+      document.body.style.removeProperty('cursor')
+    }
+  },
+)
 
 watch(
   () => getTargetEl(),
@@ -226,18 +203,17 @@ watch(
     nextTick(syncSize)
   },
 )
+
+watch(
+  () => props.contentKey,
+  () => nextTick(syncSize),
+)
 </script>
 
 <template>
   <div
-    ref="overlayRef"
-    class="table-draw-overlay"
-    :class="{ interactive: isDrawing }"
+    class="table-draw-display"
     :style="{ width: `${size.width}px`, height: `${size.height}px` }"
-    @mousedown="onPointerDown"
-    @mousemove="onPointerMove"
-    @mouseup="onPointerUp"
-    @mouseleave="onPointerUp"
   >
     <svg
       class="draw-svg"
@@ -305,16 +281,6 @@ watch(
           :stroke="shape.color"
           stroke-width="2"
         />
-        <text
-          v-else-if="shape.type === 'text'"
-          :x="shape.x"
-          :y="shape.y"
-          :fill="shape.color"
-          font-size="14"
-          font-weight="700"
-        >
-          {{ shape.text }}
-        </text>
       </template>
 
       <template v-if="draft">
@@ -361,22 +327,22 @@ watch(
         />
       </template>
     </svg>
-
-    <input
-      v-if="textInput.visible"
-      class="draw-text-input"
-      :style="{ left: `${textInput.x}px`, top: `${textInput.y}px` }"
-      v-model="textInput.value"
-      placeholder="输入文字"
-      @keydown.enter.prevent="commitText"
-      @keydown.esc.prevent="cancelText"
-      @blur="commitText"
-    />
   </div>
+
+  <div
+    v-if="isDrawing"
+    ref="overlayRef"
+    class="table-draw-hitlayer"
+    :style="{ width: `${size.width}px`, height: `${size.height}px` }"
+    @mousedown="onPointerDown"
+    @mousemove="onPointerMove"
+    @mouseup="onPointerUp"
+    @mouseleave="onPointerUp"
+  />
 </template>
 
 <style scoped>
-.table-draw-overlay {
+.table-draw-display {
   position: absolute;
   top: 0;
   left: 0;
@@ -384,28 +350,16 @@ watch(
   pointer-events: none;
 }
 
-.table-draw-overlay.interactive {
-  pointer-events: auto;
-  cursor: crosshair;
+.table-draw-hitlayer {
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 10;
+  cursor: crosshair;
 }
 
 .draw-svg {
   display: block;
   pointer-events: none;
-}
-
-.draw-text-input {
-  position: absolute;
-  z-index: 31;
-  min-width: 80px;
-  padding: 2px 6px;
-  border: 1px solid #94a3b8;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 700;
-  outline: none;
-  background: #fff;
-  pointer-events: auto;
 }
 </style>

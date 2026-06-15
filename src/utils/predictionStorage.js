@@ -54,6 +54,16 @@ export function savePredictionRows(chartId, rows, activeRowId = '') {
   notifyPredictionUpdate(chartId)
 }
 
+export function appendPredictionRow(chartId, numbers = []) {
+  if (!chartId) return null
+
+  const existing = loadPredictionRows(chartId) || [createPredictionRow()]
+  const newRow = createPredictionRow([...numbers].sort((a, b) => a - b))
+  const rows = [...existing, newRow]
+  savePredictionRows(chartId, rows, newRow.id)
+  return { row: newRow, index: rows.length }
+}
+
 export function loadCClassRowIndex() {
   try {
     const value = Number.parseInt(localStorage.getItem(C_CLASS_ROW_KEY) || '1', 10)
