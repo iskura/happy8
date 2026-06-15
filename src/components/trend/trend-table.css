@@ -26,6 +26,7 @@
 .table-suite {
   width: 100%;
   min-width: var(--table-min-width);
+  position: relative;
 }
 
 .distribution-bottom-fixed.is-sticky {

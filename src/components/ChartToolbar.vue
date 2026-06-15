@@ -8,10 +8,12 @@ import {
 } from '../constants/chartTypes.js'
 import LookbackSelect from './LookbackSelect.vue'
 import DateRangePicker from './DateRangePicker.vue'
+import DrawToolPalette from './draw/DrawToolPalette.vue'
 
 const props = defineProps({
   filters: { type: Object, required: true },
   marks: { type: Object, required: true },
+  drawTool: { type: Object, default: null },
   activeChart: { type: String, default: 'hmfb' },
   maxPeriod: { type: Number, default: 1000 },
   availableDates: { type: Array, default: () => [] },
@@ -178,6 +180,7 @@ function applyFilters() {
       >
         {{ item.label }}
       </button>
+      <DrawToolPalette v-if="drawTool" :draw-tool="drawTool" />
     </div>
   </div>
 </template>
@@ -351,6 +354,7 @@ function applyFilters() {
 
 .mark-bar {
   gap: 6px;
+  align-items: center;
 }
 
 .mark-label {

@@ -5,6 +5,7 @@ import TrendTable from './trend/TrendTable.vue'
 import OmissionSummary from './OmissionSummary.vue'
 import { filterRecords } from '../utils/recordFilter.js'
 import { buildChart } from '../utils/charts/index.js'
+import { useDrawTool } from '../composables/useDrawTool.js'
 
 const props = defineProps({
   records: {
@@ -37,6 +38,8 @@ const marks = ref({
 })
 
 const rowOrder = ref('asc')
+
+const { drawTool, isDrawing } = useDrawTool(activeChart)
 
 const filteredRecords = computed(() => filterRecords(props.records, filters.value))
 const chart = computed(() =>
@@ -73,13 +76,21 @@ function applyFilters() {
       v-model:active-chart="activeChart"
       v-model:filters="filters"
       v-model:marks="marks"
+      :draw-tool="drawTool"
       :max-period="records.length"
       :available-dates="availableDates"
       @apply="applyFilters"
     />
 
     <OmissionSummary v-if="isSummary" :data="chart" />
-    <TrendTable v-else :chart="chart" :marks="marks" v-model:row-order="rowOrder" />
+    <TrendTable
+      v-else
+      :chart="chart"
+      :marks="marks"
+      :draw-tool="drawTool"
+      :is-drawing="isDrawing"
+      v-model:row-order="rowOrder"
+    />
   </section>
 </template>
 

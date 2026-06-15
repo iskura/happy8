@@ -13,6 +13,7 @@ import IssueSelect from './IssueSelect.vue'
 import LookbackSelect from './LookbackSelect.vue'
 import SearchSelect from './SearchSelect.vue'
 import CopyButton from './CopyButton.vue'
+import { useStatTip } from '../composables/trend/useStatTip.js'
 
 const props = defineProps({
   result: {
@@ -67,6 +68,17 @@ const classAText = computed(() => props.result.classAFormatted.join(' '))
 const classBColdText = computed(() => (props.result.classBColdFormatted || []).join(' '))
 
 const COLD_HELP_TEXT = '冷号：选中开奖期数之前30期内，出现次数少于5次的号码'
+const COLD_HELP_STAT = { key: 'cold', help: COLD_HELP_TEXT }
+
+const { statTip, statTipRef, showStatTip, hideStatTip } = useStatTip()
+
+const coldNumberSet = computed(
+  () => new Set((props.result.classBCold || []).map((item) => item.num)),
+)
+
+function isColdNumber(num) {
+  return coldNumberSet.value.has(num)
+}
 
 const copiedKey = ref('')
 const predictionRows = ref([createPredictionRow()])
@@ -255,10 +267,13 @@ async function copyNumbers(key, text) {
                 type="button"
                 class="help-btn"
                 aria-label="冷号说明"
+                @mouseenter="showStatTip($event, COLD_HELP_STAT)"
+                @mouseleave="hideStatTip"
+                @focus="showStatTip($event, COLD_HELP_STAT)"
+                @blur="hideStatTip"
               >
                 ?
               </button>
-              <span class="help-tip" role="tooltip">{{ COLD_HELP_TEXT }}</span>
             </span>
           </div>
           <div class="class-title-meta">
@@ -273,7 +288,13 @@ async function copyNumbers(key, text) {
         </div>
         <p class="class-tip">在分析过程中仅被选中 1 次；冷号为基准期前 30 期内出现少于 5 次的号码</p>
         <div v-if="result.classB.length" class="ball-row">
-          <span v-for="item in result.classB" :key="item.num" class="ball ball-b">
+          <span
+            v-for="item in result.classB"
+            :key="item.num"
+            class="ball"
+            :class="isColdNumber(item.num) ? 'ball-cold' : 'ball-b'"
+            :title="isColdNumber(item.num) ? '冷号' : undefined"
+          >
             {{ formatBall(item.num) }}
           </span>
         </div>
@@ -374,7 +395,12 @@ async function copyNumbers(key, text) {
               </div>
             </div>
             <div v-if="overlapB.length" class="ball-row">
-              <span v-for="num in overlapB" :key="`cb-${num}`" class="ball ball-b">
+              <span
+                v-for="num in overlapB"
+                :key="`cb-${num}`"
+                class="ball"
+                :class="isColdNumber(num) ? 'ball-cold' : 'ball-b'"
+              >
                 {{ formatBall(num) }}
               </span>
             </div>
@@ -395,7 +421,12 @@ async function copyNumbers(key, text) {
               </div>
             </div>
             <div v-if="nonOverlapB.length" class="ball-row">
-              <span v-for="num in nonOverlapB" :key="`cnb-${num}`" class="ball ball-b">
+              <span
+                v-for="num in nonOverlapB"
+                :key="`cnb-${num}`"
+                class="ball"
+                :class="isColdNumber(num) ? 'ball-cold' : 'ball-b'"
+              >
                 {{ formatBall(num) }}
               </span>
             </div>
@@ -411,6 +442,23 @@ async function copyNumbers(key, text) {
       B 类 <strong>{{ result.classB.length }}</strong> 个，
       C 类重复合计 <strong>{{ overlapA.length + overlapB.length }}</strong> 个
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="statTip"
+        ref="statTipRef"
+        class="cold-help-popover"
+        :class="{ 'is-bottom': statTip.placement === 'bottom' }"
+        role="tooltip"
+        :style="{
+          left: `${statTip.x}px`,
+          top: `${statTip.y}px`,
+          '--arrow-offset': `${statTip.arrowOffset}px`,
+        }"
+      >
+        {{ statTip.text }}
+      </div>
+    </Teleport>
   </section>
 </template>
 
@@ -491,18 +539,15 @@ async function copyNumbers(key, text) {
 }
 
 .help-wrap {
-  position: relative;
   display: inline-flex;
   align-items: center;
 }
 
-.help-tip {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
-  z-index: 20;
+.cold-help-popover {
+  position: fixed;
+  z-index: 10001;
   width: max-content;
-  max-width: 260px;
+  max-width: min(280px, calc(100vw - 20px));
   padding: 8px 10px;
   border-radius: 8px;
   background: #1e293b;
@@ -514,26 +559,28 @@ async function copyNumbers(key, text) {
   white-space: normal;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
   pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-50%) translateY(4px);
+  transform: translate(-50%, calc(-100% - 8px));
 }
 
-.help-tip::before {
+.cold-help-popover.is-bottom {
+  transform: translate(-50%, 8px);
+}
+
+.cold-help-popover::after {
   content: '';
   position: absolute;
-  left: 50%;
+  left: calc(50% + var(--arrow-offset, 0px));
   top: 100%;
   transform: translateX(-50%);
   border: 5px solid transparent;
   border-top-color: #1e293b;
 }
 
-.help-wrap:hover .help-tip,
-.help-wrap:focus-within .help-tip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+.cold-help-popover.is-bottom::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #1e293b;
 }
 
 .overlap-grid {

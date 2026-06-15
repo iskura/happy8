@@ -306,6 +306,11 @@ body::before {
   color: #fff;
 }
 
+.ball-cold {
+  background: #2563eb;
+  color: #fff;
+}
+
 .ball-c {
   background: #7c3aed;
   color: #fff;

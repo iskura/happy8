@@ -13,12 +13,15 @@ import TrendTableBody from './TrendTableBody.vue'
 import TrendChartHead from './TrendChartHead.vue'
 import TrendChartPrediction from './TrendChartPrediction.vue'
 import TrendChartStats from './TrendChartStats.vue'
+import TableDrawOverlay from '../draw/TableDrawOverlay.vue'
 import './trend-table.css'
 
 const props = defineProps({
   chart: { type: Object, required: true },
   marks: { type: Object, default: () => ({}) },
   rowOrder: { type: String, default: 'asc' },
+  drawTool: { type: Object, default: null },
+  isDrawing: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:rowOrder'])
@@ -38,6 +41,7 @@ const {
 
 const tableWrapRef = ref(null)
 const bodyScrollRef = ref(null)
+const tableSuiteRef = ref(null)
 
 const { freeze, toggleFreeze } = useFreezePanels(ui.value?.freeze)
 
@@ -105,9 +109,9 @@ function checkPredictionCol(num) {
 
     <div v-if="!chart.rows?.length" class="empty-chart">没有符合筛选条件的开奖数据</div>
 
-    <div v-else ref="bodyScrollRef" class="distribution-scroll">
-      <div class="distribution-h-scroll">
-        <div class="table-suite">
+    <div v-else ref="bodyScrollRef" class="distribution-scroll" :class="{ 'is-drawing': isDrawing }">
+      <div class="distribution-h-scroll draw-layer-wrap">
+        <div ref="tableSuiteRef" class="table-suite">
           <table class="distribution-table table-body">
             <TrendTableColgroup
               :column-count="columnHeaders.length"
@@ -208,6 +212,13 @@ function checkPredictionCol(num) {
               />
             </table>
           </div>
+
+          <TableDrawOverlay
+            v-if="drawTool"
+            :draw-tool="drawTool"
+            :is-drawing="isDrawing"
+            :target-ref="tableSuiteRef"
+          />
         </div>
       </div>
     </div>
@@ -270,5 +281,13 @@ function checkPredictionCol(num) {
   bottom: 100%;
   border-top-color: transparent;
   border-bottom-color: #1e293b;
+}
+
+.draw-layer-wrap {
+  position: relative;
+}
+
+.distribution-scroll.is-drawing {
+  cursor: crosshair;
 }
 </style>
