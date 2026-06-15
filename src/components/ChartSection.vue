@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import ChartToolbar from './ChartToolbar.vue'
 import DistributionChart from './DistributionChart.vue'
 import OmissionSummary from './OmissionSummary.vue'
-import { filterRecords, getAvailableYears } from '../utils/recordFilter.js'
+import { filterRecords } from '../utils/recordFilter.js'
 import { buildChart } from '../utils/charts/index.js'
 
 const props = defineProps({
@@ -22,9 +22,8 @@ const filters = ref({
   issueStart: '',
   issueEnd: '',
   issueTails: [],
-  years: [],
-  months: [],
-  days: [],
+  dateStart: '',
+  dateEnd: '',
 })
 
 const marks = ref({
@@ -37,10 +36,19 @@ const marks = ref({
   segmentLine: false,
 })
 
-const availableYears = computed(() => getAvailableYears(props.records))
 const filteredRecords = computed(() => filterRecords(props.records, filters.value))
 const chart = computed(() => buildChart(activeChart.value, filteredRecords.value))
 const isSummary = computed(() => activeChart.value === 'ylqs')
+
+const dateBounds = computed(() => {
+  if (!props.records.length) {
+    return { min: '', max: '' }
+  }
+  return {
+    min: props.records[props.records.length - 1]?.date || '',
+    max: props.records[0]?.date || '',
+  }
+})
 
 function applyFilters() {
   // 保留钩子
@@ -63,7 +71,9 @@ function applyFilters() {
       v-model:active-chart="activeChart"
       v-model:filters="filters"
       v-model:marks="marks"
-      :available-years="availableYears"
+      :max-period="records.length"
+      :min-date="dateBounds.min"
+      :max-date="dateBounds.max"
       @apply="applyFilters"
     />
 

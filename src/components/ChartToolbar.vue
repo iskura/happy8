@@ -1,23 +1,31 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   CHART_TYPES,
   PERIOD_PRESETS,
   WEEKDAY_OPTIONS,
   MARK_OPTIONS,
 } from '../constants/chartTypes.js'
+import LookbackSelect from './LookbackSelect.vue'
+import DateRangePicker from './DateRangePicker.vue'
 
 const props = defineProps({
   filters: { type: Object, required: true },
   marks: { type: Object, required: true },
   activeChart: { type: String, default: 'hmfb' },
-  availableYears: { type: Array, default: () => [] },
+  maxPeriod: { type: Number, default: 1000 },
+  minDate: { type: String, default: '' },
+  maxDate: { type: String, default: '' },
 })
 
 const emit = defineEmits(['update:filters', 'update:marks', 'update:activeChart', 'apply'])
 
 const showSamePeriod = ref(false)
-const customPeriod = ref('')
+
+const periodCount = computed({
+  get: () => props.filters.periodCount,
+  set: (value) => patchFilters({ periodCount: value }),
+})
 
 function selectChart(chart) {
   emit('update:activeChart', chart.id)
@@ -45,16 +53,6 @@ function setParity(value) {
   patchFilters({ issueParity: value })
 }
 
-function setPeriod(count) {
-  customPeriod.value = ''
-  patchFilters({ periodCount: count })
-}
-
-function applyCustomPeriod() {
-  const count = Number.parseInt(customPeriod.value, 10)
-  if (count > 0) patchFilters({ periodCount: count })
-}
-
 function toggleMark(key) {
   emit('update:marks', { ...props.marks, [key]: !props.marks[key] })
 }
@@ -64,9 +62,15 @@ function resetSamePeriod() {
     ...props.filters,
     weekdays: [],
     issueTails: [],
-    years: [],
-    months: [],
-    days: [],
+    dateStart: '',
+    dateEnd: '',
+  })
+}
+
+function handleDateChange(range) {
+  patchFilters({
+    dateStart: range.start,
+    dateEnd: range.end,
   })
 }
 
@@ -94,27 +98,14 @@ function applyFilters() {
     </div>
 
     <div class="filter-bar">
-      <div class="filter-group period-group">
-        <button
-          v-for="count in PERIOD_PRESETS"
-          :key="count"
-          class="filter-btn"
-          :class="{ active: filters.periodCount === count && !customPeriod }"
-          @click="setPeriod(count)"
-        >
-          近{{ count }}期
-        </button>
-        <div class="custom-period">
-          <input
-            v-model="customPeriod"
-            type="number"
-            min="1"
-            placeholder="自定义"
-            @keyup.enter="applyCustomPeriod"
-          />
-          <button class="filter-btn" @click="applyCustomPeriod">确定</button>
-        </div>
-      </div>
+      <LookbackSelect
+        v-model="periodCount"
+        inline
+        label="显示期数"
+        placeholder="选择或输入期数"
+        :presets="PERIOD_PRESETS"
+        :max="maxPeriod"
+      />
 
       <div class="filter-group">
         <button
@@ -165,43 +156,19 @@ function applyFilters() {
           {{ tail - 1 }}尾
         </button>
       </div>
-      <div class="same-group">
-        <span class="same-label">年份</span>
-        <button
-          v-for="year in availableYears"
-          :key="year"
-          class="filter-btn sm"
-          :class="{ active: filters.years.includes(year) }"
-          @click="toggleMulti('years', year)"
-        >
-          {{ year }}
-        </button>
-      </div>
-      <div class="same-group">
-        <span class="same-label">月份</span>
-        <button
-          v-for="month in 12"
-          :key="month"
-          class="filter-btn sm"
-          :class="{ active: filters.months.includes(month) }"
-          @click="toggleMulti('months', month)"
-        >
-          {{ month }}月
-        </button>
-      </div>
-      <div class="same-group">
+      <div class="same-group date-group">
         <span class="same-label">日期</span>
-        <button
-          v-for="day in 31"
-          :key="day"
-          class="filter-btn sm"
-          :class="{ active: filters.days.includes(day) }"
-          @click="toggleMulti('days', day)"
-        >
-          {{ day }}
-        </button>
+        <DateRangePicker
+          :start="filters.dateStart"
+          :end="filters.dateEnd"
+          :min="minDate"
+          :max="maxDate"
+          @change="handleDateChange"
+        />
       </div>
-      <button class="filter-btn" @click="resetSamePeriod">重置条件</button>
+      <div class="same-period-actions">
+        <button type="button" class="filter-btn reset-btn" @click="resetSamePeriod">重置条件</button>
+      </div>
     </div>
 
     <div class="mark-bar">
@@ -225,6 +192,7 @@ function applyFilters() {
   flex-direction: column;
   gap: 10px;
   margin-bottom: 14px;
+  overflow: visible;
 }
 
 .chart-nav {
@@ -273,10 +241,6 @@ function applyFilters() {
   font-weight: 600;
 }
 
-.nav-btn.external {
-  color: var(--text-soft);
-}
-
 .filter-bar,
 .mark-bar,
 .same-period-panel {
@@ -288,6 +252,7 @@ function applyFilters() {
   background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  overflow: visible;
 }
 
 .filter-group {
@@ -338,13 +303,6 @@ function applyFilters() {
   padding: 3px 6px;
 }
 
-.custom-period {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.custom-period input,
 .issue-range input {
   width: 72px;
   padding: 4px 8px;
@@ -378,6 +336,20 @@ function applyFilters() {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-dim);
+}
+
+.date-group {
+  align-items: center;
+}
+
+.same-period-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.reset-btn {
+  width: auto;
+  align-self: flex-start;
 }
 
 .mark-bar {

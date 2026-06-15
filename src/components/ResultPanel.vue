@@ -1,22 +1,84 @@
 <script setup>
+import { computed } from 'vue'
 import { formatBall } from '../utils/format.js'
+import IssueSelect from './IssueSelect.vue'
+import LookbackSelect from './LookbackSelect.vue'
 
-defineProps({
+const props = defineProps({
   result: {
     type: Object,
     required: true,
   },
+  records: {
+    type: Array,
+    default: () => [],
+  },
+  selectedIssue: {
+    type: String,
+    default: '',
+  },
+  lookback: {
+    type: Number,
+    default: 10,
+  },
+  maxLookback: {
+    type: Number,
+    default: 50,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+const emit = defineEmits([
+  'update:selectedIssue',
+  'update:lookback',
+  'issue-change',
+  'lookback-change',
+])
+
+const selectedRecord = computed(() => {
+  const issue = props.selectedIssue || props.result?.current?.issue
+  return props.records.find((record) => record.issue === issue) || props.result?.current || null
+})
+
+function onIssueChange(value) {
+  emit('update:selectedIssue', value)
+  emit('issue-change', value)
+}
+
+function onLookbackChange(value) {
+  emit('update:lookback', value)
+  emit('lookback-change', value)
+}
 </script>
 
 <template>
   <section class="panel result-panel">
     <header class="panel-header">
-      <div>
+      <div class="panel-heading">
         <h2>选号结果</h2>
         <p class="panel-desc">
-          基于第 <strong>{{ result.current.issue }}</strong> 期（{{ result.current.date }}）开奖号，
-          往前追溯 <strong>{{ result.lookback }}</strong> 期分析
+          基于第
+          <IssueSelect
+            embedded
+            :model-value="selectedIssue"
+            :records="records"
+            :disabled="disabled"
+            @update:model-value="onIssueChange"
+          />
+          期（<strong>{{ selectedRecord?.date || '—' }}</strong>）开奖号，往前追溯
+          <LookbackSelect
+            embedded
+            :model-value="lookback"
+            :max="maxLookback"
+            option-suffix=""
+            placeholder="期数"
+            :disabled="disabled"
+            @update:model-value="onLookbackChange"
+          />
+          期分析
         </p>
       </div>
     </header>
@@ -90,3 +152,22 @@ defineProps({
     </div>
   </section>
 </template>
+
+<style scoped>
+.panel-heading {
+  width: 100%;
+}
+
+.panel-desc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  line-height: 2;
+}
+
+.panel-desc strong {
+  color: var(--primary);
+  font-weight: 600;
+}
+</style>

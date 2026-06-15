@@ -30,6 +30,15 @@ export function filterRecords(records, filters = {}) {
     result = result.filter((record) => set.has(getIssueTail(record.issue)))
   }
 
+  if (filters.dateStart) {
+    result = result.filter((record) => record.date >= filters.dateStart)
+  }
+
+  if (filters.dateEnd) {
+    result = result.filter((record) => record.date <= filters.dateEnd)
+  }
+
+  // 兼容旧筛选字段
   if (filters.years?.length) {
     const set = new Set(filters.years.map(String))
     result = result.filter((record) => set.has(record.date.slice(0, 4)))

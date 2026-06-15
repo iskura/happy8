@@ -13,6 +13,35 @@ const dataSource = ref('')
 const records = ref([])
 const result = ref(null)
 const lookback = ref(10)
+const selectedIssue = ref('')
+
+function getMaxLookback(issue = selectedIssue.value) {
+  if (!records.value.length) return 0
+  const index = issue
+    ? records.value.findIndex((record) => record.issue === issue)
+    : 0
+  if (index < 0) return 0
+  return records.value.length - index - 1
+}
+
+function runAnalysis() {
+  if (!records.value.length) return
+
+  const maxLookback = getMaxLookback()
+  if (maxLookback < 1) {
+    throw new Error('所选期号之前没有足够历史数据')
+  }
+
+  if (lookback.value > maxLookback) {
+    lookback.value = maxLookback
+  }
+
+  result.value = analyzeNumbers(
+    records.value,
+    lookback.value,
+    selectedIssue.value || records.value[0].issue,
+  )
+}
 
 async function loadData() {
   loading.value = true
@@ -25,16 +54,17 @@ async function loadData() {
     const sourceMap = {
       remote: '乐彩网实时数据',
       local: '本地缓存数据',
-      bundled: '内置开奖数据',
     }
     dataSource.value = sourceMap[data.source] || '开奖数据'
     warning.value = data.warning || ''
+
+    selectedIssue.value = records.value[0]?.issue || ''
 
     if (records.value.length < lookback.value + 1) {
       throw new Error(`数据不足，至少需要 ${lookback.value + 1} 期`)
     }
 
-    result.value = analyzeNumbers(records.value, lookback.value)
+    runAnalysis()
   } catch (err) {
     error.value = err.message || '加载失败'
     result.value = null
@@ -45,7 +75,14 @@ async function loadData() {
 
 function rerunAnalysis() {
   if (!records.value.length) return
-  result.value = analyzeNumbers(records.value, lookback.value)
+
+  try {
+    error.value = ''
+    runAnalysis()
+  } catch (err) {
+    error.value = err.message || '分析失败'
+    result.value = null
+  }
 }
 
 onMounted(loadData)
@@ -58,20 +95,10 @@ onMounted(loadData)
         <p class="eyebrow">快乐8 · 邻号跨度选号</p>
         <h1>快乐8选号分析工具</h1>
         <p class="subtitle">
-          以最新一期 20 个开奖号为基准，往前追溯历史期数，按「邻号最小跨度 + 反向跨度」规则生成 A/B 类候选号
+          在选号结果中指定基准期号与追溯期数，按「邻号最小跨度 + 反向跨度」规则生成 A/B 类候选号
         </p>
       </div>
       <div class="hero-actions">
-        <label class="lookback-control">
-          追溯期数
-          <input
-            v-model.number="lookback"
-            type="number"
-            min="1"
-            max="50"
-            @change="rerunAnalysis"
-          />
-        </label>
         <button class="btn" :disabled="loading" @click="loadData">
           {{ loading ? '加载中...' : '刷新数据' }}
         </button>
@@ -93,12 +120,22 @@ onMounted(loadData)
         <div class="meta-bar">
           <span class="chip">数据来源：<strong>{{ dataSource }}</strong></span>
           <span class="chip">历史共 <strong>{{ records.length }}</strong> 期</span>
-          <span class="chip">当前期号 <strong>{{ result.current.issue }}</strong></span>
+          <span class="chip">分析期号 <strong>{{ result.current.issue }}</strong></span>
+          <span class="chip">可追溯 <strong>{{ getMaxLookback(result.current.issue) }}</strong> 期</span>
           <span v-if="warning" class="chip chip-warn">{{ warning }}</span>
         </div>
 
         <ChartSection :records="records" />
-        <ResultPanel :result="result" />
+        <ResultPanel
+          :result="result"
+          :records="records"
+          v-model:selected-issue="selectedIssue"
+          v-model:lookback="lookback"
+          :max-lookback="getMaxLookback()"
+          :disabled="loading"
+          @issue-change="rerunAnalysis"
+          @lookback-change="rerunAnalysis"
+        />
         <DetailTable :steps="result.steps" />
       </template>
     </main>

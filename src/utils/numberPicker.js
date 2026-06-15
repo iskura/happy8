@@ -49,14 +49,29 @@ function addPick(pickMap, num, trace) {
  * 核心选号逻辑
  * @param {Array} records 按期号倒序（最新在前）
  * @param {number} lookback 往前追溯期数，默认 10
+ * @param {string|null} baseIssue 基准期号，默认最新一期
  */
-export function analyzeNumbers(records, lookback = 10) {
+export function analyzeNumbers(records, lookback = 10, baseIssue = null) {
   if (!records.length) {
     throw new Error('暂无开奖数据')
   }
 
-  const current = records[0]
-  const history = records.slice(1, lookback + 1)
+  let currentIndex = 0
+  if (baseIssue != null && baseIssue !== '') {
+    currentIndex = records.findIndex((record) => record.issue === String(baseIssue))
+    if (currentIndex < 0) {
+      throw new Error(`未找到期号 ${baseIssue}`)
+    }
+  }
+
+  const availableLookback = records.length - currentIndex - 1
+  if (availableLookback < 1) {
+    throw new Error(`期号 ${records[currentIndex].issue} 之前没有足够历史数据`)
+  }
+
+  const effectiveLookback = Math.min(lookback, availableLookback)
+  const current = records[currentIndex]
+  const history = records.slice(currentIndex + 1, currentIndex + 1 + effectiveLookback)
   const pickMap = new Map()
   const steps = []
 
@@ -97,7 +112,8 @@ export function analyzeNumbers(records, lookback = 10) {
 
   return {
     current,
-    lookback,
+    lookback: effectiveLookback,
+    requestedLookback: lookback,
     steps,
     classA,
     classB,

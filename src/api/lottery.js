@@ -1,11 +1,25 @@
-import bundledData from '../../public/data/kl8.txt?raw'
 import { sortRecordsByIssue } from '../utils/sortRecords.js'
 
-const REMOTE_URL = 'https://data.17500.cn/kl8_desc.txt'
+const UPSTREAM_URL = 'https://data.17500.cn/kl8_desc.txt'
+
+function resolveUrl(path) {
+  if (typeof window === 'undefined') {
+    const base = import.meta.env.BASE_URL || './'
+    return `${base}${path}`
+  }
+  return new URL(path, window.location.href).href
+}
+
+function getLiveUrl() {
+  return resolveUrl('api/kl8.txt')
+}
 
 function getLocalUrl() {
-  const base = import.meta.env.BASE_URL || './'
-  return `${base}data/kl8.txt`
+  return resolveUrl('data/kl8.txt')
+}
+
+function isFileProtocol() {
+  return typeof window !== 'undefined' && window.location.protocol === 'file:'
 }
 
 /**
@@ -60,31 +74,24 @@ async function fetchText(url) {
   return text
 }
 
-function loadBundledData() {
-  if (!isValidKl8Text(bundledData)) {
-    throw new Error('内置开奖数据无效，请运行 npm run fetch-data')
-  }
-  return {
-    records: parseKl8Text(bundledData),
-    source: 'bundled',
-    warning: '已使用内置开奖数据',
-  }
-}
-
 /**
- * 优先远程拉取，其次本地文件，最后回退到打包内置数据
+ * 优先通过同源代理实时拉取，失败时回退到 data/kl8.txt 离线缓存
  */
 export async function fetchLotteryData() {
   const errors = []
 
-  try {
-    const text = await fetchText(REMOTE_URL)
-    return {
-      records: parseKl8Text(text),
-      source: 'remote',
+  if (!isFileProtocol()) {
+    try {
+      const text = await fetchText(getLiveUrl())
+      return {
+        records: parseKl8Text(text),
+        source: 'remote',
+      }
+    } catch (liveError) {
+      errors.push(`实时: ${liveError.message}`)
     }
-  } catch (remoteError) {
-    errors.push(`远程: ${remoteError.message}`)
+  } else {
+    errors.push('实时: 直接打开本地 HTML 文件无法联网拉取，请运行 npm run serve')
   }
 
   try {
@@ -92,17 +99,17 @@ export async function fetchLotteryData() {
     return {
       records: parseKl8Text(text),
       source: 'local',
-      warning: `远程数据不可用，已使用本地缓存（${errors.join('；')}）`,
+      warning: isFileProtocol()
+        ? '当前为离线打开，已使用本地缓存数据。如需最新数据请运行 npm run serve'
+        : `实时数据不可用，已使用本地缓存（${errors.join('；')}）`,
     }
   } catch (localError) {
-    errors.push(`本地: ${localError.message}`)
+    errors.push(`缓存: ${localError.message}`)
   }
 
-  try {
-    const bundled = loadBundledData()
-    bundled.warning = `远程与本地均不可用，${bundled.warning}（${errors.join('；')}）`
-    return bundled
-  } catch (bundledError) {
-    throw new Error(`无法获取开奖数据：${errors.join('；')}；内置数据：${bundledError.message}`)
-  }
+  throw new Error(
+    `无法获取开奖数据：${errors.join('；')}。请确认已启动带代理的服务（npm run dev 或 npm run serve），或运行 npm run fetch-data 更新缓存`,
+  )
 }
+
+export { UPSTREAM_URL }
