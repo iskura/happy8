@@ -1,20 +1,26 @@
 import { parseKl8Text } from '../src/api/lottery.js'
-import { analyzeNumbers, findClosestNumbers, reverseBySpan, wrapNumber } from '../src/utils/numberPicker.js'
+import {
+  analyzeNumbers,
+  findClosestNumbers,
+  reverseByAdjacent,
+  reverseBySpan,
+  wrapNumber,
+} from '../src/utils/numberPicker.js'
 import assert from 'node:assert/strict'
 
-// 基础工具函数
+assert.equal(reverseByAdjacent(72, 70), 74)
+assert.equal(reverseByAdjacent(72, 74), 70)
+assert.equal(reverseByAdjacent(5, 7), 3)
+assert.equal(reverseByAdjacent(5, 3), 7)
 assert.equal(reverseBySpan(5, 2), 3)
-assert.equal(reverseBySpan(5, 6), 79)
 assert.equal(wrapNumber(-2), 78)
 
-// 邻号选取
-const closest = findClosestNumbers(5, [1, 7, 20, 35])
+const closest = findClosestNumbers(72, [10, 20, 70, 74, 80])
 assert.deepEqual(
-  closest.map((item) => item.num),
-  [7],
+  closest.map((item) => item.num).sort((a, b) => a - b),
+  [70, 74],
 )
 
-// 用最新真实数据跑一遍，确保不抛错
 const fs = await import('node:fs')
 const text = fs.readFileSync(new URL('../public/data/kl8.txt', import.meta.url), 'utf8')
 const records = parseKl8Text(text)

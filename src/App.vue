@@ -8,11 +8,9 @@ import ChartSection from './components/ChartSection.vue'
 
 const loading = ref(true)
 const error = ref('')
-const warning = ref('')
-const dataSource = ref('')
 const records = ref([])
 const result = ref(null)
-const lookback = ref(10)
+const lookback = ref(9)
 const selectedIssue = ref('')
 
 function getMaxLookback(issue = selectedIssue.value) {
@@ -46,17 +44,10 @@ function runAnalysis() {
 async function loadData() {
   loading.value = true
   error.value = ''
-  warning.value = ''
 
   try {
     const data = await fetchLotteryData()
     records.value = data.records
-    const sourceMap = {
-      remote: '乐彩网实时数据',
-      local: '本地缓存数据',
-    }
-    dataSource.value = sourceMap[data.source] || '开奖数据'
-    warning.value = data.warning || ''
 
     selectedIssue.value = records.value[0]?.issue || ''
 
@@ -117,14 +108,6 @@ onMounted(loadData)
       </div>
 
       <template v-else-if="result">
-        <div class="meta-bar">
-          <span class="chip">数据来源：<strong>{{ dataSource }}</strong></span>
-          <span class="chip">历史共 <strong>{{ records.length }}</strong> 期</span>
-          <span class="chip">分析期号 <strong>{{ result.current.issue }}</strong></span>
-          <span class="chip">可追溯 <strong>{{ getMaxLookback(result.current.issue) }}</strong> 期</span>
-          <span v-if="warning" class="chip chip-warn">{{ warning }}</span>
-        </div>
-
         <ChartSection :records="records" />
         <ResultPanel
           :result="result"
@@ -136,7 +119,11 @@ onMounted(loadData)
           @issue-change="rerunAnalysis"
           @lookback-change="rerunAnalysis"
         />
-        <DetailTable :steps="result.steps" />
+        <DetailTable
+          :source-details="result.sourceDetails"
+          :lookback="result.lookback"
+          :base-issue="result.current.issue"
+        />
       </template>
     </main>
 

@@ -157,38 +157,6 @@ body::before {
   cursor: not-allowed;
 }
 
-/* ── Meta chips ── */
-
-.meta-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 13px;
-  color: var(--text-soft);
-  box-shadow: var(--shadow-soft);
-}
-
-.chip strong {
-  color: var(--accent);
-}
-
-.chip-warn {
-  background: #fffbeb;
-  border-color: #fde68a;
-  color: #b45309;
-}
-
 /* ── Layout ── */
 
 .main {

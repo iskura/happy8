@@ -36,18 +36,17 @@ const marks = ref({
   segmentLine: false,
 })
 
+const rowOrder = ref('asc')
+
 const filteredRecords = computed(() => filterRecords(props.records, filters.value))
-const chart = computed(() => buildChart(activeChart.value, filteredRecords.value))
+const chart = computed(() =>
+  buildChart(activeChart.value, filteredRecords.value, { rowOrder: rowOrder.value }),
+)
 const isSummary = computed(() => activeChart.value === 'ylqs')
 
-const dateBounds = computed(() => {
-  if (!props.records.length) {
-    return { min: '', max: '' }
-  }
-  return {
-    min: props.records[props.records.length - 1]?.date || '',
-    max: props.records[0]?.date || '',
-  }
+const availableDates = computed(() => {
+  const set = new Set(props.records.map((record) => record.date).filter(Boolean))
+  return [...set].sort()
 })
 
 function applyFilters() {
@@ -71,9 +70,9 @@ function applyFilters() {
       v-model:active-chart="activeChart"
       v-model:filters="filters"
       v-model:marks="marks"
+      v-model:row-order="rowOrder"
       :max-period="records.length"
-      :min-date="dateBounds.min"
-      :max-date="dateBounds.max"
+      :available-dates="availableDates"
       @apply="applyFilters"
     />
 

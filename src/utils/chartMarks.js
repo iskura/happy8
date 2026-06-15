@@ -32,9 +32,12 @@ export function computeRowMarks(row, prevRow, maxCol = 80) {
   return { repeat, consecutive, edge }
 }
 
-export function attachMarksToRows(rows, maxCol = 80) {
+/**
+ * @param {'asc'|'desc'} order asc=期号正序展示，上一期在 index-1；desc=反序展示，上一期在 index+1
+ */
+export function attachMarksToRows(rows, maxCol = 80, order = 'desc') {
   return rows.map((row, index) => {
-    const prevRow = rows[index + 1]
+    const prevRow = order === 'desc' ? rows[index + 1] : rows[index - 1]
     const marks = computeRowMarks(row, prevRow, maxCol)
     return { ...row, marks }
   })

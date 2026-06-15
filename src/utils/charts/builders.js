@@ -24,8 +24,13 @@ import { buildTrendChart, buildOmissionSummary } from './trendBase.js'
 const TAIL_HEADERS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 const tailCol = (value) => tail(value) + 1
 
-function tailChart(records, getValue) {
+function trendOptions(options = {}) {
+  return options.rowOrder ? { rowOrder: options.rowOrder } : {}
+}
+
+function tailChart(records, getValue, options = {}) {
   return buildTrendChart(records, {
+    ...trendOptions(options),
     columnCount: 10,
     headers: TAIL_HEADERS,
     getActiveCols: (record) => [tailCol(getValue(record.numbers))],
@@ -34,8 +39,9 @@ function tailChart(records, getValue) {
   })
 }
 
-function countChart(records, getCount, maxCount, headers) {
+function countChart(records, getCount, maxCount, headers, options = {}) {
   return buildTrendChart(records, {
+    ...trendOptions(options),
     columnCount: maxCount + 1,
     headers,
     getActiveCols: (record) => [getCount(record.numbers) + 1],
@@ -44,8 +50,9 @@ function countChart(records, getCount, maxCount, headers) {
 }
 
 const BUILDERS = {
-  hmfb(records) {
+  hmfb(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 80,
       headers: Array.from({ length: 80 }, (_, i) => formatBall(i + 1)),
       getActiveCols: (record) => record.numbers,
@@ -54,40 +61,43 @@ const BUILDERS = {
     })
   },
 
-  hzw: (records) => tailChart(records, (nums) => calcSum(nums)),
-  kdw: (records) => tailChart(records, (nums) => calcSpan(nums)),
-  jzw: (records) => tailChart(records, (nums) => calcMean(nums)),
-  hkhw: (records) => tailChart(records, (nums) => calcSum(nums) + calcSpan(nums)),
-  hkcw: (records) => tailChart(records, (nums) => Math.abs(calcSum(nums) - calcSpan(nums))),
-  zdhw: (records) => tailChart(records, (nums) => Math.max(...nums)),
-  zxhw: (records) => tailChart(records, (nums) => Math.min(...nums)),
+  hzw: (records, options) => tailChart(records, (nums) => calcSum(nums), options),
+  kdw: (records, options) => tailChart(records, (nums) => calcSpan(nums), options),
+  jzw: (records, options) => tailChart(records, (nums) => calcMean(nums), options),
+  hkhw: (records, options) => tailChart(records, (nums) => calcSum(nums) + calcSpan(nums), options),
+  hkcw: (records, options) => tailChart(records, (nums) => Math.abs(calcSum(nums) - calcSpan(nums)), options),
+  zdhw: (records, options) => tailChart(records, (nums) => Math.max(...nums), options),
+  zxhw: (records, options) => tailChart(records, (nums) => Math.min(...nums), options),
 
-  hlfb(records) {
-    const chart = BUILDERS.hmfb(records)
+  hlfb(records, options) {
+    const chart = BUILDERS.hmfb(records, options)
     chart.zoneEvery = 10
     return chart
   },
 
-  jo(records) {
+  jo(records, options) {
     return countChart(
       records,
       countOdd,
       20,
       Array.from({ length: 21 }, (_, i) => String(i)),
+      options,
     )
   },
 
-  jofb(records) {
+  jofb(records, options) {
     return countChart(
       records,
       countEven,
       20,
       Array.from({ length: 21 }, (_, i) => String(i)),
+      options,
     )
   },
 
-  zt(records) {
+  zt(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 9,
       headers: ['0', '1', '2', '3', '4', '5', '6', '7', '8'].map((h) => `${h}字`),
       getActiveCols: (record) => {
@@ -98,14 +108,15 @@ const BUILDERS = {
     })
   },
 
-  zt2(records) {
-    const chart = BUILDERS.zt(records)
+  zt2(records, options) {
+    const chart = BUILDERS.zt(records, options)
     chart.headers = chart.headers.map((h) => `${h}头`)
     return chart
   },
 
-  wsfb(records) {
+  wsfb(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 10,
       headers: TAIL_HEADERS.map((h) => `${h}尾`),
       getActiveCols: (record) => {
@@ -117,8 +128,9 @@ const BUILDERS = {
     })
   },
 
-  bose(records) {
+  bose(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 80,
       headers: Array.from({ length: 80 }, (_, i) => formatBall(i + 1)),
       getActiveCols: (record) => record.numbers,
@@ -128,7 +140,7 @@ const BUILDERS = {
     })
   },
 
-  spj(records) {
+  spj(records, options = {}) {
     const chronological = [...sortRecordsByIssue(records, 'desc')].reverse()
     const trendMap = new Map()
     let prevTail = null
@@ -141,6 +153,7 @@ const BUILDERS = {
     }
 
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 3,
       headers: ['升', '平', '降'],
       getActiveCols: (record) => [trendMap.get(record.issue) || 1],
@@ -148,8 +161,9 @@ const BUILDERS = {
     })
   },
 
-  wsdx(records) {
+  wsdx(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 2,
       headers: ['小(0-4)', '大(5-9)'],
       getActiveCols: (record) => {
@@ -160,8 +174,9 @@ const BUILDERS = {
     })
   },
 
-  bg(records) {
+  bg(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 8,
       headers: ['乾', '兑', '离', '震', '巽', '坎', '艮', '坤'],
       getActiveCols: (record) => {
@@ -176,14 +191,15 @@ const BUILDERS = {
     })
   },
 
-  rlt(records) {
-    const chart = BUILDERS.hmfb(records)
+  rlt(records, options) {
+    const chart = BUILDERS.hmfb(records, options)
     chart.isHeatmap = true
     return chart
   },
 
-  wxls(records) {
+  wxls(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 5,
       headers: ['金', '木', '水', '火', '土'],
       getActiveCols: (record) => [getWuxingBySum(calcSum(record.numbers)) + 1],
@@ -191,8 +207,9 @@ const BUILDERS = {
     })
   },
 
-  wxyj(records) {
+  wxyj(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 5,
       headers: ['金', '木', '水', '火', '土'],
       getActiveCols: (record) => [getWuxingByTail(tail(calcSum(record.numbers))) + 1],
@@ -200,8 +217,9 @@ const BUILDERS = {
     })
   },
 
-  dwfb(records) {
+  dwfb(records, options = {}) {
     return buildTrendChart(records, {
+      ...trendOptions(options),
       columnCount: 80,
       headers: Array.from({ length: 80 }, (_, i) => formatBall(i + 1)),
       getActiveCols: (record) => {
@@ -248,9 +266,9 @@ export const CHART_META = {
   ylqs: { title: '快乐8遗漏期数及出号个数', desc: '各号码在统计期内的出现次数与遗漏' },
 }
 
-export function buildChart(chartId, records) {
+export function buildChart(chartId, records, options = {}) {
   const builder = BUILDERS[chartId] || BUILDERS.hmfb
-  const data = builder(records)
+  const data = builder(records, options)
   const meta = CHART_META[chartId] || CHART_META.hmfb
   return { ...data, id: chartId, ...meta }
 }

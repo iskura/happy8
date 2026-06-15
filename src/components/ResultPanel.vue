@@ -19,7 +19,7 @@ const props = defineProps({
   },
   lookback: {
     type: Number,
-    default: 10,
+    default: 9,
   },
   maxLookback: {
     type: Number,

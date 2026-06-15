@@ -54,6 +54,7 @@ export function buildTrendChart(records, config) {
     formatHit = (col) => String(col - 1),
     getCellClass,
     zoneEvery = 0,
+    rowOrder = 'asc',
   } = config
 
   if (!records.length) {
@@ -121,7 +122,10 @@ export function buildTrendChart(records, config) {
     })
   }
 
-  const displayRows = attachMarksToRows([...rows].reverse(), columnCount)
+  const displayRows =
+    rowOrder === 'desc'
+      ? attachMarksToRows([...rows].reverse(), columnCount, 'desc')
+      : attachMarksToRows(rows, columnCount, 'asc')
   const stats = createStats(columnCount)
 
   for (const row of displayRows) {
@@ -131,8 +135,9 @@ export function buildTrendChart(records, config) {
     }
   }
 
-  if (displayRows.length) {
-    for (const cell of displayRows[0].cells) {
+  const latestRow = rows[rows.length - 1]
+  if (latestRow) {
+    for (const cell of latestRow.cells) {
       stats.currentOmission[cell.num] = cell.type === 'hit' ? 0 : cell.omission
     }
   }

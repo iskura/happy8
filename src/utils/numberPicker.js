@@ -29,13 +29,20 @@ export function findClosestNumbers(target, nextNumbers) {
 }
 
 /**
- * 反向数相同跨度
+ * 按邻号反选：源号 - (邻号 - 源号)
+ * 例：源号 72，邻号 70 → 72-(70-72)=74；邻号 74 → 72-(74-72)=70
  */
+export function reverseByAdjacent(source, adjacent) {
+  return wrapNumber(source - (adjacent - source))
+}
+
+/** @deprecated 使用 reverseByAdjacent，保留兼容旧测试引用 */
 export function reverseBySpan(target, span) {
   return wrapNumber(target - span)
 }
 
 function addPick(pickMap, num, trace) {
+  if (!Number.isFinite(num)) return
   const key = num
   if (!pickMap.has(key)) {
     pickMap.set(key, { num, count: 0, traces: [] })
@@ -45,13 +52,50 @@ function addPick(pickMap, num, trace) {
   item.traces.push(trace)
 }
 
+/** 同一源号、同一命中期只计一次，避免邻号/反选重复累加 */
+function addPeriodPicks(pickMap, sourceNumber, hitRecord, nextRecord, closestList) {
+  const periodNumbers = new Map()
+
+  for (const { num: adjacent, span } of closestList) {
+    const reverse = reverseByAdjacent(sourceNumber, adjacent)
+    const traceBase = {
+      sourceNumber,
+      hitPeriod: hitRecord.issue,
+      nextPeriod: nextRecord.issue,
+      adjacent,
+      span,
+      reverse,
+    }
+
+    if (!periodNumbers.has(adjacent)) {
+      periodNumbers.set(adjacent, { ...traceBase, type: 'adjacent' })
+    }
+    if (!periodNumbers.has(reverse)) {
+      periodNumbers.set(reverse, { ...traceBase, type: 'reverse' })
+    }
+  }
+
+  for (const trace of periodNumbers.values()) {
+    addPick(pickMap, trace.type === 'adjacent' ? trace.adjacent : trace.reverse, trace)
+  }
+
+  return closestList.map(({ num: adjacent, span }) => ({
+    sourceNumber,
+    hitPeriod: hitRecord.issue,
+    nextPeriod: nextRecord.issue,
+    adjacent,
+    span,
+    reverse: reverseByAdjacent(sourceNumber, adjacent),
+  }))
+}
+
 /**
  * 核心选号逻辑
  * @param {Array} records 按期号倒序（最新在前）
- * @param {number} lookback 往前追溯期数，默认 10
+ * @param {number} lookback 往前追溯期数，默认 9
  * @param {string|null} baseIssue 基准期号，默认最新一期
  */
-export function analyzeNumbers(records, lookback = 10, baseIssue = null) {
+export function analyzeNumbers(records, lookback = 9, baseIssue = null) {
   if (!records.length) {
     throw new Error('暂无开奖数据')
   }
@@ -74,36 +118,81 @@ export function analyzeNumbers(records, lookback = 10, baseIssue = null) {
   const history = records.slice(currentIndex + 1, currentIndex + 1 + effectiveLookback)
   const pickMap = new Map()
   const steps = []
+  const sourceDetails = []
 
   for (const sourceNumber of current.numbers) {
+    const rows = []
+
     for (let i = 0; i < history.length; i += 1) {
       const hitRecord = history[i]
-      if (!hitRecord.numbers.includes(sourceNumber)) continue
+      const row = {
+        sourceNumber,
+        lookbackStep: i + 1,
+        hitPeriod: hitRecord.issue,
+        hitDate: hitRecord.date,
+        hit: hitRecord.numbers.includes(sourceNumber),
+        nextPeriod: '',
+        nextDate: '',
+        nextNumbers: [],
+        adjacentList: [],
+        span: null,
+        reverse: null,
+        status: 'miss',
+        statusText: '该期未开出源号',
+      }
+
+      if (!row.hit) {
+        rows.push(row)
+        continue
+      }
 
       const hitIndex = records.indexOf(hitRecord)
-      if (hitIndex <= 0) continue
+      if (hitIndex <= 0) {
+        row.status = 'skip'
+        row.statusText = '无下一期数据'
+        rows.push(row)
+        continue
+      }
 
       const nextRecord = records[hitIndex - 1]
+      row.nextPeriod = nextRecord.issue
+      row.nextDate = nextRecord.date
+      row.nextNumbers = [...nextRecord.numbers]
       const closestList = findClosestNumbers(sourceNumber, nextRecord.numbers)
-      if (!closestList.length) continue
 
-      for (const { num: adjacent, span } of closestList) {
-        const reverse = reverseBySpan(sourceNumber, span)
-        const trace = {
-          sourceNumber,
-          hitPeriod: hitRecord.issue,
-          nextPeriod: nextRecord.issue,
-          adjacent,
-          span,
-          reverse,
-        }
-
-        addPick(pickMap, adjacent, { ...trace, type: 'adjacent' })
-        addPick(pickMap, reverse, { ...trace, type: 'reverse' })
-
-        steps.push(trace)
+      if (!closestList.length) {
+        row.status = 'skip'
+        row.statusText = '无法计算邻号'
+        rows.push(row)
+        continue
       }
+
+      row.adjacentList = closestList.map(({ num, span }) => ({
+        adjacent: num,
+        span,
+        reverse: reverseByAdjacent(sourceNumber, num),
+      }))
+      row.span = closestList[0].span
+      row.reverse = row.adjacentList[0].reverse
+      row.status = 'hit'
+      row.statusText = closestList.length > 1 ? `命中，${closestList.length} 个最小跨度邻号` : '命中并产生选号'
+
+      const traces = addPeriodPicks(
+        pickMap,
+        sourceNumber,
+        hitRecord,
+        nextRecord,
+        closestList,
+      )
+      steps.push(...traces)
+
+      rows.push(row)
     }
+
+    sourceDetails.push({
+      sourceNumber,
+      rows,
+    })
   }
 
   const allPicks = [...pickMap.values()].sort((a, b) => a.num - b.num)
@@ -115,6 +204,7 @@ export function analyzeNumbers(records, lookback = 10, baseIssue = null) {
     lookback: effectiveLookback,
     requestedLookback: lookback,
     steps,
+    sourceDetails,
     classA,
     classB,
     classAFormatted: classA.map((item) => formatBall(item.num)),

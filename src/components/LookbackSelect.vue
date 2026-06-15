@@ -5,11 +5,11 @@ import SearchSelect from './SearchSelect.vue'
 const props = defineProps({
   modelValue: {
     type: Number,
-    default: 10,
+    default: 9,
   },
   presets: {
     type: Array,
-    default: () => [5, 10, 15, 20, 30, 50],
+    default: () => [5, 9, 15, 20, 30, 50],
   },
   max: {
     type: Number,

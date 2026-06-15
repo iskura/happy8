@@ -13,12 +13,12 @@ const props = defineProps({
   filters: { type: Object, required: true },
   marks: { type: Object, required: true },
   activeChart: { type: String, default: 'hmfb' },
+  rowOrder: { type: String, default: 'asc' },
   maxPeriod: { type: Number, default: 1000 },
-  minDate: { type: String, default: '' },
-  maxDate: { type: String, default: '' },
+  availableDates: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['update:filters', 'update:marks', 'update:activeChart', 'apply'])
+const emit = defineEmits(['update:filters', 'update:marks', 'update:activeChart', 'update:rowOrder', 'apply'])
 
 const showSamePeriod = ref(false)
 
@@ -77,6 +77,10 @@ function handleDateChange(range) {
 function applyFilters() {
   emit('apply')
 }
+
+function setRowOrder(order) {
+  emit('update:rowOrder', order)
+}
 </script>
 
 <template>
@@ -106,6 +110,26 @@ function applyFilters() {
         :presets="PERIOD_PRESETS"
         :max="maxPeriod"
       />
+
+      <div class="filter-group">
+        <span class="filter-group-label">排序</span>
+        <button
+          class="filter-btn"
+          :class="{ active: rowOrder === 'asc' }"
+          title="期号从小到大，旧期在上"
+          @click="setRowOrder('asc')"
+        >
+          正序
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: rowOrder === 'desc' }"
+          title="期号从大到小，新期在上"
+          @click="setRowOrder('desc')"
+        >
+          反序
+        </button>
+      </div>
 
       <div class="filter-group">
         <button
@@ -156,17 +180,14 @@ function applyFilters() {
           {{ tail - 1 }}尾
         </button>
       </div>
-      <div class="same-group date-group">
+      <div class="same-group date-row">
         <span class="same-label">日期</span>
         <DateRangePicker
           :start="filters.dateStart"
           :end="filters.dateEnd"
-          :min="minDate"
-          :max="maxDate"
+          :dates="availableDates"
           @change="handleDateChange"
         />
-      </div>
-      <div class="same-period-actions">
         <button type="button" class="filter-btn reset-btn" @click="resetSamePeriod">重置条件</button>
       </div>
     </div>
@@ -262,6 +283,13 @@ function applyFilters() {
   align-items: center;
 }
 
+.filter-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-right: 2px;
+}
+
 .filter-divider {
   width: 1px;
   height: 18px;
@@ -338,18 +366,12 @@ function applyFilters() {
   color: var(--text-dim);
 }
 
-.date-group {
-  align-items: center;
-}
-
-.same-period-actions {
-  display: flex;
-  justify-content: flex-start;
+.date-row {
+  flex-wrap: wrap;
 }
 
 .reset-btn {
-  width: auto;
-  align-self: flex-start;
+  margin-left: 4px;
 }
 
 .mark-bar {
