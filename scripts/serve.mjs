@@ -55,7 +55,7 @@ createServer(async (req, res) => {
   try {
     const urlPath = new URL(req.url || '/', `http://localhost:${PORT}`).pathname
 
-    if (urlPath === '/api/kl8' || urlPath === '/api/kl8.txt') {
+    if (urlPath === '/api/kl8') {
       await proxyLiveData(res)
       return
     }
