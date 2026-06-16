@@ -2,6 +2,16 @@
    全局通用样式 — 跨组件复用的结构类
    ═══════════════════════════════════════════════════════════ */
 
+/* ── 圆内数字光学居中 ── */
+.circle-digit-inner {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  transform: translateY(-0.05em);
+}
+
 /* ── 模态框 ── */
 .modal-backdrop {
   position: fixed;
@@ -213,7 +223,7 @@
 }
 
 .stat-help-popover__ball-row .ball {
-  display: inline-flex;
+  display: inline-block;
   box-shadow: none;
 }
 

@@ -1,76 +1,175 @@
 <script setup>
-const plannedFeatures = [
-  '选号结果一键导出 PDF / Word',
-  '走势图截图与标注归档',
-  '分析明细按期号生成报告',
-  '自定义模板与页眉页脚',
-]
+import { computed, onMounted, ref, watch } from 'vue'
+import { loadLotteryDataLocalFirst } from '../api/lottery.js'
+import CopyButton from '../components/CopyButton.vue'
+import IssueSelect from '../components/IssueSelect.vue'
+import LookbackSelect from '../components/LookbackSelect.vue'
+import { buildAnalysisDocument, buildSectionPlainText } from '../utils/buildAnalysisDocument.js'
+import { copyText } from '../utils/format.js'
+import { notifyError, notifySuccess } from '../utils/uiMessage.js'
+
+const loading = ref(true)
+const error = ref('')
+const records = ref([])
+const selectedIssue = ref('')
+const lookback = ref(9)
+const copiedSectionId = ref('')
+
+function getMaxLookback(issue = selectedIssue.value) {
+  if (!records.value.length) return 0
+  const index = issue
+    ? records.value.findIndex((record) => record.issue === issue)
+    : 0
+  if (index < 0) return 0
+  return records.value.length - index - 1
+}
+
+const documentData = computed(() => {
+  if (!records.value.length) return null
+  return buildAnalysisDocument(records.value, {
+    issue: selectedIssue.value,
+    lookback: lookback.value,
+  })
+})
+
+const sections = computed(() => documentData.value?.sections ?? [])
+const plainText = computed(() => documentData.value?.plainText ?? '')
+
+watch(selectedIssue, () => {
+  const max = getMaxLookback()
+  if (max > 0 && lookback.value > max) lookback.value = max
+})
+
+async function loadData() {
+  loading.value = true
+  error.value = ''
+  try {
+    const data = await loadLotteryDataLocalFirst()
+    records.value = data.records
+    selectedIssue.value = data.records[0]?.issue || ''
+  } catch (err) {
+    error.value = err.message || '加载失败'
+    records.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+async function copySection(section) {
+  const ok = await copyText(buildSectionPlainText(section))
+  if (!ok) {
+    notifyError('复制失败，请手动选中复制')
+    return
+  }
+  copiedSectionId.value = section.id
+  notifySuccess(`已复制「${section.title}」`)
+  window.setTimeout(() => {
+    if (copiedSectionId.value === section.id) copiedSectionId.value = ''
+  }, 1600)
+}
+
+async function copyAll() {
+  if (!plainText.value) return
+  const ok = await copyText(plainText.value)
+  if (!ok) {
+    notifyError('复制失败，请手动选中复制')
+    return
+  }
+  notifySuccess('已复制')
+}
+
+onMounted(loadData)
 </script>
 
 <template>
   <main class="main docs-page">
-    <section class="docs-placeholder">
-      <div
-        class="docs-placeholder__glow"
-        aria-hidden="true"
-      />
-
-      <div class="docs-placeholder__hero">
-        <div class="docs-placeholder__icon-wrap">
-          <svg
-            class="docs-placeholder__icon"
-            viewBox="0 0 64 64"
-            aria-hidden="true"
-          >
-            <rect
-              x="14"
-              y="8"
-              width="36"
-              height="46"
-              rx="5"
-              fill="var(--color-surface)"
-              stroke="var(--link)"
-              stroke-width="2"
-            />
-            <path
-              d="M22 22h28M22 30h20M22 38h24"
-              stroke="var(--text-dim)"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-            <circle
-              cx="46"
-              cy="46"
-              r="11"
-              fill="var(--link-bg)"
-              stroke="var(--link)"
-              stroke-width="2"
-            />
-            <path
-              d="M41 46h10M46 41v10"
-              stroke="var(--link)"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-        </div>
-        <span class="docs-placeholder__badge">开发中</span>
+    <header class="docs-toolbar panel">
+      <div class="docs-toolbar__intro">
+        <h1 class="docs-toolbar__title">文档生成</h1>
+        <p class="docs-toolbar__desc">
+          根据当前开奖数据自动生成分析报告，可在线阅读、手动选中或一键复制。
+        </p>
       </div>
 
-      <h1 class="docs-placeholder__title">文档生成</h1>
-      <p class="docs-placeholder__desc">
-        正在搭建报告导出能力，完成后可在此将选号分析、走势图与明细整理成可分享的文档。
-      </p>
-
-      <ul class="docs-placeholder__list">
-        <li
-          v-for="item in plannedFeatures"
-          :key="item"
+      <div
+        v-if="!loading && !error"
+        class="docs-toolbar__controls"
+      >
+        <IssueSelect
+          v-model="selectedIssue"
+          :records="records"
+        />
+        <LookbackSelect
+          v-model="lookback"
+          :max="Math.max(getMaxLookback(), 1)"
+          inline
+        />
+        <button
+          type="button"
+          class="btn docs-toolbar__copy"
+          :disabled="!plainText"
+          @click="copyAll"
         >
-          {{ item }}
-        </li>
-      </ul>
-    </section>
+          复制
+        </button>
+      </div>
+    </header>
+
+    <div
+      v-if="loading"
+      class="state-card docs-state"
+    >
+      <div class="spinner" />
+      <span>正在加载数据并生成文档…</span>
+    </div>
+
+    <div
+      v-else-if="error"
+      class="state-card error-card docs-state"
+    >
+      <p>{{ error }}</p>
+      <button
+        class="btn"
+        type="button"
+        @click="loadData"
+      >
+        重试
+      </button>
+    </div>
+
+    <article
+      v-else
+      class="docs-document panel"
+    >
+      <pre class="docs-document__paper">{{ plainText }}</pre>
+
+      <div class="docs-document__sections">
+        <section
+          v-for="section in sections"
+          :id="section.id"
+          :key="section.id"
+          class="docs-section"
+        >
+          <div class="docs-section__head">
+            <h2 class="docs-section__title">{{ section.title }}</h2>
+            <CopyButton
+              :copied="copiedSectionId === section.id"
+              :title="`复制「${section.title}」`"
+              size="sm"
+              @click="copySection(section)"
+            />
+          </div>
+          <ul class="docs-section__list">
+            <li
+              v-for="(line, index) in section.lines"
+              :key="index"
+            >
+              {{ line }}
+            </li>
+          </ul>
+        </section>
+      </div>
+    </article>
   </main>
 </template>
 
@@ -78,129 +177,120 @@ const plannedFeatures = [
 .main.docs-page {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
+  gap: var(--gap-section);
   width: 100%;
-  min-height: 50vh;
+  padding-bottom: var(--spacing-3xl);
 }
 
-.docs-placeholder {
-  position: relative;
+.docs-toolbar {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: min(100%, 520px);
-  padding: var(--spacing-3xl) var(--spacing-2xl);
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
+  gap: var(--spacing-lg);
 }
 
-.docs-placeholder__glow {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 120%;
-  height: 200px;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(22, 119, 255, 0.14), transparent 70%);
-  pointer-events: none;
-}
-
-.docs-placeholder__hero {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
-
-.docs-placeholder__icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-}
-
-.docs-placeholder__icon {
-  display: block;
-  width: 64px;
-  height: 64px;
-  filter: drop-shadow(0 8px 20px rgba(22, 119, 255, 0.15));
-}
-
-.docs-placeholder__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  background: var(--link-bg);
-  border: var(--border-width) solid var(--link-border);
-  color: var(--link);
-  font-size: var(--font-size-hint);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.4;
-}
-
-.docs-placeholder__title {
-  position: relative;
-  margin: 0 0 var(--spacing-sm);
+.docs-toolbar__title {
+  margin: 0 0 var(--spacing-xs);
   font-size: var(--font-size-title-lg);
   font-weight: 800;
   color: var(--text);
-  text-align: center;
 }
 
-.docs-placeholder__desc {
-  position: relative;
-  margin: 0 0 var(--spacing-xl);
-  max-width: 380px;
-  font-size: var(--font-size-body);
-  line-height: 1.7;
-  color: var(--text-soft);
-  text-align: center;
-}
-
-.docs-placeholder__list {
-  position: relative;
-  align-self: stretch;
+.docs-toolbar__desc {
   margin: 0;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+  color: var(--text-soft);
+}
+
+.docs-toolbar__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+}
+
+.docs-toolbar__copy {
+  margin-left: auto;
+  padding: 10px 18px;
+  font-size: var(--font-size-small);
+}
+
+.docs-state {
+  min-height: 200px;
+}
+
+.docs-document {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.docs-document__paper {
+  margin: 0;
+  padding: var(--spacing-xl);
   border-radius: var(--radius-md);
   background: var(--color-surface-alt);
   border: var(--border-width) solid var(--border);
-  list-style: none;
-  text-align: left;
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+  color: var(--text-soft);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
 }
 
-.docs-placeholder__list li {
-  position: relative;
-  padding-left: 18px;
-  font-size: var(--font-size-small);
-  line-height: 1.8;
+.docs-document__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.docs-section {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+}
+
+.docs-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.docs-section__title {
+  margin: 0;
+  font-size: var(--font-size-body);
+  line-height: 1.6;
   color: var(--text-soft);
 }
 
-.docs-placeholder__list li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.72em;
-  width: 6px;
-  height: 6px;
-  border-radius: var(--radius-circle);
-  background: var(--link);
+.docs-section__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  user-select: text;
 }
 
-.docs-placeholder__list li + li {
-  margin-top: var(--spacing-xs);
+.docs-section__list li {
+  padding: 6px 0;
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+  color: var(--text-soft);
+  border-bottom: 1px dashed var(--border);
+}
+
+.docs-section__list li:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 640px) {
+  .docs-toolbar__copy {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 </style>

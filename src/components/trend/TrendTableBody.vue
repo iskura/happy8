@@ -8,6 +8,10 @@ defineProps({
   formatIssueDate: { type: Function, required: true },
   isSegmentLine: { type: Function, required: true },
 })
+
+function hitBallClass(label) {
+  return /^\d+$/.test(String(label ?? '')) ? 'hit-ball' : 'hit-ball hit-ball--wide'
+}
 </script>
 
 <template>
@@ -33,8 +37,16 @@ defineProps({
         class="col-num"
         :class="cellClasses(cell, row)"
       >
-        <span v-if="cell.type === 'hit'" class="hit-ball">{{ displayHit(cell) }}</span>
-        <span v-else-if="marks.omission !== false" class="miss-value">{{ cell.omission }}</span>
+        <span class="col-num-fit">
+          <span
+            v-if="cell.type === 'hit'"
+            :class="hitBallClass(displayHit(cell))"
+          >{{ displayHit(cell) }}</span>
+          <span
+            v-else-if="marks.omission !== false"
+            class="miss-value"
+          >{{ cell.omission }}</span>
+        </span>
       </td>
     </tr>
   </tbody>

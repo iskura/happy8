@@ -780,8 +780,8 @@ body.nav-hided .thyuu-header-area .site-icon {
 .thyuu-header-area .thyuu-iconfont.go-top {
   position: relative;
   flex: none;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
   border: none;
   font-size: 1.25rem;
@@ -821,9 +821,6 @@ body.nav-hided .thyuu-header-area .site-icon {
 .thyuu-header-area .thyuu-iconfont.go-top .num {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   margin: 0;
   padding: 0;
   color: var(--thyuu-font-fill);
@@ -831,13 +828,21 @@ body.nav-hided .thyuu-header-area .site-icon {
   font-style: normal;
   font-weight: 700;
   font-size: var(--font-size-tiny);
-  line-height: 1;
+  line-height: 1.5rem;
+  text-align: center;
   white-space: nowrap;
   pointer-events: none;
   transition:
     opacity var(--go-top-num-duration) var(--thyuu-ease-hero),
     transform var(--go-top-num-duration) var(--thyuu-ease-hero),
     color var(--go-top-color-duration);
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top .num.go-top-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .thyuu-header-area .thyuu-iconfont.go-top:hover .num {

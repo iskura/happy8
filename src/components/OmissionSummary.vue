@@ -25,7 +25,7 @@ defineProps({
         </thead>
         <tbody>
           <tr v-for="item in data.items" :key="item.num">
-            <td><span class="num-ball">{{ formatBall(item.num) }}</span></td>
+            <td><span class="num-ball"><span class="circle-digit-inner">{{ formatBall(item.num) }}</span></span></td>
             <td>{{ item.appearCount }}</td>
             <td :class="{ hot: item.currentOmission >= 10 }">{{ item.currentOmission }}</td>
             <td>{{ item.avgOmission }}</td>
@@ -77,16 +77,24 @@ defineProps({
 }
 
 .num-ball {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
   min-width: 28px;
   height: 28px;
+  line-height: 28px;
   border-radius: var(--radius-circle);
   background: var(--primary-bg);
   color: var(--primary);
   font-weight: 700;
   font-size: var(--font-size-small);
+  text-align: center;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  padding: 0 4px;
+}
+
+.num-ball .circle-digit-inner {
+  line-height: 28px;
 }
 
 .hot {

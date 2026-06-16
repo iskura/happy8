@@ -44,6 +44,8 @@ const routeMenu = [
   { id: 'docs', label: '文档生成', to: '/docs' },
 ]
 
+const showSearchButton = false
+
 const sectionNav = [
   { id: 'chart', label: '走势图', target: 'section-chart' },
   { id: 'result', label: '选号结果', target: 'section-result' },
@@ -145,6 +147,7 @@ onBeforeUnmount(() => {
     <div class="thyuu-site-icon site-icon">
       <div class="site-icon-fixed">
         <button
+          v-if="showSearchButton"
           type="button"
           class="thyuu-icon-btn has-tip"
           data-tip="搜索"
@@ -227,8 +230,7 @@ onBeforeUnmount(() => {
 
         <button
           type="button"
-          class="thyuu-iconfont go-top has-tip"
-          :class="{ 'is-visible': scrollProgress > 0 }"
+          class="thyuu-iconfont go-top has-tip is-visible"
           data-tip="回到顶部"
           @click="scrollToTop"
         >
@@ -236,7 +238,7 @@ onBeforeUnmount(() => {
             class="num go-top-arrow"
             aria-hidden="true"
           />
-          <i class="num">{{ scrollProgress }}</i>
+          <i class="num"><span class="circle-digit-inner">{{ scrollProgress }}</span></i>
         </button>
 
         <button

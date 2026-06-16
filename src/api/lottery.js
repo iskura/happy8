@@ -6,6 +6,7 @@ import {
 } from '../utils/lotteryCache.js'
 
 export const UPSTREAM_URL = 'https://data.17500.cn/kl8_desc.txt'
+export const LIVE_DATA_PROXY_PATH = 'api/kl8.txt'
 
 function resolveUrl(path) {
   if (typeof window === 'undefined') {
@@ -17,6 +18,10 @@ function resolveUrl(path) {
 
 function getLocalUrl() {
   return resolveUrl('data/kl8.txt')
+}
+
+function getLiveDataUrl() {
+  return resolveUrl(LIVE_DATA_PROXY_PATH)
 }
 
 function isFileProtocol() {
@@ -59,7 +64,11 @@ export function parseKl8Text(text) {
 }
 
 function isValidKl8Text(text) {
-  if (!text || text.trim().startsWith('<!')) return false
+  if (!text) return false
+  const trimmed = text.trim()
+  if (trimmed.startsWith('<!') || trimmed.startsWith('<html') || trimmed.includes('<html')) {
+    return false
+  }
   return parseKl8Text(text).length >= 11
 }
 
@@ -70,6 +79,9 @@ async function fetchText(url) {
   }
   const text = await response.text()
   if (!isValidKl8Text(text)) {
+    if (text.trim().startsWith('<')) {
+      throw new Error('刷新失败：数据源返回了网页而非开奖文件，请通过 npm run dev 或 npm run serve 访问')
+    }
     throw new Error('返回内容不是有效的开奖数据')
   }
   return text
@@ -110,13 +122,14 @@ export async function loadLotteryDataLocalFirst() {
 
 /**
  * 从乐彩网拉取最新数据并写入浏览器本地缓存
+ * 浏览器须走同源代理 /api/kl8.txt，直连上游会因 Origin 被返回 HTML 跳转页
  */
 export async function refreshLotteryDataFromUpstream() {
   if (isFileProtocol()) {
     throw new Error('直接打开本地 HTML 文件无法联网，请运行 npm run serve')
   }
 
-  const text = await fetchText(UPSTREAM_URL)
+  const text = await fetchText(getLiveDataUrl())
   const saved = writeLotteryCache(text, 'upstream')
   return buildResult(text, 'upstream', saved.updatedAt)
 }

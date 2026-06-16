@@ -281,14 +281,31 @@ tfoot .sticky-col {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: none;
+  box-sizing: border-box;
   width: 20px;
   height: 20px;
+  min-width: 20px;
+  padding: 0;
   border-radius: var(--radius-circle);
   background: var(--primary);
   color: var(--text-on-primary);
-  font-size: var(--font-size-hint);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
   line-height: 1;
+  letter-spacing: 0;
   box-shadow: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hit-ball--wide {
+  width: auto;
+  min-width: 20px;
+  padding-inline: 3px;
+  font-family: inherit;
+  font-size: var(--font-size-tiny);
 }
 
 .miss-value {
@@ -301,6 +318,14 @@ tfoot .sticky-col {
   height: 26px;
   vertical-align: middle;
   padding: 0 !important;
+}
+
+.col-num-fit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 26px;
 }
 
 .zone-line {
@@ -597,7 +622,6 @@ tfoot .sticky-col {
   background: var(--info);
   color: var(--text-on-primary);
   font-size: var(--font-size-hint);
-  font-weight: 700;
   line-height: 1;
 }
 
