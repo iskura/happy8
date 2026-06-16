@@ -351,7 +351,7 @@ body::before {
 }
 
 .class-a {
-  background: linear-gradient(160deg, var(--color-class-a-bg-start) 0%, var(--color-white) 100%);
+  background: linear-gradient(160deg, var(--color-class-a-bg-start) 0%, var(--card) 100%);
 }
 
 .class-a::before {
@@ -359,7 +359,7 @@ body::before {
 }
 
 .class-b {
-  background: linear-gradient(160deg, var(--color-class-b-bg-start) 0%, var(--color-white) 100%);
+  background: linear-gradient(160deg, var(--color-class-b-bg-start) 0%, var(--card) 100%);
 }
 
 .class-b::before {
@@ -367,7 +367,7 @@ body::before {
 }
 
 .class-c {
-  background: linear-gradient(160deg, var(--color-class-c-bg-start) 0%, var(--color-white) 100%);
+  background: linear-gradient(160deg, var(--color-class-c-bg-start) 0%, var(--card) 100%);
 }
 
 .class-c::before {
@@ -396,7 +396,7 @@ body::before {
   font-size: var(--font-size-hint);
   font-weight: 600;
   color: var(--text-dim);
-  background: var(--color-white);
+  background: var(--color-surface-muted);
   border: var(--border-width) solid var(--border);
   padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--radius-pill);
@@ -561,7 +561,7 @@ tbody tr.row-latest td:first-child {
 
 @media (max-width: 860px) {
   .app {
-    padding: var(--spacing-lg) var(--page-inline) var(--spacing-sm);
+    padding: 16px 14px 36px;
   }
 
   .hero {

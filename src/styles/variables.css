@@ -41,9 +41,9 @@
   --gap-section: 22px;
   --gap-card: 18px;
   /* 页面内容区距浏览器左右 */
-  --page-content-inline: 9px;
+  --page-content-inline: 12px;
   --page-inline: var(--page-content-inline);
-  --padding-app: var(--spacing-lg) var(--page-inline) var(--spacing-sm);
+  --padding-app: 16px 12px 32px;
   --panel-padding-inline: var(--spacing-lg);
   --padding-panel: var(--spacing-xl) var(--panel-padding-inline);
   --padding-modal: var(--spacing-3xl) var(--spacing-2xl) var(--spacing-2xl);
@@ -223,6 +223,7 @@
   /* ── 过渡动画 ── */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.5s ease;
+  --transition-slow: 0.35s ease;
   --ease-shake: ease;
 
   /* ── 图标/控件尺寸 ── */
@@ -246,4 +247,109 @@
   --z-dialog: 10020;
   --z-tooltip: 10001;
 
+}
+
+/* ── 深色模式：覆盖语义色，card / table / 走势图等自动跟随 ── */
+:root[theme='dark'] {
+  --bg: #0f172a;
+  --bg-soft: #1e293b;
+  --card: #1e293b;
+  --text: #e2e8f0;
+  --text-soft: #cbd5e1;
+  --text-dim: #94a3b8;
+
+  --primary-bg: rgba(225, 29, 72, 0.14);
+  --primary-border: rgba(254, 205, 211, 0.22);
+  --success-bg: rgba(22, 163, 74, 0.14);
+  --success-border: rgba(74, 222, 128, 0.22);
+  --warning-bg: rgba(212, 136, 6, 0.14);
+  --warning-border: rgba(251, 191, 36, 0.25);
+  --warning-surface: rgba(234, 179, 8, 0.12);
+  --warning-surface-border: rgba(250, 204, 21, 0.35);
+  --info-bg: rgba(37, 99, 235, 0.14);
+  --info-border: rgba(147, 197, 253, 0.22);
+  --info-border-light: rgba(96, 165, 250, 0.35);
+  --link-bg: rgba(22, 119, 255, 0.12);
+  --link-bg-active: rgba(22, 119, 255, 0.2);
+  --purple-bg: rgba(124, 58, 237, 0.14);
+  --purple-border: rgba(196, 181, 253, 0.22);
+
+  --border: #334155;
+  --border-strong: #475569;
+  --border-input: #475569;
+  --border-summary: rgba(129, 140, 248, 0.35);
+
+  --color-surface: #1e293b;
+  --color-surface-muted: #273548;
+  --color-surface-alt: #162032;
+  --color-row-hover: #273548;
+  --color-row-latest: rgba(225, 29, 72, 0.12);
+  --color-surface-skip: rgba(251, 191, 36, 0.1);
+  --color-summary-bg: rgba(79, 70, 229, 0.12);
+  --color-neutral-bg: #162032;
+  --color-neutral-border: var(--border);
+  --color-nav-bg: #162032;
+  --color-surface-glass: rgba(30, 41, 59, 0.92);
+
+  --color-overlay: rgba(0, 0, 0, 0.62);
+  --color-overlay-light: rgba(0, 0, 0, 0.55);
+  --color-overlay-subtle: rgba(0, 0, 0, 0.38);
+  --color-tooltip-bg: #334155;
+  --color-tooltip-fg: #f1f5f9;
+  --color-btn-neutral-bg: #273548;
+  --color-btn-neutral-hover: #334155;
+
+  --color-class-a-bg-start: rgba(251, 146, 60, 0.12);
+  --color-class-b-bg-start: rgba(34, 197, 94, 0.12);
+  --color-class-c-bg-start: rgba(139, 92, 246, 0.12);
+  --color-current-draw-start: #162032;
+  --color-current-draw-end: #1e293b;
+
+  --color-status-hit-bg: rgba(5, 150, 105, 0.14);
+  --color-status-miss: var(--color-surface);
+  --color-status-miss-bg: var(--color-surface-alt);
+  --color-status-skip-bg: rgba(234, 88, 12, 0.12);
+
+  --ball-mini: #475569;
+  --ball-mini-text: #e2e8f0;
+  --ball-adjacent-ring: rgba(251, 146, 60, 0.35);
+  --ball-source-ring: rgba(59, 130, 246, 0.25);
+  --ball-draw-default: #334155;
+  --ball-draw-default-text: var(--text-soft);
+
+  --chart-freeze-bg: #1a2438;
+  --chart-freeze-border: #334155;
+  --chart-zone-border: #64748b;
+  --chart-omission-0: #1e293b;
+  --chart-omission-1: #243044;
+  --chart-omission-2: #2a3750;
+  --chart-omission-3: #31405c;
+  --chart-omission-4: #384968;
+  --chart-omission-text-1: #94a3b8;
+  --chart-omission-text-2: #a8b4c4;
+  --chart-omission-text-3: #b8c2d0;
+  --chart-omission-text-4: #c8d0dc;
+  --chart-miss-bg: rgba(244, 63, 94, 0.12);
+  --chart-miss-strong: rgba(244, 63, 94, 0.2);
+  --chart-edge-bg: rgba(234, 179, 8, 0.12);
+  --chart-zone-a: rgba(56, 189, 248, 0.08);
+  --chart-zone-b: rgba(56, 189, 248, 0.14);
+  --chart-zone-c: rgba(56, 189, 248, 0.22);
+  --chart-zone-highlight: rgba(56, 189, 248, 0.12);
+  --chart-pink-bg: rgba(244, 63, 94, 0.15);
+  --chart-danger-bg: rgba(239, 68, 68, 0.15);
+  --chart-text-deep: #cbd5e1;
+  --chart-legend-bose-red: rgba(254, 202, 202, 0.35);
+
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-surface: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-sticky-bottom: 0 -4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --shadow-modal-sm: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.45);
+
+  --icon-muted: #94a3b8;
+  --color-spinner-track: rgba(254, 205, 211, 0.25);
 }

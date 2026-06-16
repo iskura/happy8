@@ -285,7 +285,7 @@ tfoot .sticky-col {
   height: 20px;
   border-radius: var(--radius-circle);
   background: var(--primary);
-  color: var(--color-surface);
+  color: var(--text-on-primary);
   font-size: var(--font-size-hint);
   line-height: 1;
   box-shadow: none;
@@ -595,7 +595,7 @@ tfoot .sticky-col {
   height: 20px;
   border-radius: var(--radius-circle);
   background: var(--info);
-  color: var(--color-surface);
+  color: var(--text-on-primary);
   font-size: var(--font-size-hint);
   font-weight: 700;
   line-height: 1;

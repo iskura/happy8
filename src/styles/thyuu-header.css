@@ -13,8 +13,11 @@
   --thyuu-radius-shell: var(--radius-header-shell);
   --thyuu-radius: var(--radius-header-inner);
   --thyuu-shell-margin-inline: var(--header-shell-margin-inline);
-  --thyuu-edgelr: var(--header-content-inline);
+  --thyuu-edgelr: clamp(12px, 2vw, 24px);
   --thyuu-ease-hero: cubic-bezier(0.6, 0.1, 0, 1);
+  --go-top-color-duration: 0.55s;
+  --go-top-reveal-duration: 1s;
+  --go-top-num-duration: 0.7s;
 }
 
 :root[theme='dark'] {
@@ -27,33 +30,27 @@
 }
 
 :root[theme='dark'] body {
-  background: var(--color-dark-bg);
-  color: var(--border);
+  background: var(--bg);
+  color: var(--text);
 }
 
 :root[theme='dark'] body::before {
   background:
     radial-gradient(ellipse 70% 50% at 50% -20%, rgba(79, 70, 229, 0.12), transparent 60%),
-    linear-gradient(180deg, var(--color-tooltip-bg) 0%, var(--color-dark-bg) 300px);
+    linear-gradient(180deg, var(--color-surface-alt) 0%, var(--bg) 300px);
 }
 
 .app-layout.has-thyuu-header {
-  padding-top: calc(var(--thyuu-header-height) + var(--spacing-xs));
-  padding-bottom: 0;
+  padding-top: calc(var(--thyuu-header-height) + 4px);
 }
 
 .app-layout.has-thyuu-header .app {
-  padding: var(--spacing-xs) var(--page-inline) 0;
+  padding-top: 4px;
+  padding-bottom: 20px;
 }
 
 .app-layout.has-thyuu-header .about-page {
-  padding-top: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
-}
-
-/* 仅底部页内 nav 出现时预留刚好够用的空间 */
-body.nav-hided .app-layout.has-thyuu-header.has-page-nav {
-  padding-bottom: var(--page-nav-reserve);
+  padding: 8px 12px 16px;
 }
 
 html {
@@ -61,7 +58,7 @@ html {
 }
 
 html:has(body.nav-hided) {
-  scroll-padding-bottom: var(--page-nav-reserve);
+  scroll-padding-bottom: calc(var(--thyuu-header-height) + 8px);
 }
 
 .thyuu-header-area {
@@ -799,11 +796,11 @@ body.nav-hided .thyuu-header-area .site-icon {
   visibility: hidden;
   pointer-events: none;
   transition:
-    background 0.35s,
-    color 0.35s,
-    opacity 0.7s,
-    visibility 0.7s,
-    margin-inline 0.7s;
+    background var(--go-top-color-duration),
+    color var(--go-top-color-duration),
+    opacity var(--go-top-reveal-duration),
+    visibility var(--go-top-reveal-duration),
+    margin-inline var(--go-top-reveal-duration);
 }
 
 .thyuu-header-area .thyuu-iconfont.go-top.is-visible {
@@ -835,9 +832,9 @@ body.nav-hided .thyuu-header-area .site-icon {
   white-space: nowrap;
   pointer-events: none;
   transition:
-    opacity 0.45s var(--thyuu-ease-hero),
-    transform 0.45s var(--thyuu-ease-hero),
-    color 0.35s;
+    opacity var(--go-top-num-duration) var(--thyuu-ease-hero),
+    transform var(--go-top-num-duration) var(--thyuu-ease-hero),
+    color var(--go-top-color-duration);
 }
 
 .thyuu-header-area .thyuu-iconfont.go-top:hover .num {

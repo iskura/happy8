@@ -235,6 +235,18 @@ function statusClass(status) {
   margin-top: 18px;
 }
 
+.detail-panel .panel-header h2 {
+  color: var(--text);
+}
+
+.detail-panel :deep(table th) {
+  color: var(--text-dim);
+}
+
+.detail-panel :deep(table td) {
+  color: var(--text-soft);
+}
+
 .panel-header-actions {
   display: flex;
   align-items: center;
@@ -281,8 +293,13 @@ function statusClass(status) {
   padding: 12px 14px;
   border: none;
   background: var(--color-nav-bg);
+  color: var(--text);
   cursor: pointer;
   text-align: left;
+}
+
+.source-card-header strong {
+  color: var(--text);
 }
 
 .source-title {
@@ -375,6 +392,7 @@ tbody tr.status-skip {
 .col-head-title {
   flex-shrink: 0;
   font-weight: 700;
+  color: var(--text);
 }
 
 .col-head-hint {
@@ -436,13 +454,13 @@ tbody tr.status-skip {
 
 .draw-ball.is-adjacent {
   background: var(--a-to);
-  color: var(--color-surface);
+  color: var(--text-on-primary);
   box-shadow: 0 0 0 2px var(--ball-adjacent-ring);
 }
 
 .draw-ball.is-source-ref {
   background: var(--info);
-  color: var(--color-surface);
+  color: var(--text-on-primary);
   box-shadow: 0 0 0 2px var(--ball-source-ring);
 }
 

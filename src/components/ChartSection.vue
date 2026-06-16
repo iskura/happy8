@@ -144,16 +144,15 @@ function applyFilters() {
         </button>
         <button
           type="button"
-          class="chart-fullscreen-btn"
+          class="icon-action-btn icon-action-btn--md icon-action-btn--info"
           :title="isFullscreen ? '退出全屏' : '全屏'"
           :aria-label="isFullscreen ? '退出全屏' : '全屏'"
           @click="toggleFullscreen"
         >
           <svg
             v-if="!isFullscreen"
+            class="icon-action-btn__svg"
             viewBox="0 0 24 24"
-            width="18"
-            height="18"
             aria-hidden="true"
           >
             <path
@@ -167,9 +166,8 @@ function applyFilters() {
           </svg>
           <svg
             v-else
+            class="icon-action-btn__svg"
             viewBox="0 0 24 24"
-            width="18"
-            height="18"
             aria-hidden="true"
           >
             <path
@@ -278,23 +276,24 @@ function applyFilters() {
   gap: 6px;
   height: var(--control-height-md);
   padding: 0 var(--spacing-md);
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text-soft);
+  border: var(--border-width) solid var(--link);
+  border-radius: var(--radius-xs);
+  background: var(--link);
+  color: var(--text-on-primary);
   font-size: var(--font-size-small);
   font-weight: 600;
   cursor: pointer;
   transition:
-    color var(--transition-fast),
+    filter var(--transition-fast),
     border-color var(--transition-fast),
     background var(--transition-fast);
 }
 
 .chart-refresh-btn:hover:not(:disabled) {
-  color: var(--link);
-  border-color: var(--link-border);
-  background: var(--link-bg);
+  filter: brightness(1.06);
+  border-color: var(--link);
+  background: var(--link);
+  color: var(--text-on-primary);
 }
 
 .chart-refresh-btn:disabled {
@@ -305,38 +304,6 @@ function applyFilters() {
 .chart-refresh-btn svg {
   display: block;
   flex-shrink: 0;
-}
-
-.chart-fullscreen-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: var(--control-height-md);
-  height: var(--control-height-md);
-  padding: 0;
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text-dim);
-  cursor: pointer;
-  transition:
-    color var(--transition-fast),
-    border-color var(--transition-fast),
-    background var(--transition-fast);
-}
-
-.chart-fullscreen-btn svg {
-  display: block;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.chart-fullscreen-btn:hover {
-  color: var(--link);
-  border-color: var(--link-border);
-  background: var(--link-bg);
 }
 
 .chart-section:fullscreen :deep(.chart-toolbar),

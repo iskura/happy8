@@ -8,7 +8,7 @@ const SECTION_NAV_PROGRESS = 3
 export function useThyuuHeader() {
   const activeSection = ref('chart')
   const showGoTop = ref(false)
-  const theme = ref('auto')
+  const theme = ref('light')
   const openDialog = ref('')
   const scrollY = ref(0)
   const scrollProgress = ref(0)
@@ -27,9 +27,9 @@ export function useThyuuHeader() {
 
   function getStoredTheme() {
     try {
-      return localStorage.getItem(THEME_KEY) || 'auto'
+      return localStorage.getItem(THEME_KEY) || 'light'
     } catch {
-      return 'auto'
+      return 'light'
     }
   }
 
