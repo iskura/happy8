@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onBeforeUnmount, onMounted } from 'vue'
+import { computed, ref, onBeforeUnmount, onMounted, provide } from 'vue'
 import {
   loadLotteryDataLocalFirst,
   refreshLotteryDataFromUpstream,
@@ -37,6 +37,14 @@ const dataSourceLabel = computed(() => {
   if (dataSource.value === 'upstream') return '最新数据'
   return ''
 })
+
+const pageMeta = computed(() => ({
+  dataUpdatedAt: dataUpdatedAt.value,
+  dataSourceLabel: dataSourceLabel.value,
+  refreshScheduleLabel,
+}))
+
+provide('pageMeta', pageMeta)
 
 let restReminderTimer = null
 let loveShakeTimer = null
@@ -215,23 +223,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="app">
-    <header class="hero">
-      <h1>快乐8选号分析工具</h1>
-      <div class="hero-actions">
-        <p v-if="dataUpdatedAt" class="data-meta">
-          更新于 {{ dataUpdatedAt }}
-          <template v-if="dataSourceLabel"> · {{ dataSourceLabel }}</template>
-          · {{ refreshScheduleLabel }} 自动更新
-        </p>
-        <button
-          class="btn"
-          :disabled="loading || refreshing"
-          @click="refreshData()"
-        >
-          {{ refreshing ? '更新中...' : '刷新数据' }}
-        </button>
-      </div>
-    </header>
 
     <main class="main">
       <div v-if="loading" class="state-card">
@@ -245,26 +236,40 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-else-if="result">
-        <ChartSection :records="records" />
-        <ResultPanel
-          :result="result"
-          :records="records"
-          v-model:selected-issue="selectedIssue"
-          v-model:lookback="lookback"
-          :max-lookback="getMaxLookback()"
-          :disabled="loading"
-          @issue-change="rerunAnalysis"
-          @lookback-change="rerunAnalysis"
-        />
-        <DetailTable
-          :source-details="result.sourceDetails"
-          :lookback="result.lookback"
-          :base-issue="result.current.issue"
-        />
+        <div id="section-chart" class="page-section">
+          <ChartSection
+            :records="records"
+            :loading="loading"
+            :refreshing="refreshing"
+            :data-updated-at="dataUpdatedAt"
+            :data-source-label="dataSourceLabel"
+            :refresh-schedule-label="refreshScheduleLabel"
+            @refresh="refreshData()"
+          />
+        </div>
+        <div id="section-result" class="page-section">
+          <ResultPanel
+            :result="result"
+            :records="records"
+            v-model:selected-issue="selectedIssue"
+            v-model:lookback="lookback"
+            :max-lookback="getMaxLookback()"
+            :disabled="loading"
+            @issue-change="rerunAnalysis"
+            @lookback-change="rerunAnalysis"
+          />
+        </div>
+        <div id="section-detail" class="page-section">
+          <DetailTable
+            :source-details="result.sourceDetails"
+            :lookback="result.lookback"
+            :base-issue="result.current.issue"
+          />
+        </div>
       </template>
     </main>
 
-    <footer class="footer">
+    <footer id="section-footer" class="footer">
       <p>规则说明：对每个开奖号，在之前 N 期内找到曾开出该号的期次，取其次一期开奖号中与该号跨度最小的邻号入选，再按相同跨度反向选号。重复入选为 A 类，仅 1 次为 B 类。</p>
       <p class="disclaimer">开奖数据仅供参考，请以官方公告为准。</p>
     </footer>
@@ -295,18 +300,12 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.hero-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+.page-section {
+  scroll-margin-top: calc(var(--thyuu-header-height, 3.5rem) + 4px);
 }
 
-.data-meta {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-dim);
-  text-align: right;
+.page-section:first-child {
+  margin-top: 0;
 }
 
 .love-modal-backdrop {

@@ -1,9 +1,10 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { login } from '../utils/auth.js'
 import PageBackground from './PageBackground.vue'
 
-const emit = defineEmits(['success'])
+const router = useRouter()
 const faviconUrl = `${import.meta.env.BASE_URL}favicon.png`
 
 const password = ref('')
@@ -30,7 +31,10 @@ function submit() {
     return
   }
 
-  emit('success')
+  const redirect = typeof router.currentRoute.value.query.redirect === 'string'
+    ? router.currentRoute.value.query.redirect
+    : '/home'
+  router.replace(redirect)
 }
 </script>
 

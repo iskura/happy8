@@ -12,7 +12,29 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  refreshing: {
+    type: Boolean,
+    default: false,
+  },
+  dataUpdatedAt: {
+    type: String,
+    default: '',
+  },
+  dataSourceLabel: {
+    type: String,
+    default: '',
+  },
+  refreshScheduleLabel: {
+    type: String,
+    default: '',
+  },
 })
+
+const emit = defineEmits(['refresh'])
 
 const sectionRef = ref(null)
 const isFullscreen = ref(false)
@@ -102,13 +124,45 @@ onBeforeUnmount(() => {
           </template>
         </p>
       </div>
-      <button
-        type="button"
-        class="chart-fullscreen-btn"
-        :title="isFullscreen ? '退出全屏' : '全屏'"
-        :aria-label="isFullscreen ? '退出全屏' : '全屏'"
-        @click="toggleFullscreen"
-      >
+      <div class="section-title-actions">
+        <p v-if="dataUpdatedAt" class="section-data-meta">
+          更新于 {{ dataUpdatedAt }}
+          <template v-if="dataSourceLabel"> · {{ dataSourceLabel }}</template>
+          <template v-if="refreshScheduleLabel"> · {{ refreshScheduleLabel }} 自动更新</template>
+        </p>
+        <button
+          type="button"
+          class="chart-refresh-btn"
+          :disabled="loading || refreshing"
+          :title="refreshing ? '更新中...' : '刷新数据'"
+          @click="emit('refresh')"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path
+              d="M21 12a9 9 0 1 1-2.64-6.36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <path
+              d="M21 3v6h-6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span>{{ refreshing ? '更新中' : '刷新数据' }}</span>
+        </button>
+        <button
+          type="button"
+          class="chart-fullscreen-btn"
+          :title="isFullscreen ? '退出全屏' : '全屏'"
+          :aria-label="isFullscreen ? '退出全屏' : '全屏'"
+          @click="toggleFullscreen"
+        >
         <svg v-if="!isFullscreen" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <path
             fill="none"
@@ -129,7 +183,8 @@ onBeforeUnmount(() => {
             d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"
           />
         </svg>
-      </button>
+        </button>
+      </div>
     </header>
 
     <ChartToolbar
@@ -196,18 +251,70 @@ onBeforeUnmount(() => {
   font-size: 14px;
 }
 
+.section-title-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.section-data-meta {
+  margin: 0;
+  max-width: 280px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.chart-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.chart-refresh-btn:hover:not(:disabled) {
+  color: #1677ff;
+  border-color: #91caff;
+  background: #f0f7ff;
+}
+
+.chart-refresh-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.chart-refresh-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
 .chart-fullscreen-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
   color: var(--text-dim);
   cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
 .chart-fullscreen-btn svg {
@@ -219,6 +326,8 @@ onBeforeUnmount(() => {
 
 .chart-fullscreen-btn:hover {
   color: #1677ff;
+  border-color: #91caff;
+  background: #f0f7ff;
 }
 
 .chart-section:fullscreen :deep(.chart-toolbar),

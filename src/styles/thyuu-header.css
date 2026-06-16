@@ -1,0 +1,997 @@
+:root {
+  --thyuu-header-height: 3.5rem;
+  --thyuu-content-width: 920px;
+  --thyuu-medium-width: min(var(--thyuu-content-width), calc(100% - 2 * var(--thyuu-edgelr)));
+  --thyuu-main: 239deg 29% 54%;
+  --thyuu-font-head: hsl(0deg 0% 22%);
+  --thyuu-font-soft: hsl(0deg 0% 42%);
+  --thyuu-font-fill: hsl(0deg 0% 98%);
+  --thyuu-back-shift: hsl(0deg 0% 98% / 0.82);
+  --thyuu-border: 1px solid hsl(0deg 0% 0% / 0.06);
+  --thyuu-shadow: 0 8px 32px hsl(0deg 0% 0% / 0.08);
+  --thyuu-radius: 1rem;
+  --thyuu-edgelr: clamp(12px, 2vw, 24px);
+  --thyuu-ease-hero: cubic-bezier(0.6, 0.1, 0, 1);
+}
+
+:root[theme='dark'] {
+  --thyuu-font-head: hsl(0deg 0% 92%);
+  --thyuu-font-soft: hsl(0deg 0% 72%);
+  --thyuu-font-fill: hsl(0deg 0% 16%);
+  --thyuu-back-shift: hsl(220deg 14% 14% / 0.86);
+  --thyuu-border: 1px solid hsl(0deg 0% 100% / 0.08);
+  --thyuu-shadow: 0 10px 36px hsl(0deg 0% 0% / 0.35);
+}
+
+:root[theme='dark'] body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+:root[theme='dark'] body::before {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -20%, rgba(79, 70, 229, 0.12), transparent 60%),
+    linear-gradient(180deg, #1e293b 0%, #0f172a 300px);
+}
+
+.app-layout.has-thyuu-header {
+  padding-top: calc(var(--thyuu-header-height) + 4px);
+}
+
+.app-layout.has-thyuu-header .app {
+  padding-top: 4px;
+  padding-bottom: 20px;
+}
+
+.app-layout.has-thyuu-header .about-page {
+  padding: 8px 12px 16px;
+}
+
+.app-layout.has-thyuu-header.has-page-nav {
+  padding-bottom: calc(var(--thyuu-header-height) + 8px);
+}
+
+html {
+  scroll-padding-top: calc(var(--thyuu-header-height) + 4px);
+}
+
+html:has(body.nav-hided) {
+  scroll-padding-bottom: calc(var(--thyuu-header-height) + 8px);
+}
+
+.thyuu-header-area {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25em;
+  width: 100%;
+  max-width: 100%;
+  height: var(--thyuu-header-height);
+  padding-inline: var(--thyuu-edgelr);
+  margin-inline: auto;
+  font-size: 15px;
+  transition:
+    opacity 0.5s var(--thyuu-ease-hero),
+    transform 0.5s var(--thyuu-ease-hero),
+    max-width 0.5s var(--thyuu-ease-hero);
+}
+
+.thyuu-header-area::before {
+  content: '';
+  position: absolute;
+  inset: 0.5em;
+  background: var(--thyuu-back-shift);
+  backdrop-filter: blur(2em) saturate(1.4);
+  -webkit-backdrop-filter: blur(2em) saturate(1.4);
+  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  box-shadow: var(--thyuu-shadow);
+  outline: var(--thyuu-border);
+  pointer-events: none;
+  z-index: 0;
+  transform: scaleX(0.82);
+  opacity: 0;
+  transform-origin: center top;
+  transition:
+    opacity 0.5s var(--thyuu-ease-hero),
+    transform 0.5s var(--thyuu-ease-hero);
+}
+
+.thyuu-header-area .header-menu,
+.thyuu-header-area .site-icon {
+  transition:
+    opacity 0.45s var(--thyuu-ease-hero),
+    transform 0.5s var(--thyuu-ease-hero),
+    visibility 0.45s;
+}
+
+/* ── 顶部：全宽 + 毛玻璃 ── */
+body.nav-at-top .thyuu-header-area {
+  max-width: 100%;
+}
+
+body.nav-at-top .thyuu-header-area::before {
+  opacity: 1;
+  transform: none;
+}
+
+body.nav-at-top .site-logo {
+  position: relative;
+  left: auto;
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.nav-at-top .site-logo::before {
+  opacity: 0;
+  transform: scale(0.88);
+}
+
+/* ── 中等：非全宽紧凑条（向上滚从最小展开到此态） ── */
+body.nav-compact .thyuu-header-area {
+  max-width: var(--thyuu-medium-width);
+  left: 0;
+  right: 0;
+}
+
+body.nav-compact .thyuu-header-area::before {
+  opacity: 1;
+  transform: none;
+}
+
+body.nav-compact .header-menu,
+body.nav-compact .site-icon {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+body.nav-compact .site-logo {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  left: auto;
+  transform: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.nav-compact .site-logo::before {
+  opacity: 0;
+  transform: scale(0.88);
+}
+
+/* ── 向下滚：隐藏 header 菜单，底部页内 nav 滑入 ── */
+body.nav-hided .thyuu-header-area::before {
+  opacity: 0;
+  transform: scaleX(0.82);
+}
+
+body.nav-hided .thyuu-header-area .header-menu,
+body.nav-hided .thyuu-header-area .site-icon {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-0.5em);
+}
+
+.site-logo {
+  position: relative;
+  flex: none;
+  line-height: 1;
+  transition:
+    opacity 0.5s var(--thyuu-ease-hero),
+    transform 0.5s var(--thyuu-ease-hero),
+    left 0.5s var(--thyuu-ease-hero);
+}
+
+.site-logo::before {
+  content: '';
+  position: absolute;
+  inset: -0.65em -1.2em;
+  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  background: var(--thyuu-back-shift);
+  backdrop-filter: blur(2em) saturate(1.4);
+  -webkit-backdrop-filter: blur(2em) saturate(1.4);
+  box-shadow: var(--thyuu-shadow);
+  outline: var(--thyuu-border);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.88);
+  z-index: 0;
+  transition:
+    opacity 0.5s var(--thyuu-ease-hero),
+    transform 0.5s var(--thyuu-ease-hero);
+}
+
+.site-logo .logo {
+  position: relative;
+  z-index: 1;
+}
+
+.thyuu-header-area > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 桌面：离开顶部后切换为中等宽度 */
+@media (min-width: 1153px) {
+  body.nav-compact .thyuu-header-area {
+    max-width: var(--thyuu-medium-width);
+  }
+
+  body.nav-at-top .thyuu-header-area {
+    max-width: 100%;
+  }
+}
+
+.thyuu-site-logo .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65em;
+  text-decoration: none;
+  color: inherit;
+}
+
+.thyuu-site-logo .logo img {
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 0.45em;
+  object-fit: cover;
+}
+
+.thyuu-site-logo .logo footer {
+  margin: 0;
+  font-size: 0.72em;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--thyuu-font-soft);
+}
+
+.thyuu-site-menu {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+  transition: inherit;
+}
+
+.site-icon-fixed {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35em;
+  transition: inherit;
+}
+
+/* 页内导航（参考 kunkunyu switch-nav，仅改 nav 样式） */
+.section-nav-enter-active,
+.section-nav-leave-active {
+  transition:
+    opacity 0.5s cubic-bezier(0.5, 0, 0, 1.4),
+    transform 0.5s cubic-bezier(0.5, 0, 0, 1.4);
+}
+
+.section-nav-enter-from,
+.section-nav-leave-to {
+  opacity: 0;
+  transform: translateY(110%);
+}
+
+.happy8-switch-nav {
+  --switch-nav-ease: cubic-bezier(0.5, 0, 0, 1.4);
+  position: fixed;
+  inset: auto 0.5rem 1rem;
+  width: fit-content;
+  max-width: calc(100% - 1em);
+  margin: auto;
+  padding: 0.25em;
+  border: thin solid hsl(var(--thyuu-main) / 0.15);
+  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  background: var(--thyuu-back-shift);
+  backdrop-filter: blur(2em) saturate(1.4);
+  -webkit-backdrop-filter: blur(2em) saturate(1.4);
+  box-shadow: var(--thyuu-shadow);
+  z-index: 290;
+  overflow: hidden;
+}
+
+.happy8-switch-nav .switch-nav-inner {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow: hidden;
+  border-radius: calc(min(calc(var(--thyuu-radius) * 2), 2em) - 0.25em);
+  contain: paint;
+}
+
+.happy8-switch-nav .switch-nav-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: calc(min(calc(var(--thyuu-radius) * 2), 2em) - 0.25em);
+  background: hsl(var(--thyuu-main) / 0.12);
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    transform 0.45s var(--switch-nav-ease),
+    width 0.45s var(--switch-nav-ease);
+}
+
+@media (width <= 1152px) {
+  .happy8-switch-nav {
+    inset: auto 0.5em 0.5em;
+  }
+}
+
+.happy8-switch-nav .switch-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: fit-content;
+  padding: 0.75em 1em;
+  border: none;
+  border-radius: inherit;
+  background: none;
+  color: hsl(0deg 0% 22% / 0.55);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.35s var(--switch-nav-ease);
+}
+
+:root[theme='dark'] .happy8-switch-nav .switch-btn {
+  color: hsl(0deg 0% 92% / 0.55);
+}
+
+.happy8-switch-nav .switch-btn:hover,
+.happy8-switch-nav .switch-btn.is-active {
+  color: hsl(var(--thyuu-main) / 0.85);
+}
+
+.thyuu-menu-out .menu {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.thyuu-menu-out .menu > li {
+  position: relative;
+  padding: 0.35em;
+  border-radius: var(--thyuu-radius);
+}
+
+.thyuu-menu-out .menu > li > button,
+.thyuu-menu-out .menu > li > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0 0.85em;
+  border: none;
+  background: none;
+  color: var(--thyuu-font-head);
+  font-size: inherit;
+  font-weight: 600;
+  line-height: var(--thyuu-header-height);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.thyuu-menu-out .menu > li > button::after {
+  content: '▾';
+  font-size: 0.75em;
+  opacity: 0.45;
+}
+
+.thyuu-menu-out .menu > li:not(.has-children) > button::after {
+  display: none;
+}
+
+.thyuu-menu-out .menu:hover > li:not(:hover) > button {
+  opacity: 0.55;
+}
+
+.thyuu-menu-out .sub-menu {
+  position: absolute;
+  top: calc(100% + 0.35em);
+  left: 0;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.45em;
+  list-style: none;
+  border-radius: var(--thyuu-radius);
+  background: var(--thyuu-back-shift);
+  backdrop-filter: blur(1.2em) saturate(1.5);
+  -webkit-backdrop-filter: blur(1.2em) saturate(1.5);
+  box-shadow: var(--thyuu-shadow);
+  outline: var(--thyuu-border);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-0.5em);
+  transition: 0.25s ease;
+  z-index: 20;
+}
+
+.thyuu-menu-out li:hover > .sub-menu,
+.thyuu-menu-out li.is-open > .sub-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+.thyuu-menu-out .sub-menu li {
+  animation: thyuu-menu-in 0.35s ease both;
+}
+
+.thyuu-menu-out .sub-menu li:nth-child(1) { animation-delay: 0s; }
+.thyuu-menu-out .sub-menu li:nth-child(2) { animation-delay: 0.05s; }
+.thyuu-menu-out .sub-menu li:nth-child(3) { animation-delay: 0.1s; }
+.thyuu-menu-out .sub-menu li:nth-child(4) { animation-delay: 0.15s; }
+
+@keyframes thyuu-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.thyuu-menu-out .sub-menu a,
+.thyuu-menu-out .sub-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  width: 100%;
+  padding: 0.65em 0.75em;
+  border: none;
+  border-radius: calc(var(--thyuu-radius) * 0.75);
+  background: transparent;
+  color: var(--thyuu-font-head);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.thyuu-menu-out .sub-menu a:hover,
+.thyuu-menu-out .sub-menu a.is-active,
+.thyuu-menu-out .sub-menu button:hover,
+.thyuu-menu-out .sub-menu button.is-active {
+  color: hsl(var(--thyuu-main));
+  background: hsl(var(--thyuu-main) / 0.1);
+}
+
+.thyuu-menu-out .sub-menu .item-dot {
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  background: hsl(var(--thyuu-main));
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.thyuu-site-icon {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  transition: inherit;
+}
+
+#themeBtn::before {
+  content: '';
+  display: block;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  border-radius: 50%;
+  box-shadow:
+    -0.7em 0 0 -0.4em,
+    -0.5em 0.5em 0 -0.4em,
+    0 -0.7em 0 -0.4em,
+    0.5em -0.5em 0 -0.4em,
+    0.7em 0 0 -0.4em,
+    0.5em 0.5em 0 -0.4em,
+    0 0.7em 0 -0.4em,
+    -0.5em -0.5em 0 -0.4em,
+    inset 0 0;
+  transform: scale(0.65);
+  transition: 0.7s, color 0s;
+}
+
+:root[theme='dark'] #themeBtn::before {
+  box-shadow:
+    0 0 0 -0.4em,
+    0 0 0 -0.4em,
+    0 0 0 -0.4em,
+    0 0 0 -0.4em,
+    0 0 0 -0.4em,
+    0 0 0 -0.4em,
+    0 0 0 -0.4em,
+    0 0 0 -0.4em,
+    inset -0.4em -0.4em;
+  background: none;
+  transform: none;
+}
+
+.thyuu-theme-toggle:hover #themeBtn::before,
+#themeBtn:hover::before {
+  transform: scale(0.8) rotate(-180deg);
+}
+
+:root[theme='dark'] .thyuu-theme-toggle:hover #themeBtn::before,
+:root[theme='dark'] #themeBtn:hover::before {
+  transform: rotate(-180deg);
+}
+
+.thyuu-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1em;
+  height: 2.1em;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--thyuu-font-head);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.thyuu-icon-btn:not(.go-top):hover {
+  background: hsl(var(--thyuu-main) / 0.1);
+  color: hsl(var(--thyuu-main));
+}
+
+.thyuu-icon-btn svg {
+  width: 1.05em;
+  height: 1.05em;
+}
+
+.thyuu-theme-toggle {
+  position: relative;
+}
+
+.thyuu-theme-options {
+  position: absolute;
+  top: calc(100% + 0.65em);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  min-width: 7.5rem;
+  padding: 0.35em;
+  border-radius: var(--thyuu-radius);
+  background: var(--thyuu-back-shift);
+  backdrop-filter: blur(1em) saturate(1.5);
+  box-shadow: var(--thyuu-shadow);
+  outline: var(--thyuu-border);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.5em);
+  transition: 0.25s ease;
+  z-index: 40;
+}
+
+.thyuu-theme-toggle:hover .thyuu-theme-options,
+.thyuu-theme-toggle.is-open .thyuu-theme-options {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.thyuu-theme-opt {
+  padding: 0.55em 0.75em;
+  border: none;
+  border-radius: calc(var(--thyuu-radius) * 0.75);
+  background: transparent;
+  color: var(--thyuu-font-head);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.thyuu-theme-opt:hover,
+.thyuu-theme-opt.is-active {
+  color: hsl(var(--thyuu-main));
+  background: hsl(var(--thyuu-main) / 0.1);
+}
+
+.thyuu-panel-btn {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  width: 2.1em;
+  height: 2.1em;
+}
+
+.thyuu-panel-btn i {
+  display: block;
+  width: 14px;
+  height: 2px;
+  margin-inline: auto;
+  border-radius: 2px;
+  background: currentColor;
+  transition: 0.25s;
+}
+
+.thyuu-panel-btn i:nth-child(2) {
+  width: 10px;
+}
+
+.thyuu-global-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 350;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.thyuu-global-panel.is-open {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.thyuu-global-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.thyuu-global-panel.is-open .thyuu-global-panel-backdrop {
+  opacity: 1;
+}
+
+.thyuu-global-panel-body {
+  position: relative;
+  width: min(100%, 22rem);
+  height: 100%;
+  padding: 1rem;
+  background: var(--thyuu-back-shift);
+  backdrop-filter: blur(1.4em) saturate(1.4);
+  box-shadow: var(--thyuu-shadow);
+  transform: translateX(100%);
+  transition: transform 0.35s ease;
+  overflow: auto;
+}
+
+.thyuu-global-panel.is-open .thyuu-global-panel-body {
+  transform: none;
+}
+
+.thyuu-panel-welcome {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--thyuu-radius);
+  background: hsl(var(--thyuu-main) / 0.08);
+  color: var(--thyuu-font-head);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.thyuu-panel-search {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.thyuu-panel-search input {
+  flex: 1;
+  min-width: 0;
+  height: 2.5rem;
+  padding: 0 0.85rem;
+  border: var(--thyuu-border);
+  border-radius: 999px;
+  background: hsl(0deg 0% 100% / 0.65);
+  color: var(--thyuu-font-head);
+  font-size: 14px;
+  outline: none;
+}
+
+:root[theme='dark'] .thyuu-panel-search input {
+  background: hsl(0deg 0% 100% / 0.06);
+}
+
+.thyuu-panel-search button {
+  flex-shrink: 0;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 999px;
+  background: hsl(var(--thyuu-main));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.thyuu-panel-section {
+  margin-bottom: 1rem;
+}
+
+.thyuu-panel-section h4 {
+  margin: 0 0 0.5rem;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--thyuu-font-soft);
+}
+
+.thyuu-panel-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.thyuu-panel-links a,
+.thyuu-panel-links button {
+  padding: 0.65rem 0.75rem;
+  border: none;
+  border-radius: calc(var(--thyuu-radius) * 0.75);
+  background: transparent;
+  color: var(--thyuu-font-head);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.thyuu-panel-links a:hover,
+.thyuu-panel-links button:hover {
+  background: hsl(var(--thyuu-main) / 0.1);
+  color: hsl(var(--thyuu-main));
+}
+
+.thyuu-panel-meta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--thyuu-font-soft);
+}
+
+/* 回到顶部（对齐 THYUU go-top） */
+@font-face {
+  font-family: thyuu-iconfont;
+  src: url('../assets/fonts/thyuu-iconfont.woff2') format('woff2');
+  font-display: swap;
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top {
+  position: relative;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  color: var(--thyuu-font-head);
+  background: currentColor;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  z-index: 29;
+  margin-inline: -0.85em;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    background 0.35s,
+    color 0.35s,
+    opacity 0.7s,
+    visibility 0.7s,
+    margin-inline 0.7s;
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  margin-inline: 0;
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top:hover {
+  background: hsl(var(--thyuu-main) / 0.1);
+  color: hsl(var(--thyuu-main));
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top .num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  color: var(--thyuu-font-fill);
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  transition:
+    opacity 0.45s var(--thyuu-ease-hero),
+    transform 0.45s var(--thyuu-ease-hero),
+    color 0.35s;
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top:hover .num {
+  color: hsl(var(--thyuu-main));
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top .num.btn {
+  font-size: 12px;
+}
+
+.thyuu-header-area .thyuu-iconfont.go-top .num.btn::before {
+  content: '\f07a';
+  font-family: thyuu-iconfont, sans-serif;
+  font-style: normal;
+  display: block;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+.thyuu-header-area .go-top:not(:hover) .num:not(.btn) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.thyuu-header-area .go-top:not(:hover) .num.btn {
+  opacity: 0;
+  transform: translateY(0.85em);
+}
+
+.thyuu-header-area .go-top:hover .num:not(.btn) {
+  opacity: 0;
+  transform: translateY(0.85em);
+}
+
+.thyuu-header-area .go-top:hover .num.btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.thyuu-header-area .has-tip {
+  --tip-ease: cubic-bezier(0.5, 0, 0, 1.4);
+  --tip-transform: scale(0.9) translateY(-110%);
+}
+
+.thyuu-header-area .has-tip::after {
+  content: attr(data-tip);
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: calc((var(--thyuu-header-height) - 2.5em) / 2);
+  width: fit-content;
+  height: 2.5em;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  background: var(--thyuu-font-head);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: var(--tip-transform);
+  transition: 0.5s var(--tip-ease);
+  pointer-events: none;
+  z-index: 301;
+}
+
+.thyuu-header-area .has-tip:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.thyuu-menu-mobile-btn {
+  display: none;
+}
+
+.thyuu-menu-mobile-panel {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .thyuu-site-menu {
+    display: none;
+  }
+
+  .thyuu-menu-mobile-btn {
+    display: inline-flex;
+  }
+
+  .thyuu-menu-mobile-panel {
+    display: block;
+    position: fixed;
+    inset: calc(var(--thyuu-header-height) + 0.5rem) 0.75rem auto;
+    z-index: 320;
+    padding: 0.75rem;
+    border-radius: var(--thyuu-radius);
+    background: var(--thyuu-back-shift);
+    backdrop-filter: blur(1.2em);
+    box-shadow: var(--thyuu-shadow);
+    outline: var(--thyuu-border);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-0.5rem);
+    transition: 0.25s ease;
+  }
+
+  .thyuu-menu-mobile-panel.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .thyuu-menu-mobile-panel .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .thyuu-menu-mobile-panel button,
+  .thyuu-menu-mobile-panel a {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: calc(var(--thyuu-radius) * 0.75);
+    background: transparent;
+    color: var(--thyuu-font-head);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .thyuu-menu-mobile-panel button:hover,
+  .thyuu-menu-mobile-panel a:hover {
+    background: hsl(var(--thyuu-main) / 0.1);
+    color: hsl(var(--thyuu-main));
+  }
+}
