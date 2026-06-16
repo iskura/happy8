@@ -12,8 +12,9 @@ export function getScheduleLabel(
 export function getTodayScheduleTime(
   hour = DEFAULT_REFRESH_HOUR,
   minute = DEFAULT_REFRESH_MINUTE,
+  referenceMs = Date.now(),
 ) {
-  const schedule = new Date()
+  const schedule = new Date(referenceMs)
   schedule.setHours(hour, minute, 0, 0)
   return schedule.getTime()
 }
@@ -48,15 +49,61 @@ export function getLastRefreshTime() {
   return readLotteryCache()?.updatedAt ?? 0
 }
 
-export function shouldAutoRefresh(
-  lastRefreshMs = getLastRefreshTime(),
-  hour = DEFAULT_REFRESH_HOUR,
-  minute = DEFAULT_REFRESH_MINUTE,
-) {
-  const now = Date.now()
-  const scheduleTime = getTodayScheduleTime(hour, minute)
+/** @returns {string} YYYY-MM-DD（本地时区） */
+export function toLocalDateKey(input) {
+  if (!input) return ''
+  if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    return input
+  }
+  const date = new Date(input)
+  if (Number.isNaN(date.getTime())) return ''
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+/** 从浏览器缓存的开奖文本读取最新一期日期 */
+export function getLatestIssueDateFromCache() {
+  const cached = readLotteryCache()
+  if (!cached?.text) return null
+
+  const line = cached.text.trim().split('\n').find((row) => row.trim())
+  if (!line) return null
+
+  const parts = line.trim().split(/\s+/)
+  if (parts.length >= 2 && /^\d{4}-\d{2}-\d{2}$/.test(parts[1])) {
+    return parts[1]
+  }
+  return null
+}
+
+/**
+ * 是否应自动拉取最新开奖数据：
+ * 1. 今天已过 21:10
+ * 2. 今天 21:10 之后尚未刷新过（白天手动刷过也会再拉）
+ * 3. 本地最新一期开奖日期不是今天（说明还没有当天开奖数据）
+ */
+export function shouldAutoRefresh(options = {}) {
+  const {
+    lastRefreshMs = getLastRefreshTime(),
+    latestIssueDate = getLatestIssueDateFromCache(),
+    hour = DEFAULT_REFRESH_HOUR,
+    minute = DEFAULT_REFRESH_MINUTE,
+    now = Date.now(),
+  } = options
+
+  const scheduleTime = getTodayScheduleTime(hour, minute, now)
+  const todayKey = toLocalDateKey(now)
+
   if (now < scheduleTime) return false
-  return !lastRefreshMs || lastRefreshMs < scheduleTime
+
+  if (lastRefreshMs >= scheduleTime) return false
+
+  const latestIssueKey = toLocalDateKey(latestIssueDate)
+  if (latestIssueKey && latestIssueKey === todayKey) return false
+
+  return true
 }
 
 export function formatCacheTime(timestamp) {

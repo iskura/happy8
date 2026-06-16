@@ -97,7 +97,7 @@ function buildResult(text, source, updatedAt) {
 }
 
 /**
- * 优先读取本地：浏览器缓存 > 站点内置 data/kl8.txt
+ * 平时只读：浏览器缓存 > 站点 data/kl8.txt（不访问乐彩网）
  */
 export async function loadLotteryDataLocalFirst() {
   const errors = []
@@ -109,22 +109,29 @@ export async function loadLotteryDataLocalFirst() {
 
   try {
     const text = await fetchText(getLocalUrl())
-    const saved = writeLotteryCache(text, 'bundled')
-    return buildResult(text, 'bundled', saved.updatedAt)
+    return buildResult(text, 'bundled', 0)
   } catch (localError) {
-    errors.push(`内置缓存: ${localError.message}`)
+    errors.push(`内置数据: ${localError.message}`)
   }
 
   throw new Error(
-    `无法读取本地开奖数据：${errors.join('；')}。请检查网络后手动刷新，或运行 npm run fetch-data 更新内置数据`,
+    `无法读取开奖数据：${errors.join('；')}。请检查网络后手动刷新，或运行 npm run serve / npm run dev 访问`,
   )
 }
 
-/**
- * 从乐彩网拉取最新数据并写入浏览器本地缓存
- * 浏览器须走同源代理 /api/kl8.txt，直连上游会因 Origin 被返回 HTML 跳转页
- */
+/** 手动刷新：强制拉取并更新服务器内置 txt */
 export async function refreshLotteryDataFromUpstream() {
+  if (isFileProtocol()) {
+    throw new Error('直接打开本地 HTML 文件无法联网，请运行 npm run serve')
+  }
+
+  const text = await fetchText(`${getLiveDataUrl()}?force=1`)
+  const saved = writeLotteryCache(text, 'upstream')
+  return buildResult(text, 'upstream', saved.updatedAt)
+}
+
+/** 自动同步：服务端按 21:10 规则决定是否访问乐彩网 */
+export async function syncLotteryDataFromServer() {
   if (isFileProtocol()) {
     throw new Error('直接打开本地 HTML 文件无法联网，请运行 npm run serve')
   }

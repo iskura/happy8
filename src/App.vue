@@ -3,9 +3,14 @@ import { computed, onMounted, provide, ref } from 'vue'
 import {
   loadLotteryDataLocalFirst,
   refreshLotteryDataFromUpstream,
+  syncLotteryDataFromServer,
 } from './api/lottery.js'
 import { useLotteryAutoRefresh } from './composables/useLotteryAutoRefresh.js'
-import { getScheduleLabel, shouldAutoRefresh } from './utils/lotteryCache.js'
+import {
+  getLatestIssueDateFromCache,
+  getScheduleLabel,
+  shouldAutoRefresh,
+} from './utils/lotteryCache.js'
 import { notifyError, notifySuccess } from './utils/uiMessage.js'
 import { analyzeNumbers } from './utils/numberPicker.js'
 import ResultPanel from './components/ResultPanel.vue'
@@ -127,9 +132,26 @@ async function refreshData(options = {}) {
   }
 }
 
+function canAutoRefresh() {
+  return shouldAutoRefresh({
+    latestIssueDate: records.value[0]?.date ?? getLatestIssueDateFromCache(),
+  })
+}
+
 async function tryScheduledRefresh() {
-  if (!shouldAutoRefresh()) return
-  await refreshData({ silent: true, scheduled: true })
+  if (!canAutoRefresh()) return
+  refreshing.value = true
+  autoRefreshRunning = true
+  try {
+    const data = await syncLotteryDataFromServer()
+    applyLotteryData(data)
+    notifySuccess(`已到 ${refreshScheduleLabel}，已自动更新开奖数据`)
+  } catch (err) {
+    // 自动同步失败时静默，继续用内置数据
+  } finally {
+    refreshing.value = false
+    autoRefreshRunning = false
+  }
 }
 
 const { checkSchedule } = useLotteryAutoRefresh(() => {
