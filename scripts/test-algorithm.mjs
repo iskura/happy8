@@ -22,7 +22,7 @@ assert.deepEqual(
 )
 
 const fs = await import('node:fs')
-const text = fs.readFileSync(new URL('../public/data/kl8.txt', import.meta.url), 'utf8')
+const text = fs.readFileSync(new URL('./fixtures/kl8.txt', import.meta.url), 'utf8')
 const records = parseKl8Text(text)
 const result = analyzeNumbers(records, 10)
 

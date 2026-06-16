@@ -1,21 +1,21 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { createLotterySyncMiddleware } from './scripts/lotteryDevMiddleware.mjs'
 
-function lotterySyncPlugin() {
-  return {
-    name: 'lottery-sync',
-    configureServer(server) {
-      server.middlewares.use(createLotterySyncMiddleware())
-    },
-    configurePreviewServer(server) {
-      server.middlewares.use(createLotterySyncMiddleware())
-    },
-  }
+const liveProxy = {
+  '/api/kl8': {
+    target: 'https://data.17500.cn',
+    changeOrigin: true,
+    rewrite: () => '/kl8_desc.txt',
+  },
 }
 
 export default defineConfig({
-  plugins: [vue(), lotterySyncPlugin()],
+  plugins: [vue()],
   base: './',
-  assetsInclude: ['**/*.txt'],
+  server: {
+    proxy: liveProxy,
+  },
+  preview: {
+    proxy: liveProxy,
+  },
 })

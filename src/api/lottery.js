@@ -6,22 +6,21 @@ import {
 } from '../utils/lotteryCache.js'
 
 export const UPSTREAM_URL = 'https://data.17500.cn/kl8_desc.txt'
-export const LIVE_DATA_PROXY_PATH = 'api/kl8.txt'
+export const LIVE_DATA_API_PATH = '/api/kl8'
 
-function resolveUrl(path) {
+function getApiBasePath() {
+  const base = import.meta.env.BASE_URL || '/'
+  if (base === './' || base === '.' || base === '/') return ''
+  return base.replace(/\/$/, '')
+}
+
+function getLiveDataUrl(force = false) {
+  const query = force ? '?force=1' : ''
+  const apiPath = `${getApiBasePath()}${LIVE_DATA_API_PATH}${query}`
   if (typeof window === 'undefined') {
-    const base = import.meta.env.BASE_URL || './'
-    return `${base}${path}`
+    return apiPath
   }
-  return new URL(path, window.location.href).href
-}
-
-function getLocalUrl() {
-  return resolveUrl('data/kl8.txt')
-}
-
-function getLiveDataUrl() {
-  return resolveUrl(LIVE_DATA_PROXY_PATH)
+  return `${window.location.origin}${apiPath}`
 }
 
 function isFileProtocol() {
@@ -72,17 +71,24 @@ function isValidKl8Text(text) {
   return parseKl8Text(text).length >= 11
 }
 
+function buildFetchError(status) {
+  if (status === 404) {
+    return new Error('刷新失败：接口不可用')
+  }
+  return new Error(`刷新失败（${status}）`)
+}
+
 async function fetchText(url) {
   const response = await fetch(url)
   if (!response.ok) {
-    throw new Error(`请求失败: ${response.status}`)
+    throw buildFetchError(response.status)
   }
   const text = await response.text()
   if (!isValidKl8Text(text)) {
     if (text.trim().startsWith('<')) {
-      throw new Error('刷新失败：数据源返回了网页而非开奖文件，请通过 npm run dev 或 npm run serve 访问')
+      throw new Error('刷新失败：接口返回异常')
     }
-    throw new Error('返回内容不是有效的开奖数据')
+    throw new Error('刷新失败：数据格式无效')
   }
   return text
 }
@@ -96,49 +102,31 @@ function buildResult(text, source, updatedAt) {
   }
 }
 
+async function fetchAndCacheLiveData(force = false) {
+  if (isFileProtocol()) {
+    throw new Error('请使用 npm run dev 启动')
+  }
+
+  const text = await fetchText(getLiveDataUrl(force))
+  const saved = writeLotteryCache(text, 'upstream')
+  return buildResult(text, 'upstream', saved.updatedAt)
+}
+
 /**
- * 平时只读：浏览器缓存 > 站点 data/kl8.txt（不访问乐彩网）
+ * 优先读 localStorage；无缓存时再请求接口并写入本地
  */
 export async function loadLotteryDataLocalFirst() {
-  const errors = []
-
   const cached = readLotteryCache()
   if (cached?.text && isValidKl8Text(cached.text)) {
     return buildResult(cached.text, 'cache', cached.updatedAt)
   }
 
-  try {
-    const text = await fetchText(getLocalUrl())
-    return buildResult(text, 'bundled', 0)
-  } catch (localError) {
-    errors.push(`内置数据: ${localError.message}`)
-  }
-
-  throw new Error(
-    `无法读取开奖数据：${errors.join('；')}。请检查网络后手动刷新，或运行 npm run serve / npm run dev 访问`,
-  )
+  return fetchAndCacheLiveData(true)
 }
 
-/** 手动刷新：强制拉取并更新服务器内置 txt */
+/** 手动刷新：强制拉取最新数据并写入 localStorage */
 export async function refreshLotteryDataFromUpstream() {
-  if (isFileProtocol()) {
-    throw new Error('直接打开本地 HTML 文件无法联网，请运行 npm run serve')
-  }
-
-  const text = await fetchText(`${getLiveDataUrl()}?force=1`)
-  const saved = writeLotteryCache(text, 'upstream')
-  return buildResult(text, 'upstream', saved.updatedAt)
-}
-
-/** 自动同步：服务端按 21:10 规则决定是否访问乐彩网 */
-export async function syncLotteryDataFromServer() {
-  if (isFileProtocol()) {
-    throw new Error('直接打开本地 HTML 文件无法联网，请运行 npm run serve')
-  }
-
-  const text = await fetchText(getLiveDataUrl())
-  const saved = writeLotteryCache(text, 'upstream')
-  return buildResult(text, 'upstream', saved.updatedAt)
+  return fetchAndCacheLiveData(true)
 }
 
 /** @deprecated 请使用 loadLotteryDataLocalFirst */

@@ -3,9 +3,7 @@ import { computed, onMounted, provide, ref } from 'vue'
 import {
   loadLotteryDataLocalFirst,
   refreshLotteryDataFromUpstream,
-  syncLotteryDataFromServer,
 } from './api/lottery.js'
-import { useLotteryAutoRefresh } from './composables/useLotteryAutoRefresh.js'
 import {
   getLatestIssueDateFromCache,
   getScheduleLabel,
@@ -31,7 +29,6 @@ const refreshScheduleLabel = getScheduleLabel()
 
 const dataSourceLabel = computed(() => {
   if (dataSource.value === 'cache') return '本地缓存'
-  if (dataSource.value === 'bundled') return '内置数据'
   if (dataSource.value === 'upstream') return '最新数据'
   return ''
 })
@@ -140,23 +137,8 @@ function canAutoRefresh() {
 
 async function tryScheduledRefresh() {
   if (!canAutoRefresh()) return
-  refreshing.value = true
-  autoRefreshRunning = true
-  try {
-    const data = await syncLotteryDataFromServer()
-    applyLotteryData(data)
-    notifySuccess(`已到 ${refreshScheduleLabel}，已自动更新开奖数据`)
-  } catch (err) {
-    // 自动同步失败时静默，继续用内置数据
-  } finally {
-    refreshing.value = false
-    autoRefreshRunning = false
-  }
+  await refreshData({ silent: true, scheduled: true })
 }
-
-const { checkSchedule } = useLotteryAutoRefresh(() => {
-  tryScheduledRefresh()
-})
 
 function rerunAnalysis() {
   if (!records.value.length) return
@@ -173,7 +155,6 @@ function rerunAnalysis() {
 onMounted(async () => {
   await loadData()
   await tryScheduledRefresh()
-  checkSchedule()
 })
 </script>
 

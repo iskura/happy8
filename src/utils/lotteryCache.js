@@ -45,10 +45,6 @@ export function writeLotteryCache(text, source = 'upstream') {
   }
 }
 
-export function getLastRefreshTime() {
-  return readLotteryCache()?.updatedAt ?? 0
-}
-
 /** @returns {string} YYYY-MM-DD（本地时区） */
 export function toLocalDateKey(input) {
   if (!input) return ''
@@ -78,32 +74,45 @@ export function getLatestIssueDateFromCache() {
   return null
 }
 
+/** 两个日期之间相差的自然日数（按日历日，非 48 小时、非仅 dd 相减） */
+export function getCalendarDayGap(latestDateKey, todayDateKey) {
+  const latest = toLocalDateKey(latestDateKey)
+  const today = toLocalDateKey(todayDateKey)
+  if (!latest || !today) return 0
+
+  const latestMs = new Date(`${latest}T12:00:00`).getTime()
+  const todayMs = new Date(`${today}T12:00:00`).getTime()
+  if (Number.isNaN(latestMs) || Number.isNaN(todayMs)) return 0
+
+  return Math.round((todayMs - latestMs) / 86_400_000)
+}
+
 /**
- * 是否应自动拉取最新开奖数据：
- * 1. 今天已过 21:10
- * 2. 今天 21:10 之后尚未刷新过（白天手动刷过也会再拉）
- * 3. 本地最新一期开奖日期不是今天（说明还没有当天开奖数据）
+ * 进入页面时是否应自动拉取最新开奖数据（手动刷新不受此限制）：
+ *
+ * 1. 已过今天 21:10：本地最新一期日期不是今天
+ * 2. 未到今天 21:10：本地最新一期与今天相差的自然日 >= 2
  */
 export function shouldAutoRefresh(options = {}) {
   const {
-    lastRefreshMs = getLastRefreshTime(),
     latestIssueDate = getLatestIssueDateFromCache(),
     hour = DEFAULT_REFRESH_HOUR,
     minute = DEFAULT_REFRESH_MINUTE,
     now = Date.now(),
   } = options
 
-  const scheduleTime = getTodayScheduleTime(hour, minute, now)
   const todayKey = toLocalDateKey(now)
-
-  if (now < scheduleTime) return false
-
-  if (lastRefreshMs >= scheduleTime) return false
-
   const latestIssueKey = toLocalDateKey(latestIssueDate)
-  if (latestIssueKey && latestIssueKey === todayKey) return false
+  if (!latestIssueKey) return false
 
-  return true
+  const scheduleTime = getTodayScheduleTime(hour, minute, now)
+  const afterSchedule = now >= scheduleTime
+
+  if (afterSchedule) {
+    return latestIssueKey !== todayKey
+  }
+
+  return getCalendarDayGap(latestIssueKey, todayKey) >= 2
 }
 
 export function formatCacheTime(timestamp) {

@@ -6,9 +6,12 @@
   "scripts": {
     "fetch-data": "node scripts/fetch-data.mjs",
     "dev": "vite",
+    "dev:5500": "vite --port 5500",
     "build": "vite build",
     "preview": "vite preview",
-    "serve": "node scripts/serve.mjs"
+    "preview:5500": "vite preview --port 5500",
+    "serve": "node scripts/serve.mjs",
+    "serve:5500": "node scripts/serve.mjs 5500"
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",

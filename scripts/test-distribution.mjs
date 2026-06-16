@@ -2,7 +2,7 @@ import { parseKl8Text } from '../src/api/lottery.js'
 import { buildDistribution } from '../src/utils/distribution.js'
 import fs from 'node:fs'
 
-const text = fs.readFileSync('public/data/kl8.txt', 'utf8')
+const text = fs.readFileSync('scripts/fixtures/kl8.txt', 'utf8')
 const records = parseKl8Text(text)
 const chart = buildDistribution(records, 30)
 

@@ -334,6 +334,7 @@ function submit() {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  width: 100%;
   margin-top: 8px;
   height: 50px;
   border: none;
