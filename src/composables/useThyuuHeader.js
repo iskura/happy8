@@ -137,7 +137,7 @@ export function useThyuuHeader() {
     syncFirstSectionZone()
     syncActiveSection()
     syncSectionNavOpen()
-    if (openDialog.value) {
+    if (openDialog.value === 'mobile-menu') {
       closeDialogs()
     }
     syncBodyNavClasses()

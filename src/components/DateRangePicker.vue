@@ -20,6 +20,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  teleport: {
+    type: Boolean,
+    default: false,
+  },
+  panelClass: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['update:start', 'update:end', 'change'])
@@ -67,6 +75,8 @@ function setEnd(value) {
       placeholder="开始日期"
       search-placeholder="搜索日期..."
       :disabled="disabled || !sortedDates.length"
+      :teleport="teleport"
+      :panel-class="panelClass"
       @update:model-value="setStart"
     />
     <span class="range-sep">至</span>
@@ -77,6 +87,8 @@ function setEnd(value) {
       placeholder="结束日期"
       search-placeholder="搜索日期..."
       :disabled="disabled || !sortedDates.length"
+      :teleport="teleport"
+      :panel-class="panelClass"
       @update:model-value="setEnd"
     />
   </div>

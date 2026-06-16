@@ -22,9 +22,18 @@ const router = createRouter({
           component: () => import('../App.vue'),
         },
         {
+          path: 'report',
+          name: 'report',
+          component: () => import('../views/ReportPage.vue'),
+        },
+        {
+          path: 'docs',
+          name: 'docs',
+          component: () => import('../views/DocsPage.vue'),
+        },
+        {
           path: 'about',
-          name: 'about',
-          component: () => import('../views/AboutPage.vue'),
+          redirect: '/report',
         },
       ],
     },

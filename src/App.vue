@@ -5,11 +5,9 @@ import {
   refreshLotteryDataFromUpstream,
 } from './api/lottery.js'
 import { useLotteryAutoRefresh } from './composables/useLotteryAutoRefresh.js'
-import { useLoveModal, useRestReminder } from './composables/useAppModals.js'
 import { getScheduleLabel, shouldAutoRefresh } from './utils/lotteryCache.js'
 import { notifyError, notifySuccess } from './utils/uiMessage.js'
 import { analyzeNumbers } from './utils/numberPicker.js'
-import BaseModal from './components/common/BaseModal.vue'
 import ResultPanel from './components/ResultPanel.vue'
 import DetailTable from './components/DetailTable.vue'
 import ChartSection from './components/ChartSection.vue'
@@ -26,9 +24,6 @@ const dataUpdatedAt = ref('')
 
 const refreshScheduleLabel = getScheduleLabel()
 
-const { showRestReminder, setupRestReminder, dismissRestReminder } = useRestReminder()
-const { showLoveModal, loveModalShake, setupLoveModal, answerLove } = useLoveModal()
-
 const dataSourceLabel = computed(() => {
   if (dataSource.value === 'cache') return '本地缓存'
   if (dataSource.value === 'bundled') return '内置数据'
@@ -43,6 +38,7 @@ const pageMeta = computed(() => ({
 }))
 
 provide('pageMeta', pageMeta)
+provide('lotteryRecords', records)
 
 let autoRefreshRunning = false
 
@@ -153,17 +149,14 @@ function rerunAnalysis() {
 }
 
 onMounted(async () => {
-  setupLoveModal()
   await loadData()
-  setupRestReminder()
   await tryScheduledRefresh()
   checkSchedule()
 })
 </script>
 
 <template>
-  <div class="app">
-    <main class="main">
+  <main class="main">
       <div
         v-if="loading"
         class="state-card"
@@ -236,58 +229,6 @@ onMounted(async () => {
       <p>规则说明：对每个开奖号，在之前 N 期内找到曾开出该号的期次，取其次一期开奖号中与该号跨度最小的邻号入选，再按相同跨度反向选号。重复入选为 A 类，仅 1 次为 B 类。</p>
       <p class="disclaimer">开奖数据仅供参考，请以官方公告为准。</p>
     </footer>
-
-    <BaseModal
-      :show="showLoveModal"
-      :shake="loveModalShake"
-      aria-labelledby="love-modal-title"
-    >
-      <p
-        id="love-modal-title"
-        class="modal-text"
-      >
-        老婆，你爱我吗？
-      </p>
-      <div class="modal-actions">
-        <button
-          type="button"
-          class="btn modal-btn modal-btn--love-yes"
-          @click="answerLove('yes')"
-        >
-          爱
-        </button>
-        <button
-          type="button"
-          class="btn modal-btn modal-btn--love-no"
-          @click="answerLove('no')"
-        >
-          不爱
-        </button>
-      </div>
-    </BaseModal>
-
-    <BaseModal
-      :show="showRestReminder"
-      variant="secondary"
-      dismiss-on-backdrop
-      aria-labelledby="rest-modal-title"
-      @dismiss="dismissRestReminder"
-    >
-      <p
-        id="rest-modal-title"
-        class="modal-text modal-text--sm"
-      >
-        老婆别看了，休息下。给我发消息了！
-      </p>
-      <button
-        type="button"
-        class="btn modal-btn modal-btn--wide"
-        @click="dismissRestReminder"
-      >
-        好的
-      </button>
-    </BaseModal>
-  </div>
 </template>
 
 <style scoped>

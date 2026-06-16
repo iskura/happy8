@@ -1,15 +1,24 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
+const SHOW_DELAY_MS = 180
+
 export function useStatTip() {
   const statTip = ref(null)
   const statTipRef = ref(null)
+  let showTimer = null
 
   function showStatTip(event, stat) {
+    clearTimeout(showTimer)
+
     const rect = event.currentTarget.getBoundingClientRect()
     const anchorX = rect.left + rect.width / 2
-    const text = Array.isArray(stat.help) ? stat.help.join('\n') : stat.help
-    statTip.value = {
-      key: stat.key,
+    const text = stat.text ?? (
+      stat.help != null
+        ? (Array.isArray(stat.help) ? stat.help.join('\n') : stat.help)
+        : undefined
+    )
+    const payload = {
+      ...stat,
       text,
       anchorX,
       x: anchorX,
@@ -18,7 +27,12 @@ export function useStatTip() {
       placement: 'top',
       arrowOffset: 0,
     }
-    nextTick(adjustStatTipPosition)
+
+    showTimer = setTimeout(() => {
+      showTimer = null
+      statTip.value = payload
+      nextTick(adjustStatTipPosition)
+    }, SHOW_DELAY_MS)
   }
 
   function adjustStatTipPosition() {
@@ -61,6 +75,8 @@ export function useStatTip() {
   }
 
   function hideStatTip() {
+    clearTimeout(showTimer)
+    showTimer = null
     statTip.value = null
   }
 
@@ -70,6 +86,7 @@ export function useStatTip() {
   })
 
   onBeforeUnmount(() => {
+    clearTimeout(showTimer)
     window.removeEventListener('resize', hideStatTip)
     window.removeEventListener('scroll', hideStatTip, true)
   })

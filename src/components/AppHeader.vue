@@ -1,7 +1,8 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useThyuuHeader } from '../composables/useThyuuHeader.js'
+import NumberRecordPanel from './NumberRecordPanel.vue'
 
 defineProps({
   dataUpdatedAt: {
@@ -23,10 +24,7 @@ defineProps({
 })
 
 const route = useRoute()
-const router = useRouter()
 const faviconUrl = `${import.meta.env.BASE_URL}favicon.png`
-const panelSearch = ref('')
-
 const {
   activeSection,
   scrollProgress,
@@ -42,7 +40,8 @@ const {
 
 const routeMenu = [
   { id: 'home', label: '选号分析', to: '/home' },
-  { id: 'about', label: '规则说明', to: '/about' },
+  { id: 'report', label: '数据报表', to: '/report' },
+  { id: 'docs', label: '文档生成', to: '/docs' },
 ]
 
 const sectionNav = [
@@ -62,19 +61,6 @@ function isSectionActive(itemId) {
 function goSection(target) {
   scrollToSection(target)
   closeDialogs()
-}
-
-function onPanelSearch() {
-  const keyword = panelSearch.value.trim()
-  if (!keyword) return
-  const matchedRoute = routeMenu.find((item) => item.label.includes(keyword))
-  if (matchedRoute) {
-    closeDialogs()
-    router.push(matchedRoute.to)
-    return
-  }
-  const matchedSection = sectionNav.find((item) => item.label.includes(keyword))
-  if (matchedSection) goSection(matchedSection.target)
 }
 
 const sectionNavRef = ref(null)
@@ -233,7 +219,7 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="thyuu-icon-btn thyuu-panel-btn global-panel-btn has-tip"
-          data-tip="全站动态"
+          data-tip="号码记录"
           @click="toggleDialog('global-panel')"
         >
           <i /><i /><i />
@@ -340,76 +326,8 @@ onBeforeUnmount(() => {
     </nav>
   </Transition>
 
-  <aside
-    id="global-panel"
-    class="thyuu-global-panel global-panel"
-    :class="{ 'is-open': openDialog === 'global-panel' }"
-    role="complementary"
-  >
-    <div
-      class="thyuu-global-panel-backdrop"
-      @click="closeDialogs"
-    />
-    <div class="thyuu-global-panel-body">
-      <p class="thyuu-panel-welcome">
-        欢迎来到快乐8选号分析，为您导读全站动态。
-      </p>
-
-      <form
-        class="thyuu-panel-search"
-        @submit.prevent="onPanelSearch"
-      >
-        <input
-          v-model="panelSearch"
-          type="search"
-          placeholder="搜索页面或区块…"
-        />
-        <button type="submit">搜索</button>
-      </form>
-
-      <div class="thyuu-panel-section">
-        <h4>站点导航</h4>
-        <div class="thyuu-panel-links">
-          <RouterLink
-            v-for="item in routeMenu"
-            :key="`pr-${item.id}`"
-            :to="item.to"
-            :class="{ 'is-active': isRouteActive(item.to) }"
-            @click="closeDialogs"
-          >
-            {{ item.label }}
-          </RouterLink>
-        </div>
-      </div>
-
-      <div
-        v-if="showPageNav"
-        class="thyuu-panel-section"
-      >
-        <h4>当前页导航</h4>
-        <div class="thyuu-panel-links">
-          <button
-            v-for="item in sectionNav"
-            :key="`ps-${item.id}`"
-            type="button"
-            @click="goSection(item.target)"
-          >
-            {{ item.label }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="dataUpdatedAt"
-        class="thyuu-panel-section"
-      >
-        <h4>数据状态</h4>
-        <p class="thyuu-panel-meta">
-          更新于 {{ dataUpdatedAt }}
-          <template v-if="dataSourceLabel"> · {{ dataSourceLabel }}</template>
-          <template v-if="refreshScheduleLabel"> · {{ refreshScheduleLabel }} 自动更新</template>
-        </p>
-      </div>
-    </div>
-  </aside>
+  <NumberRecordPanel
+    :open="openDialog === 'global-panel'"
+    @close="closeDialogs"
+  />
 </template>

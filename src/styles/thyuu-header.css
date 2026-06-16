@@ -41,16 +41,19 @@
 }
 
 .app-layout.has-thyuu-header {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   padding-top: calc(var(--thyuu-header-height) + 4px);
 }
 
 .app-layout.has-thyuu-header .app {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   padding-top: 4px;
   padding-bottom: 20px;
-}
-
-.app-layout.has-thyuu-header .about-page {
-  padding: 8px 12px 16px;
 }
 
 html {

@@ -1,14 +1,19 @@
-import { onBeforeUnmount, ref } from 'vue'
+import { ref } from 'vue'
+import { launchFireworks } from '../utils/fireworks.js'
 
 const REST_REMIND_MS = 60 * 60 * 1000
 const SESSION_START_KEY = 'happy8-session-start'
 const REST_SHOWN_KEY = 'happy8-rest-shown'
 
-/** 休息提醒弹窗逻辑 — 抽离自 App.vue */
-export function useRestReminder() {
-  const showRestReminder = ref(false)
-  let restReminderTimer = null
+const showRestReminder = ref(false)
+let restReminderTimer = null
 
+const showLoveModal = ref(false)
+const loveModalShake = ref(false)
+let loveShakeTimer = null
+
+/** 休息提醒弹窗 — 全局单例，挂载于 AppLayout */
+export function useRestReminder() {
   function getSessionStart() {
     const stored = sessionStorage.getItem(SESSION_START_KEY)
     if (stored) return Number(stored)
@@ -24,6 +29,7 @@ export function useRestReminder() {
   }
 
   function setupRestReminder() {
+    if (restReminderTimer) return
     if (sessionStorage.getItem(REST_SHOWN_KEY)) return
 
     const remaining = REST_REMIND_MS - (Date.now() - getSessionStart())
@@ -39,10 +45,6 @@ export function useRestReminder() {
     showRestReminder.value = false
   }
 
-  onBeforeUnmount(() => {
-    if (restReminderTimer) window.clearTimeout(restReminderTimer)
-  })
-
   return {
     showRestReminder,
     setupRestReminder,
@@ -50,12 +52,8 @@ export function useRestReminder() {
   }
 }
 
-/** 爱心弹窗逻辑 — 抽离自 App.vue */
+/** 爱心弹窗 — 全局单例，挂载于 AppLayout */
 export function useLoveModal() {
-  const showLoveModal = ref(false)
-  const loveModalShake = ref(false)
-  let loveShakeTimer = null
-
   function setupLoveModal() {
     showLoveModal.value = true
   }
@@ -63,6 +61,7 @@ export function useLoveModal() {
   function answerLove(choice) {
     if (choice === 'yes') {
       showLoveModal.value = false
+      launchFireworks()
       return
     }
 
@@ -76,10 +75,6 @@ export function useLoveModal() {
       }, 520)
     })
   }
-
-  onBeforeUnmount(() => {
-    if (loveShakeTimer) window.clearTimeout(loveShakeTimer)
-  })
 
   return {
     showLoveModal,

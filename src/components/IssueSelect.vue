@@ -35,6 +35,14 @@ const props = defineProps({
     type: String,
     default: 'default',
   },
+  teleport: {
+    type: Boolean,
+    default: false,
+  },
+  panelClass: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -64,6 +72,8 @@ const options = computed(() => {
   return list
 })
 
+const isDisabled = computed(() => props.disabled || options.value.length === 0)
+
 function filterOption(input, option) {
   if (option?.value === '') return true
 
@@ -90,8 +100,10 @@ function handleChange(value) {
     :filter-option="filterOption"
     :placeholder="resolvedPlaceholder"
     :search-placeholder="searchPlaceholder"
-    :disabled="disabled || !records.length"
+    :disabled="isDisabled"
     :tone="resolvedTone"
+    :teleport="teleport"
+    :panel-class="panelClass"
     :class="{
       'issue-block': resolvedTone === 'default',
       'issue-embed': resolvedTone === 'accent',

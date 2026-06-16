@@ -64,28 +64,43 @@
   min-width: 100px;
 }
 
+.modal-btn-icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+
 .modal-btn--wide {
   min-width: 120px;
 }
 
-.modal-btn--love-yes {
+.btn.modal-btn--love-yes {
   background: linear-gradient(135deg, var(--color-btn-love), var(--primary));
   border: none;
   color: var(--text-on-primary);
+  box-shadow: 0 8px 20px rgba(251, 113, 133, 0.35);
 }
 
-.modal-btn--love-yes:hover {
-  filter: brightness(1.05);
+.btn.modal-btn--love-yes:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow: 0 10px 24px rgba(251, 113, 133, 0.42);
 }
 
-.modal-btn--love-no {
+.btn.modal-btn--love-no {
   background: var(--color-btn-neutral-bg);
   border: var(--border-width) solid var(--border);
   color: var(--text-soft);
+  box-shadow: none;
 }
 
-.modal-btn--love-no:hover {
+.btn.modal-btn--love-no:hover:not(:disabled) {
   background: var(--color-btn-neutral-hover);
+  transform: none;
+  box-shadow: none;
+}
+
+.btn.modal-btn--rest-ok {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
 }
 
 .modal-shake {
@@ -108,9 +123,37 @@
 }
 
 /* ── 统计帮助气泡 ── */
-.stat-help-popover {
+.stat-help-popover-anchor {
   position: fixed;
   z-index: var(--z-tooltip);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - var(--spacing-sm)));
+}
+
+.stat-help-popover-anchor.is-bottom {
+  transform: translate(-50%, var(--spacing-sm));
+}
+
+.stat-tip-enter-active .stat-help-popover,
+.stat-tip-leave-active .stat-help-popover {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.stat-tip-enter-from .stat-help-popover,
+.stat-tip-leave-to .stat-help-popover {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.stat-tip-enter-from.stat-help-popover-anchor.is-bottom .stat-help-popover,
+.stat-tip-leave-to.stat-help-popover-anchor.is-bottom .stat-help-popover {
+  transform: translateY(-6px);
+}
+
+.stat-help-popover {
+  position: relative;
   width: max-content;
   max-width: min(280px, calc(100vw - var(--spacing-xl)));
   padding: var(--spacing-sm) var(--spacing-md);
@@ -124,7 +167,6 @@
   white-space: normal;
   box-shadow: var(--shadow-tooltip);
   pointer-events: none;
-  transform: translate(-50%, calc(-100% - var(--spacing-sm)));
 }
 
 .stat-help-popover--compact {
@@ -132,8 +174,60 @@
   white-space: pre-line;
 }
 
-.stat-help-popover.is-bottom {
-  transform: translate(-50%, var(--spacing-sm));
+.stat-help-popover--balls {
+  max-width: calc(100vw - var(--spacing-xl));
+  overflow: visible;
+  background: var(--color-surface-glass);
+  color: var(--text);
+  border: var(--border-width) solid var(--border);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(2em) saturate(1.4);
+  -webkit-backdrop-filter: blur(2em) saturate(1.4);
+}
+
+.stat-help-popover--balls .stat-help-popover__empty {
+  color: var(--text-dim);
+}
+
+.stat-help-popover__text {
+  margin: 0;
+}
+
+.stat-help-popover__ball-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stat-help-popover__ball-row--nowrap {
+  flex-wrap: nowrap;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.stat-help-popover__group-gap {
+  flex-shrink: 0;
+  width: 10px;
+}
+
+.stat-help-popover__ball-row .ball {
+  display: inline-flex;
+  box-shadow: none;
+}
+
+.stat-help-popover__ball {
+  width: var(--ball-size-sm);
+  height: var(--ball-size-sm);
+  min-width: var(--ball-size-sm);
+  max-width: var(--ball-size-sm);
+  font-size: var(--ball-font-sm);
+}
+
+.stat-help-popover__empty {
+  margin: 0;
+  color: var(--color-tooltip-fg-muted, rgba(255, 255, 255, 0.72));
 }
 
 .stat-help-popover::after {
@@ -151,6 +245,34 @@
   bottom: 100%;
   border-top-color: transparent;
   border-bottom-color: var(--color-tooltip-bg);
+}
+
+.stat-help-popover.stat-help-popover--balls::after {
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: none;
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(2em) saturate(1.4);
+  -webkit-backdrop-filter: blur(2em) saturate(1.4);
+}
+
+.stat-help-popover.stat-help-popover--balls:not(.is-bottom)::after {
+  top: 100%;
+  bottom: auto;
+  transform: translate(-50%, -5px) rotate(45deg);
+  border-right: var(--border-width) solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.stat-help-popover.stat-help-popover--balls.is-bottom::after {
+  top: auto;
+  bottom: 100%;
+  transform: translate(-50%, 5px) rotate(45deg);
+  border-top: var(--border-width) solid var(--border);
+  border-left: var(--border-width) solid var(--border);
+  border-right: none;
+  border-bottom: none;
 }
 
 /* ── 图标操作按钮 ── */

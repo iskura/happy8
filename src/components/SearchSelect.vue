@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -38,14 +38,24 @@ const props = defineProps({
     type: Function,
     default: null,
   },
+  teleport: {
+    type: Boolean,
+    default: false,
+  },
+  panelClass: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const rootRef = ref(null)
+const panelRef = ref(null)
 const listRef = ref(null)
 const open = ref(false)
 const keyword = ref('')
+const panelStyle = ref({})
 
 const resolvedTone = computed(() => {
   if (props.tone) return props.tone
@@ -86,16 +96,57 @@ watch(filteredOptions, () => {
   resetListScroll()
 })
 
+function updatePanelPosition() {
+  if (!props.teleport || !rootRef.value) return
+  const rect = rootRef.value.getBoundingClientRect()
+  panelStyle.value = {
+    position: 'fixed',
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+    minWidth: `${rect.width}px`,
+  }
+}
+
+function bindPanelPositionListeners() {
+  window.addEventListener('scroll', updatePanelPosition, true)
+  window.addEventListener('resize', updatePanelPosition, { passive: true })
+}
+
+function unbindPanelPositionListeners() {
+  window.removeEventListener('scroll', updatePanelPosition, true)
+  window.removeEventListener('resize', updatePanelPosition)
+}
+
+watch(open, (isOpen) => {
+  if (isOpen && props.teleport) {
+    nextTick(() => {
+      updatePanelPosition()
+      bindPanelPositionListeners()
+    })
+    return
+  }
+  if (!isOpen) {
+    unbindPanelPositionListeners()
+    panelStyle.value = {}
+  }
+})
+
 function toggleOpen() {
   if (props.disabled) return
-  open.value = !open.value
-  if (open.value) keyword.value = ''
+  const nextOpen = !open.value
+  if (nextOpen) {
+    if (props.teleport) updatePanelPosition()
+    keyword.value = ''
+  }
+  open.value = nextOpen
 }
 
 function closePanel(commitCustom = true) {
   if (open.value && commitCustom) commitCustomValue()
   open.value = false
   keyword.value = ''
+  unbindPanelPositionListeners()
+  panelStyle.value = {}
 }
 
 function selectOption(option) {
@@ -126,17 +177,19 @@ function handleSearchKeydown(event) {
 }
 
 function handleClickOutside(event) {
-  if (!rootRef.value?.contains(event.target)) {
-    closePanel(true)
-  }
+  const target = event.target
+  if (rootRef.value?.contains(target)) return
+  if (panelRef.value?.contains(target)) return
+  closePanel(true)
 }
 
 onMounted(() => {
-  document.addEventListener('mousedown', handleClickOutside)
+  document.addEventListener('click', handleClickOutside)
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('mousedown', handleClickOutside)
+  document.removeEventListener('click', handleClickOutside)
+  unbindPanelPositionListeners()
 })
 </script>
 
@@ -150,44 +203,62 @@ onBeforeUnmount(() => {
       type="button"
       class="search-select-trigger"
       :disabled="disabled"
-      @click="toggleOpen"
+      @mousedown.stop
+      @click.stop="toggleOpen"
     >
       <span v-if="displayText" class="search-select-value">{{ displayText }}</span>
       <span v-else class="search-select-placeholder">{{ placeholder }}</span>
       <span class="search-select-arrow" aria-hidden="true">▾</span>
     </button>
 
-    <div v-if="open" class="search-select-panel">
-      <input
-        v-model="keyword"
-        type="text"
-        class="search-select-input"
-        :placeholder="searchPlaceholder"
-        @keydown="handleSearchKeydown"
-      />
+    <Teleport
+      to="body"
+      :disabled="!teleport"
+    >
       <div
-        v-if="filteredOptions.length"
-        ref="listRef"
-        class="search-select-list-wrap"
+        v-if="open"
+        ref="panelRef"
+        class="search-select-panel"
+        :class="[panelClass, { 'is-teleported': teleport }]"
+        :style="teleport ? panelStyle : null"
       >
-        <ul
-          :key="keyword"
-          class="search-select-list"
+        <input
+          v-model="keyword"
+          type="text"
+          class="search-select-input"
+          :placeholder="searchPlaceholder"
+          @keydown="handleSearchKeydown"
+        />
+        <div
+          v-if="filteredOptions.length"
+          ref="listRef"
+          class="search-select-list-wrap"
         >
-          <li
-            v-for="(option, index) in filteredOptions"
-            :key="`${option.value}__${index}`"
-            class="search-select-option"
-            :class="{ active: option.value === modelValue }"
-            @mousedown.prevent="selectOption(option)"
+          <ul
+            :key="keyword"
+            class="search-select-list"
           >
-            {{ option.label }}
-          </li>
-        </ul>
+            <li
+              v-for="(option, index) in filteredOptions"
+              :key="`${option.value}__${index}`"
+              class="search-select-option"
+              :class="{ active: option.value === modelValue }"
+              @mousedown.prevent="selectOption(option)"
+            >
+              {{ option.label }}
+            </li>
+          </ul>
+        </div>
+        <p
+          v-else
+          class="search-select-empty"
+        >无匹配项</p>
+        <p
+          v-if="allowCustom"
+          class="search-select-tip"
+        >输入后按 Enter 确认</p>
       </div>
-      <p v-else class="search-select-empty">无匹配项</p>
-      <p v-if="allowCustom" class="search-select-tip">输入后按 Enter 确认</p>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -282,6 +353,13 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-sm);
   background: var(--color-surface);
   box-shadow: var(--shadow-soft);
+}
+
+.search-select-panel.is-teleported {
+  position: fixed;
+  top: auto;
+  left: auto;
+  z-index: 10060;
 }
 
 .search-select-input {
