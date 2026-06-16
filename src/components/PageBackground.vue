@@ -24,7 +24,7 @@ const bgUrl = `${import.meta.env.BASE_URL}background.png`
 .page-background-image {
   position: absolute;
   inset: 0;
-  background-color: #081426;
+  background-color: var(--color-black);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;

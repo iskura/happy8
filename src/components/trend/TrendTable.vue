@@ -15,6 +15,7 @@ import TrendChartPrediction from './TrendChartPrediction.vue'
 import ChartStatsSection from './ChartStatsSection.vue'
 import PredictionMergeDialog from './PredictionMergeDialog.vue'
 import TableDrawOverlay from '../draw/TableDrawOverlay.vue'
+import StatHelpPopover from '../common/StatHelpPopover.vue'
 import './trend-table.css'
 
 const props = defineProps({
@@ -278,66 +279,15 @@ const showDrawOverlay = computed(() => {
       @cancel="cancelMergeSelection"
     />
 
-    <Teleport to="body">
-      <div
-        v-if="statTip"
-        ref="statTipRef"
-        class="stat-help-popover"
-        :class="{ 'is-bottom': statTip.placement === 'bottom' }"
-        role="tooltip"
-        :style="{
-          left: `${statTip.x}px`,
-          top: `${statTip.y}px`,
-          '--arrow-offset': `${statTip.arrowOffset}px`,
-        }"
-      >
-        {{ statTip.text }}
-      </div>
-    </Teleport>
+    <StatHelpPopover
+      :tip="statTip"
+      :tip-ref="statTipRef"
+      compact
+    />
   </div>
 </template>
 
 <style scoped>
-.stat-help-popover {
-  position: fixed;
-  z-index: 10001;
-  width: max-content;
-  max-width: min(280px, calc(100vw - 20px));
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: #1e293b;
-  color: #f8fafc;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.45;
-  text-align: left;
-  white-space: pre-line;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
-  pointer-events: none;
-  transform: translate(-50%, calc(-100% - 8px));
-}
-
-.stat-help-popover.is-bottom {
-  transform: translate(-50%, 8px);
-}
-
-.stat-help-popover::after {
-  content: '';
-  position: absolute;
-  left: calc(50% + var(--arrow-offset, 0px));
-  top: 100%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #1e293b;
-}
-
-.stat-help-popover.is-bottom::after {
-  top: auto;
-  bottom: 100%;
-  border-top-color: transparent;
-  border-bottom-color: #1e293b;
-}
-
 .draw-layer-wrap {
   position: relative;
 }

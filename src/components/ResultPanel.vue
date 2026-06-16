@@ -16,6 +16,8 @@ import LookbackSelect from './LookbackSelect.vue'
 import SearchSelect from './SearchSelect.vue'
 import CopyButton from './CopyButton.vue'
 import PredictionRowButton from './PredictionRowButton.vue'
+import StatHelpPopover from './common/StatHelpPopover.vue'
+import { useActionFeedback } from '../composables/useActionFeedback.js'
 import { useStatTip } from '../composables/trend/useStatTip.js'
 
 const props = defineProps({
@@ -83,8 +85,8 @@ function isColdNumber(num) {
   return coldNumberSet.value.has(num)
 }
 
-const copiedKey = ref('')
-const addedPredKey = ref('')
+const { trigger: triggerCopied, isActive: isCopied } = useActionFeedback()
+const { trigger: triggerAdded, isActive: isAdded } = useActionFeedback()
 const predictionRows = ref([createPredictionRow()])
 const selectedPredIndex = ref(loadCClassRowIndex())
 
@@ -172,11 +174,8 @@ async function copyNumbers(key, text) {
     notifyError('复制失败')
     return
   }
-  copiedKey.value = key
+  triggerCopied(key)
   notifySuccess('复制成功')
-  window.setTimeout(() => {
-    if (copiedKey.value === key) copiedKey.value = ''
-  }, 1500)
 }
 
 function addNumbersToPrediction(key, numbers) {
@@ -189,11 +188,8 @@ function addNumbersToPrediction(key, numbers) {
   saveCClassRowIndex(result.index)
   reloadPredictionRows()
 
-  addedPredKey.value = key
+  triggerAdded(key)
   notifySuccess(`已生成预测第 ${result.index} 行（${numbers.length} 个号码）`)
-  window.setTimeout(() => {
-    if (addedPredKey.value === key) addedPredKey.value = ''
-  }, 1500)
 }
 
 function addClassToPrediction(key, classItems) {
@@ -265,14 +261,14 @@ function addClassToPrediction(key, classItems) {
           <div class="class-title-meta">
             <PredictionRowButton
               v-if="result.classA.length"
-              :added="addedPredKey === 'a-pred'"
+              :added="isAdded('a-pred')"
               :disabled="disabled"
               title="生成预测行并填入 A 类号码"
               @click="addClassToPrediction('a-pred', result.classA)"
             />
             <CopyButton
               v-if="result.classA.length"
-              :copied="copiedKey === 'a'"
+              :copied="isCopied('a')"
               title="复制 A 类号码"
               @click="copyNumbers('a', classAText)"
             />
@@ -315,14 +311,14 @@ function addClassToPrediction(key, classItems) {
           <div class="class-title-meta">
             <PredictionRowButton
               v-if="result.classB.length"
-              :added="addedPredKey === 'b-pred'"
+              :added="isAdded('b-pred')"
               :disabled="disabled"
               title="生成预测行并填入 B 类号码"
               @click="addClassToPrediction('b-pred', result.classB)"
             />
             <CopyButton
               v-if="result.classB.length"
-              :copied="copiedKey === 'b'"
+              :copied="isCopied('b')"
               title="复制 B 类号码"
               @click="copyNumbers('b', classBText)"
             />
@@ -350,7 +346,7 @@ function addClassToPrediction(key, classItems) {
           <div class="class-title-meta">
             <CopyButton
               v-if="selectedPredictionNumbers.length"
-              :copied="copiedKey === 'c-pred'"
+              :copied="isCopied('c-pred')"
               title="复制预测号码"
               @click="copyNumbers('c-pred', selectedPredictionText)"
             />
@@ -388,14 +384,14 @@ function addClassToPrediction(key, classItems) {
               <div class="overlap-head-meta">
                 <PredictionRowButton
                   v-if="overlapA.length"
-                  :added="addedPredKey === 'c-a-pred'"
+                  :added="isAdded('c-a-pred')"
                   :disabled="disabled"
                   title="生成预测行并填入与 A 类重复号码"
                   @click="addNumbersToPrediction('c-a-pred', overlapA)"
                 />
                 <CopyButton
                   v-if="overlapA.length"
-                  :copied="copiedKey === 'c-a'"
+                  :copied="isCopied('c-a')"
                   title="复制与 A 类重复号码"
                   @click="copyNumbers('c-a', overlapAText)"
                 />
@@ -416,14 +412,14 @@ function addClassToPrediction(key, classItems) {
               <div class="overlap-head-meta">
                 <PredictionRowButton
                   v-if="nonOverlapA.length"
-                  :added="addedPredKey === 'c-not-a-pred'"
+                  :added="isAdded('c-not-a-pred')"
                   :disabled="disabled"
                   title="生成预测行并填入与 A 类不重复号码"
                   @click="addNumbersToPrediction('c-not-a-pred', nonOverlapA)"
                 />
                 <CopyButton
                   v-if="nonOverlapA.length"
-                  :copied="copiedKey === 'c-not-a'"
+                  :copied="isCopied('c-not-a')"
                   title="复制与 A 类不重复号码"
                   @click="copyNumbers('c-not-a', nonOverlapAText)"
                 />
@@ -444,14 +440,14 @@ function addClassToPrediction(key, classItems) {
               <div class="overlap-head-meta">
                 <PredictionRowButton
                   v-if="overlapB.length"
-                  :added="addedPredKey === 'c-b-pred'"
+                  :added="isAdded('c-b-pred')"
                   :disabled="disabled"
                   title="生成预测行并填入与 B 类重复号码"
                   @click="addNumbersToPrediction('c-b-pred', overlapB)"
                 />
                 <CopyButton
                   v-if="overlapB.length"
-                  :copied="copiedKey === 'c-b'"
+                  :copied="isCopied('c-b')"
                   title="复制与 B 类重复号码"
                   @click="copyNumbers('c-b', overlapBText)"
                 />
@@ -477,14 +473,14 @@ function addClassToPrediction(key, classItems) {
               <div class="overlap-head-meta">
                 <PredictionRowButton
                   v-if="nonOverlapB.length"
-                  :added="addedPredKey === 'c-not-b-pred'"
+                  :added="isAdded('c-not-b-pred')"
                   :disabled="disabled"
                   title="生成预测行并填入与 B 类不重复号码"
                   @click="addNumbersToPrediction('c-not-b-pred', nonOverlapB)"
                 />
                 <CopyButton
                   v-if="nonOverlapB.length"
-                  :copied="copiedKey === 'c-not-b'"
+                  :copied="isCopied('c-not-b')"
                   title="复制与 B 类不重复号码"
                   @click="copyNumbers('c-not-b', nonOverlapBText)"
                 />
@@ -514,22 +510,11 @@ function addClassToPrediction(key, classItems) {
       C 类重复合计 <strong>{{ overlapA.length + overlapB.length }}</strong> 个
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="statTip"
-        ref="statTipRef"
-        class="cold-help-popover"
-        :class="{ 'is-bottom': statTip.placement === 'bottom' }"
-        role="tooltip"
-        :style="{
-          left: `${statTip.x}px`,
-          top: `${statTip.y}px`,
-          '--arrow-offset': `${statTip.arrowOffset}px`,
-        }"
-      >
-        {{ statTip.text }}
-      </div>
-    </Teleport>
+    <StatHelpPopover
+      :tip="statTip"
+      :tip-ref="statTipRef"
+    />
+
   </section>
 </template>
 
@@ -555,8 +540,8 @@ function addClassToPrediction(key, classItems) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin: 8px 0 4px;
+  gap: var(--spacing-md);
+  margin: var(--spacing-sm) 0 var(--spacing-xs);
 }
 
 .class-c-label {
@@ -592,11 +577,11 @@ function addClassToPrediction(key, classItems) {
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 1px solid #cbd5e1;
-  border-radius: 50%;
-  background: #fff;
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-circle);
+  background: var(--color-surface);
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 700;
   line-height: 1;
   cursor: help;
@@ -604,9 +589,9 @@ function addClassToPrediction(key, classItems) {
 
 .help-btn:hover,
 .help-wrap:focus-within .help-btn {
-  border-color: #16a34a;
-  color: #16a34a;
-  background: #f0fdf4;
+  border-color: var(--success);
+  color: var(--success);
+  background: var(--success-bg);
 }
 
 .help-wrap {
@@ -614,56 +599,16 @@ function addClassToPrediction(key, classItems) {
   align-items: center;
 }
 
-.cold-help-popover {
-  position: fixed;
-  z-index: 10001;
-  width: max-content;
-  max-width: min(280px, calc(100vw - 20px));
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: #1e293b;
-  color: #f8fafc;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.45;
-  text-align: left;
-  white-space: normal;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
-  pointer-events: none;
-  transform: translate(-50%, calc(-100% - 8px));
-}
-
-.cold-help-popover.is-bottom {
-  transform: translate(-50%, 8px);
-}
-
-.cold-help-popover::after {
-  content: '';
-  position: absolute;
-  left: calc(50% + var(--arrow-offset, 0px));
-  top: 100%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #1e293b;
-}
-
-.cold-help-popover.is-bottom::after {
-  top: auto;
-  bottom: 100%;
-  border-top-color: transparent;
-  border-bottom-color: #1e293b;
-}
-
 .overlap-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px 36px;
-  margin-top: 16px;
+  gap: var(--spacing-xl) 36px;
+  margin-top: var(--spacing-lg);
 }
 
 .overlap-section {
   padding-top: 14px;
-  border-top: 1px dashed var(--border);
+  border-top: var(--border-width) dashed var(--border);
 }
 
 @media (max-width: 720px) {
@@ -676,19 +621,19 @@ function addClassToPrediction(key, classItems) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .overlap-head h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 700;
   color: var(--text);
 }
 
 .overlap-count {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--text-dim);
 }

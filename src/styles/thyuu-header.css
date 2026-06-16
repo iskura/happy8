@@ -1,7 +1,7 @@
 :root {
   --thyuu-header-height: 3.5rem;
   --thyuu-content-width: 920px;
-  --thyuu-medium-width: min(var(--thyuu-content-width), calc(100% - 2 * var(--thyuu-edgelr)));
+  --thyuu-medium-width: min(var(--thyuu-content-width), calc(100% - 2 * var(--thyuu-shell-margin-inline)));
   --thyuu-main: 239deg 29% 54%;
   --thyuu-font-head: hsl(0deg 0% 22%);
   --thyuu-font-soft: hsl(0deg 0% 42%);
@@ -9,8 +9,11 @@
   --thyuu-back-shift: hsl(0deg 0% 98% / 0.82);
   --thyuu-border: 1px solid hsl(0deg 0% 0% / 0.06);
   --thyuu-shadow: 0 8px 32px hsl(0deg 0% 0% / 0.08);
-  --thyuu-radius: 1rem;
-  --thyuu-edgelr: clamp(12px, 2vw, 24px);
+  /* 顶栏 / nav 外壳圆角，直接读取 variables.css 中的 --radius-header-shell */
+  --thyuu-radius-shell: var(--radius-header-shell);
+  --thyuu-radius: var(--radius-header-inner);
+  --thyuu-shell-margin-inline: var(--header-shell-margin-inline);
+  --thyuu-edgelr: var(--header-content-inline);
   --thyuu-ease-hero: cubic-bezier(0.6, 0.1, 0, 1);
 }
 
@@ -24,31 +27,33 @@
 }
 
 :root[theme='dark'] body {
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--color-dark-bg);
+  color: var(--border);
 }
 
 :root[theme='dark'] body::before {
   background:
     radial-gradient(ellipse 70% 50% at 50% -20%, rgba(79, 70, 229, 0.12), transparent 60%),
-    linear-gradient(180deg, #1e293b 0%, #0f172a 300px);
+    linear-gradient(180deg, var(--color-tooltip-bg) 0%, var(--color-dark-bg) 300px);
 }
 
 .app-layout.has-thyuu-header {
-  padding-top: calc(var(--thyuu-header-height) + 4px);
+  padding-top: calc(var(--thyuu-header-height) + var(--spacing-xs));
+  padding-bottom: 0;
 }
 
 .app-layout.has-thyuu-header .app {
-  padding-top: 4px;
-  padding-bottom: 20px;
+  padding: var(--spacing-xs) var(--page-inline) 0;
 }
 
 .app-layout.has-thyuu-header .about-page {
-  padding: 8px 12px 16px;
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
 }
 
-.app-layout.has-thyuu-header.has-page-nav {
-  padding-bottom: calc(var(--thyuu-header-height) + 8px);
+/* 仅底部页内 nav 出现时预留刚好够用的空间 */
+body.nav-hided .app-layout.has-thyuu-header.has-page-nav {
+  padding-bottom: var(--page-nav-reserve);
 }
 
 html {
@@ -56,7 +61,7 @@ html {
 }
 
 html:has(body.nav-hided) {
-  scroll-padding-bottom: calc(var(--thyuu-header-height) + 8px);
+  scroll-padding-bottom: var(--page-nav-reserve);
 }
 
 .thyuu-header-area {
@@ -72,7 +77,9 @@ html:has(body.nav-hided) {
   height: var(--thyuu-header-height);
   padding-inline: var(--thyuu-edgelr);
   margin-inline: auto;
+  overflow: visible;
   font-size: 15px;
+  box-sizing: border-box;
   transition:
     opacity 0.5s var(--thyuu-ease-hero),
     transform 0.5s var(--thyuu-ease-hero),
@@ -82,11 +89,13 @@ html:has(body.nav-hided) {
 .thyuu-header-area::before {
   content: '';
   position: absolute;
-  inset: 0.5em;
+  inset-block: 0.5em;
+  /* 毛玻璃左右比 logo 再内缩 2px；只改这里，不动 --header-content-inline */
+  inset-inline: calc(0.5em + 2px);
   background: var(--thyuu-back-shift);
   backdrop-filter: blur(2em) saturate(1.4);
   -webkit-backdrop-filter: blur(2em) saturate(1.4);
-  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  border-radius: var(--thyuu-radius-shell);
   box-shadow: var(--thyuu-shadow);
   outline: var(--thyuu-border);
   pointer-events: none;
@@ -107,12 +116,13 @@ html:has(body.nav-hided) {
     visibility 0.45s;
 }
 
-/* ── 顶部：全宽 + 毛玻璃 ── */
+/* ── 顶部：全宽 ── */
 body.nav-at-top .thyuu-header-area {
   max-width: 100%;
 }
 
-body.nav-at-top .thyuu-header-area::before {
+body.nav-at-top .thyuu-header-area::before,
+body.nav-compact .thyuu-header-area::before {
   opacity: 1;
   transform: none;
 }
@@ -130,16 +140,11 @@ body.nav-at-top .site-logo::before {
   transform: scale(0.88);
 }
 
-/* ── 中等：非全宽紧凑条（向上滚从最小展开到此态） ── */
+/* ── 紧凑：header 收成中等宽度，内容区仍全宽 ── */
 body.nav-compact .thyuu-header-area {
   max-width: var(--thyuu-medium-width);
   left: 0;
   right: 0;
-}
-
-body.nav-compact .thyuu-header-area::before {
-  opacity: 1;
-  transform: none;
 }
 
 body.nav-compact .header-menu,
@@ -194,7 +199,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   content: '';
   position: absolute;
   inset: -0.65em -1.2em;
-  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  border-radius: var(--thyuu-radius-shell);
   background: var(--thyuu-back-shift);
   backdrop-filter: blur(2em) saturate(1.4);
   -webkit-backdrop-filter: blur(2em) saturate(1.4);
@@ -219,7 +224,6 @@ body.nav-hided .thyuu-header-area .site-icon {
   z-index: 1;
 }
 
-/* 桌面：离开顶部后切换为中等宽度 */
 @media (min-width: 1153px) {
   body.nav-compact .thyuu-header-area {
     max-width: var(--thyuu-medium-width);
@@ -286,13 +290,13 @@ body.nav-hided .thyuu-header-area .site-icon {
 .happy8-switch-nav {
   --switch-nav-ease: cubic-bezier(0.5, 0, 0, 1.4);
   position: fixed;
-  inset: auto 0.5rem 1rem;
+  inset: auto var(--thyuu-shell-margin-inline) var(--spacing-lg);
   width: fit-content;
-  max-width: calc(100% - 1em);
+  max-width: calc(100% - 2 * var(--thyuu-shell-margin-inline));
   margin: auto;
   padding: 0.25em;
   border: thin solid hsl(var(--thyuu-main) / 0.15);
-  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  border-radius: var(--thyuu-radius-shell);
   background: var(--thyuu-back-shift);
   backdrop-filter: blur(2em) saturate(1.4);
   -webkit-backdrop-filter: blur(2em) saturate(1.4);
@@ -307,7 +311,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   flex-wrap: nowrap;
   align-items: center;
   overflow: hidden;
-  border-radius: calc(min(calc(var(--thyuu-radius) * 2), 2em) - 0.25em);
+  border-radius: calc(var(--thyuu-radius-shell) - var(--spacing-xs));
   contain: paint;
 }
 
@@ -316,7 +320,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   top: 0;
   bottom: 0;
   left: 0;
-  border-radius: calc(min(calc(var(--thyuu-radius) * 2), 2em) - 0.25em);
+  border-radius: calc(var(--thyuu-radius-shell) - var(--spacing-xs));
   background: hsl(var(--thyuu-main) / 0.12);
   pointer-events: none;
   z-index: 0;
@@ -327,7 +331,7 @@ body.nav-hided .thyuu-header-area .site-icon {
 
 @media (width <= 1152px) {
   .happy8-switch-nav {
-    inset: auto 0.5em 0.5em;
+    inset: auto var(--thyuu-shell-margin-inline) var(--spacing-lg);
   }
 }
 
@@ -374,7 +378,6 @@ body.nav-hided .thyuu-header-area .site-icon {
   border-radius: var(--thyuu-radius);
 }
 
-.thyuu-menu-out .menu > li > button,
 .thyuu-menu-out .menu > li > a {
   display: inline-flex;
   align-items: center;
@@ -388,19 +391,16 @@ body.nav-hided .thyuu-header-area .site-icon {
   line-height: var(--thyuu-header-height);
   cursor: pointer;
   white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s, opacity 0.15s;
 }
 
-.thyuu-menu-out .menu > li > button::after {
-  content: '▾';
-  font-size: 0.75em;
-  opacity: 0.45;
+.thyuu-menu-out .menu > li > a.is-active,
+.thyuu-menu-out .menu > li > a.router-link-active {
+  color: hsl(var(--thyuu-main));
 }
 
-.thyuu-menu-out .menu > li:not(.has-children) > button::after {
-  display: none;
-}
-
-.thyuu-menu-out .menu:hover > li:not(:hover) > button {
+.thyuu-menu-out .menu:hover > li:not(:hover) > a {
   opacity: 0.55;
 }
 
@@ -412,7 +412,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   margin: 0;
   padding: 0.45em;
   list-style: none;
-  border-radius: var(--thyuu-radius);
+  border-radius: var(--thyuu-radius-shell);
   background: var(--thyuu-back-shift);
   backdrop-filter: blur(1.2em) saturate(1.5);
   -webkit-backdrop-filter: blur(1.2em) saturate(1.5);
@@ -462,10 +462,10 @@ body.nav-hided .thyuu-header-area .site-icon {
   width: 100%;
   padding: 0.65em 0.75em;
   border: none;
-  border-radius: calc(var(--thyuu-radius) * 0.75);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--thyuu-font-head);
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 600;
   text-align: left;
   text-decoration: none;
@@ -479,15 +479,6 @@ body.nav-hided .thyuu-header-area .site-icon {
 .thyuu-menu-out .sub-menu button.is-active {
   color: hsl(var(--thyuu-main));
   background: hsl(var(--thyuu-main) / 0.1);
-}
-
-.thyuu-menu-out .sub-menu .item-dot {
-  width: 0.45em;
-  height: 0.45em;
-  border-radius: 50%;
-  background: hsl(var(--thyuu-main));
-  opacity: 0.65;
-  flex-shrink: 0;
 }
 
 .thyuu-site-icon {
@@ -504,7 +495,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   width: 1em;
   height: 1em;
   background: currentColor;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   box-shadow:
     -0.7em 0 0 -0.4em,
     -0.5em 0.5em 0 -0.4em,
@@ -553,7 +544,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   height: 2.1em;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: transparent;
   color: var(--thyuu-font-head);
   cursor: pointer;
@@ -583,7 +574,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   gap: 0.15em;
   min-width: 7.5rem;
   padding: 0.35em;
-  border-radius: var(--thyuu-radius);
+  border-radius: var(--thyuu-radius-shell);
   background: var(--thyuu-back-shift);
   backdrop-filter: blur(1em) saturate(1.5);
   box-shadow: var(--thyuu-shadow);
@@ -605,7 +596,7 @@ body.nav-hided .thyuu-header-area .site-icon {
 .thyuu-theme-opt {
   padding: 0.55em 0.75em;
   border: none;
-  border-radius: calc(var(--thyuu-radius) * 0.75);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--thyuu-font-head);
   font-size: 13px;
@@ -690,7 +681,7 @@ body.nav-hided .thyuu-header-area .site-icon {
 .thyuu-panel-welcome {
   margin: 0 0 1rem;
   padding: 0.85rem 1rem;
-  border-radius: var(--thyuu-radius);
+  border-radius: var(--thyuu-radius-shell);
   background: hsl(var(--thyuu-main) / 0.08);
   color: var(--thyuu-font-head);
   font-size: 13px;
@@ -709,10 +700,10 @@ body.nav-hided .thyuu-header-area .site-icon {
   height: 2.5rem;
   padding: 0 0.85rem;
   border: var(--thyuu-border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: hsl(0deg 0% 100% / 0.65);
   color: var(--thyuu-font-head);
-  font-size: 14px;
+  font-size: var(--font-size-body);
   outline: none;
 }
 
@@ -725,9 +716,9 @@ body.nav-hided .thyuu-header-area .site-icon {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: hsl(var(--thyuu-main));
-  color: #fff;
+  color: var(--color-surface);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -739,7 +730,7 @@ body.nav-hided .thyuu-header-area .site-icon {
 
 .thyuu-panel-section h4 {
   margin: 0 0 0.5rem;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -756,10 +747,10 @@ body.nav-hided .thyuu-header-area .site-icon {
 .thyuu-panel-links button {
   padding: 0.65rem 0.75rem;
   border: none;
-  border-radius: calc(var(--thyuu-radius) * 0.75);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--thyuu-font-head);
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 600;
   text-align: left;
   text-decoration: none;
@@ -774,7 +765,7 @@ body.nav-hided .thyuu-header-area .site-icon {
 
 .thyuu-panel-meta {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   line-height: 1.6;
   color: var(--thyuu-font-soft);
 }
@@ -799,7 +790,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   text-align: center;
   color: var(--thyuu-font-head);
   background: currentColor;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   overflow: hidden;
   cursor: pointer;
   z-index: 29;
@@ -839,7 +830,7 @@ body.nav-hided .thyuu-header-area .site-icon {
   font-family: inherit;
   font-style: normal;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--font-size-tiny);
   line-height: 1;
   white-space: nowrap;
   pointer-events: none;
@@ -853,11 +844,11 @@ body.nav-hided .thyuu-header-area .site-icon {
   color: hsl(var(--thyuu-main));
 }
 
-.thyuu-header-area .thyuu-iconfont.go-top .num.btn {
-  font-size: 12px;
+.thyuu-header-area .thyuu-iconfont.go-top .num.go-top-arrow {
+  font-size: var(--font-size-small);
 }
 
-.thyuu-header-area .thyuu-iconfont.go-top .num.btn::before {
+.thyuu-header-area .thyuu-iconfont.go-top .num.go-top-arrow::before {
   content: '\f07a';
   font-family: thyuu-iconfont, sans-serif;
   font-style: normal;
@@ -866,22 +857,22 @@ body.nav-hided .thyuu-header-area .site-icon {
   -webkit-font-smoothing: antialiased;
 }
 
-.thyuu-header-area .go-top:not(:hover) .num:not(.btn) {
+.thyuu-header-area .go-top:not(:hover) .num:not(.go-top-arrow) {
   opacity: 1;
   transform: translateY(0);
 }
 
-.thyuu-header-area .go-top:not(:hover) .num.btn {
+.thyuu-header-area .go-top:not(:hover) .num.go-top-arrow {
   opacity: 0;
   transform: translateY(0.85em);
 }
 
-.thyuu-header-area .go-top:hover .num:not(.btn) {
+.thyuu-header-area .go-top:hover .num:not(.go-top-arrow) {
   opacity: 0;
   transform: translateY(0.85em);
 }
 
-.thyuu-header-area .go-top:hover .num.btn {
+.thyuu-header-area .go-top:hover .num.go-top-arrow {
   opacity: 1;
   transform: translateY(0);
 }
@@ -904,10 +895,10 @@ body.nav-hided .thyuu-header-area .site-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: min(calc(var(--thyuu-radius) * 2), 2em);
+  border-radius: var(--thyuu-radius-shell);
   background: var(--thyuu-font-head);
-  color: #fff;
-  font-size: 12px;
+  color: var(--color-surface);
+  font-size: var(--font-size-small);
   font-weight: 600;
   white-space: nowrap;
   opacity: 0;
@@ -944,10 +935,10 @@ body.nav-hided .thyuu-header-area .site-icon {
   .thyuu-menu-mobile-panel {
     display: block;
     position: fixed;
-    inset: calc(var(--thyuu-header-height) + 0.5rem) 0.75rem auto;
+    inset: calc(var(--thyuu-header-height) + var(--spacing-sm)) var(--thyuu-shell-margin-inline) auto;
     z-index: 320;
     padding: 0.75rem;
-    border-radius: var(--thyuu-radius);
+    border-radius: var(--thyuu-radius-shell);
     background: var(--thyuu-back-shift);
     backdrop-filter: blur(1.2em);
     box-shadow: var(--thyuu-shadow);
@@ -979,10 +970,10 @@ body.nav-hided .thyuu-header-area .site-icon {
     width: 100%;
     padding: 0.75rem;
     border: none;
-    border-radius: calc(var(--thyuu-radius) * 0.75);
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--thyuu-font-head);
-    font-size: 14px;
+    font-size: var(--font-size-body);
     font-weight: 600;
     text-align: left;
     text-decoration: none;

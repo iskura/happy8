@@ -116,8 +116,8 @@ function applyFilters() {
         <button
           v-for="chart in CHART_TYPES"
           :key="chart.id"
-          class="nav-btn"
-          :class="{ active: chart.id === activeChart }"
+          class="toolbar-btn toolbar-btn--nav"
+          :class="{ 'is-active': chart.id === activeChart }"
           :title="chart.label"
           @click="selectChart(chart)"
         >
@@ -140,16 +140,16 @@ function applyFilters() {
         <button
           v-for="day in WEEKDAY_OPTIONS"
           :key="day.value"
-          class="filter-btn"
-          :class="{ active: filters.weekdays.includes(day.value) }"
+          class="toolbar-btn"
+          :class="{ 'is-active': filters.weekdays.includes(day.value) }"
           @click="toggleWeekday(day.value)"
         >
           {{ day.label }}
         </button>
         <span class="filter-divider" />
-        <button class="filter-btn" :class="{ active: filters.issueParity === 'odd' }" @click="setParity('odd')">单期</button>
-        <button class="filter-btn" :class="{ active: filters.issueParity === 'even' }" @click="setParity('even')">双期</button>
-        <button class="filter-btn" :class="{ active: filters.issueParity === 'all' }" @click="setParity('all')">全部</button>
+        <button class="toolbar-btn" :class="{ 'is-active': filters.issueParity === 'odd' }" @click="setParity('odd')">单期</button>
+        <button class="toolbar-btn" :class="{ 'is-active': filters.issueParity === 'even' }" @click="setParity('even')">双期</button>
+        <button class="toolbar-btn" :class="{ 'is-active': filters.issueParity === 'all' }" @click="setParity('all')">全部</button>
       </div>
 
       <div class="filter-group issue-range">
@@ -173,8 +173,8 @@ function applyFilters() {
           search-placeholder="搜索结束期号"
           @update:model-value="updateIssueEnd"
         />
-        <button class="filter-btn primary" @click="applyFilters">查看</button>
-        <button class="filter-btn" @click="showSamePeriod = !showSamePeriod">
+        <button class="toolbar-btn toolbar-btn--primary" @click="applyFilters">查看</button>
+        <button class="toolbar-btn" @click="showSamePeriod = !showSamePeriod">
           {{ showSamePeriod ? '收起同期筛选' : '同期筛选' }}
         </button>
       </div>
@@ -186,8 +186,8 @@ function applyFilters() {
         <button
           v-for="tail in 10"
           :key="tail"
-          class="filter-btn sm"
-          :class="{ active: filters.issueTails.includes(tail - 1) }"
+          class="toolbar-btn toolbar-btn--sm"
+          :class="{ 'is-active': filters.issueTails.includes(tail - 1) }"
           @click="toggleMulti('issueTails', tail - 1)"
         >
           {{ tail - 1 }}尾
@@ -201,7 +201,7 @@ function applyFilters() {
           :dates="availableDates"
           @change="handleDateChange"
         />
-        <button type="button" class="filter-btn reset-btn" @click="resetSamePeriod">重置条件</button>
+        <button type="button" class="toolbar-btn reset-btn" @click="resetSamePeriod">重置条件</button>
       </div>
     </div>
 
@@ -210,8 +210,8 @@ function applyFilters() {
       <button
         v-for="item in MARK_OPTIONS"
         :key="item.key"
-        class="mark-btn"
-        :class="{ active: marks[item.key] }"
+        class="toolbar-btn toolbar-btn--mark"
+        :class="{ 'is-active': marks[item.key] }"
         @click="toggleMark(item.key)"
       >
         {{ item.label }}
@@ -235,7 +235,7 @@ function applyFilters() {
   gap: 10px;
   align-items: flex-start;
   padding: 10px 12px;
-  background: #fafbfc;
+  background: var(--color-nav-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
@@ -254,28 +254,6 @@ function applyFilters() {
   gap: 6px;
 }
 
-.nav-btn {
-  border: 1px solid #d8dee9;
-  background: #fff;
-  color: var(--text);
-  padding: 5px 12px;
-  border-radius: 4px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.nav-btn:hover {
-  border-color: #7cb3ff;
-  color: #1677ff;
-}
-
-.nav-btn.active {
-  border-color: #1677ff;
-  color: #1677ff;
-  font-weight: 600;
-}
-
 .filter-bar,
 .mark-bar,
 .same-period-panel {
@@ -284,7 +262,7 @@ function applyFilters() {
   gap: 8px;
   align-items: center;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: visible;
@@ -298,56 +276,27 @@ function applyFilters() {
 }
 
 .filter-group-label {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--text-dim);
   margin-right: 2px;
 }
 
 .filter-divider {
-  width: 1px;
+  width: var(--border-width);
   height: 18px;
   background: var(--border-strong);
-  margin: 0 4px;
+  margin: 0 var(--spacing-xs);
 }
 
-.filter-btn {
-  border: 1px solid #d8dee9;
-  background: #fff;
-  color: var(--text-soft);
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.filter-btn:hover {
-  border-color: #1677ff;
-  color: #1677ff;
-}
-
-.filter-btn.active {
-  background: #e6f4ff;
-  border-color: #1677ff;
-  color: #1677ff;
-  font-weight: 600;
-}
-
-.filter-btn.primary {
-  background: #1677ff;
-  border-color: #1677ff;
-  color: #fff;
-}
-
-.filter-btn.sm {
+.toolbar-btn--sm {
   min-width: 36px;
   padding: 3px 6px;
 }
 
 .issue-range {
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--text-soft);
 }
 
@@ -367,7 +316,7 @@ function applyFilters() {
 .same-label {
   flex-shrink: 0;
   width: 48px;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--text-dim);
 }
@@ -386,26 +335,9 @@ function applyFilters() {
 }
 
 .mark-label {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--text-dim);
-  margin-right: 4px;
-}
-
-.mark-btn {
-  border: 1px solid #d8dee9;
-  background: #fff;
-  color: var(--text-soft);
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.mark-btn.active {
-  background: #fff7e6;
-  border-color: #ffc53d;
-  color: #d48806;
-  font-weight: 600;
+  margin-right: var(--spacing-xs);
 }
 </style>

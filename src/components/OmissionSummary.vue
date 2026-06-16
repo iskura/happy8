@@ -65,15 +65,15 @@ defineProps({
 }
 
 .summary-table th {
-  background: #f8fafc;
+  background: var(--color-surface-alt);
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--font-size-small);
   position: sticky;
   top: 0;
 }
 
 .summary-table tbody tr:hover {
-  background: #f8fafc;
+  background: var(--color-surface-alt);
 }
 
 .num-ball {
@@ -82,15 +82,15 @@ defineProps({
   justify-content: center;
   min-width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: #fff1f2;
+  border-radius: var(--radius-circle);
+  background: var(--primary-bg);
   color: var(--primary);
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--font-size-small);
 }
 
 .hot {
-  color: #dc2626;
+  color: var(--danger);
   font-weight: 700;
 }
 </style>

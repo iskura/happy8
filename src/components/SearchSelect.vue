@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-sm);
   background: var(--bg-soft);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--font-size-body);
   cursor: pointer;
   text-align: left;
 }
@@ -230,18 +230,18 @@ onBeforeUnmount(() => {
 .search-select.accent .search-select-trigger {
   min-height: 28px;
   padding: 2px 8px;
-  border-color: #fecdd3;
-  background: #fff1f2;
+  border-color: var(--primary-border);
+  background: var(--primary-bg);
   font-weight: 700;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .search-select.filter .search-select-trigger {
   min-height: 28px;
   padding: 4px 8px;
   border-color: var(--border-strong);
-  background: #fff;
-  font-size: 12px;
+  background: var(--color-surface);
+  font-size: var(--font-size-small);
   font-weight: 400;
   color: var(--text);
 }
@@ -265,7 +265,7 @@ onBeforeUnmount(() => {
 
 .search-select-arrow {
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: var(--font-size-tiny);
   color: var(--text-dim);
 }
 
@@ -280,7 +280,7 @@ onBeforeUnmount(() => {
   padding: 8px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--color-surface);
   box-shadow: var(--shadow-soft);
 }
 
@@ -288,13 +288,13 @@ onBeforeUnmount(() => {
   width: 100%;
   padding: 6px 8px;
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-size: 13px;
   outline: none;
 }
 
 .search-select-input:focus {
-  border-color: #1677ff;
+  border-color: var(--link);
 }
 
 .search-select-list-wrap {
@@ -312,21 +312,21 @@ onBeforeUnmount(() => {
 
 .search-select-option {
   padding: 6px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-size: 13px;
   cursor: pointer;
 }
 
 .search-select-option:hover,
 .search-select-option.active {
-  background: #e6f4ff;
-  color: #1677ff;
+  background: var(--link-bg-active);
+  color: var(--link);
 }
 
 .search-select-empty,
 .search-select-tip {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--text-dim);
 }
 </style>

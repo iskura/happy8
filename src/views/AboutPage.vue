@@ -26,8 +26,8 @@ import { RouterLink } from 'vue-router'
 .about-card {
   padding: 1.5rem;
   border-radius: var(--radius-md);
-  background: #fff;
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  background: var(--color-surface);
+  box-shadow: 0 8px 32px var(--shadow-card);
 }
 
 .about-card h1 {

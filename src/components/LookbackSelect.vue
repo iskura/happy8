@@ -110,7 +110,7 @@ function handleChange(value) {
 }
 
 .lookback-label {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--text-dim);
   white-space: nowrap;

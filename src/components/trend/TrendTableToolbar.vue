@@ -85,7 +85,7 @@ function setRowOrder(order) {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--text-dim);
 }
 
@@ -103,38 +103,38 @@ function setRowOrder(order) {
   gap: 6px;
   flex-shrink: 0;
   padding: 4px 8px;
-  background: #f8fafc;
+  background: var(--color-surface-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 
 .toolbar-label {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--text-dim);
 }
 
 .toolbar-btn {
-  border: 1px solid #d8dee9;
-  background: #fff;
+  border: 1px solid var(--border-input);
+  background: var(--color-surface);
   color: var(--text-soft);
   padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--radius-xs);
+  font-size: var(--font-size-small);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .toolbar-btn:hover {
-  border-color: #1677ff;
-  color: #1677ff;
+  border-color: var(--link);
+  color: var(--link);
 }
 
 .toolbar-btn.active {
-  background: #e6f4ff;
-  border-color: #1677ff;
-  color: #1677ff;
+  background: var(--link-bg-active);
+  border-color: var(--link);
+  color: var(--link);
 }
 
 .legend-items {
@@ -151,37 +151,37 @@ function setRowOrder(order) {
   gap: 6px;
   flex-shrink: 0;
   padding: 4px 8px;
-  background: #f8fafc;
+  background: var(--color-surface-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 
 .legend-order-label {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--text-dim);
 }
 
 .legend-order-btn {
-  border: 1px solid #d8dee9;
-  background: #fff;
+  border: 1px solid var(--border-input);
+  background: var(--color-surface);
   color: var(--text-soft);
   padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--radius-xs);
+  font-size: var(--font-size-small);
   font-weight: 600;
   cursor: pointer;
 }
 
 .legend-order-btn:hover {
-  border-color: #1677ff;
-  color: #1677ff;
+  border-color: var(--link);
+  color: var(--link);
 }
 
 .legend-order-btn.active {
-  background: #e6f4ff;
-  border-color: #1677ff;
-  color: #1677ff;
+  background: var(--link-bg-active);
+  border-color: var(--link);
+  color: var(--link);
 }
 
 .legend-item {
@@ -194,14 +194,14 @@ function setRowOrder(order) {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
-.legend-dot.hit { background: linear-gradient(135deg, #fb7185, #e11d48); }
-.legend-dot.miss { background: #f1f5f9; border: 1px solid var(--border); }
-.legend-dot.mark-repeat { background: #dbeafe; border: 2px solid #2563eb; }
-.legend-dot.mark-edge { background: #fef9c3; border: 2px solid #ca8a04; }
-.legend-dot.bose-red { background: #fecaca; }
-.legend-dot.bose-blue { background: #bfdbfe; }
-.legend-dot.bose-green { background: #bbf7d0; }
+.legend-dot.hit { background: linear-gradient(135deg, var(--chart-legend-pink-from), var(--primary)); }
+.legend-dot.miss { background: var(--color-surface-muted); border: 1px solid var(--border); }
+.legend-dot.mark-repeat { background: var(--ball-source-ring); border: 2px solid var(--info); }
+.legend-dot.mark-edge { background: var(--warning-surface); border: 2px solid var(--warning-strong); }
+.legend-dot.bose-red { background: var(--chart-legend-bose-red); }
+.legend-dot.bose-blue { background: var(--info-border); }
+.legend-dot.bose-green { background: var(--success-border); }
 </style>

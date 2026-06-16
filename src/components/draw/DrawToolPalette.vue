@@ -159,18 +159,18 @@ if (typeof window !== 'undefined') {
   justify-content: center;
   width: 30px;
   height: 30px;
-  border: 1px solid #d8dee9;
-  border-radius: 4px;
-  background: #fff;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
   color: var(--text-soft);
   cursor: pointer;
 }
 
 .draw-tool-trigger:hover,
 .draw-tool-trigger.active {
-  border-color: #1677ff;
-  color: #1677ff;
-  background: #f0f7ff;
+  border-color: var(--link);
+  color: var(--link);
+  background: var(--link-bg);
 }
 </style>
 
@@ -181,9 +181,9 @@ if (typeof window !== 'undefined') {
   width: max-content;
   max-width: calc(100vw - 16px);
   padding: 10px 12px;
-  background: #fff;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--chart-freeze-border);
+  border-radius: var(--radius-sm);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
 }
 
@@ -204,15 +204,15 @@ if (typeof window !== 'undefined') {
   border: none;
   background: transparent;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .draw-tool-panel .draw-tool-item:hover {
-  background: #f8fafc;
+  background: var(--color-surface-alt);
 }
 
 .draw-tool-panel .draw-tool-item.active .draw-tool-label {
-  color: #e53935;
+  color: var(--color-draw-active);
   font-weight: 700;
 }
 
@@ -253,8 +253,8 @@ if (typeof window !== 'undefined') {
 }
 
 .draw-tool-panel .draw-tool-label {
-  font-size: 11px;
-  color: #64748b;
+  font-size: var(--font-size-hint);
+  color: var(--icon-muted);
   line-height: 1;
 }
 
@@ -269,7 +269,7 @@ if (typeof window !== 'undefined') {
   width: 22px;
   height: 22px;
   border: 2px solid transparent;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--dot-color);
   cursor: pointer;
   padding: 0;
@@ -277,6 +277,6 @@ if (typeof window !== 'undefined') {
 
 .draw-tool-panel .draw-color-dot.active {
   border-color: var(--dot-color);
-  box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--dot-color);
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 3px var(--dot-color);
 }
 </style>

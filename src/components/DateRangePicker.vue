@@ -95,7 +95,7 @@ function setEnd(value) {
 
 .range-sep {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--text-dim);
 }
 </style>

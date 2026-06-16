@@ -213,7 +213,7 @@ function submit() {
 
 .login-eyebrow {
   margin: 0 0 4px;
-  font-size: 11px;
+  font-size: var(--font-size-hint);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -225,7 +225,7 @@ function submit() {
   font-size: clamp(24px, 5vw, 28px);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #fff;
+  color: var(--color-surface);
   text-shadow: 0 2px 18px rgba(15, 23, 42, 0.35);
 }
 
@@ -279,7 +279,7 @@ function submit() {
   border: none;
   background: transparent;
   font-size: 15px;
-  color: #fff;
+  color: var(--color-surface);
   outline: none;
 }
 
@@ -300,7 +300,7 @@ function submit() {
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: rgba(226, 232, 240, 0.78);
   cursor: pointer;
@@ -313,7 +313,7 @@ function submit() {
 }
 
 .login-toggle:hover:not(:disabled) {
-  color: #fff;
+  color: var(--color-surface);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -326,7 +326,7 @@ function submit() {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #fecaca;
+  color: var(--chart-legend-bose-red);
 }
 
 .login-btn {
@@ -338,8 +338,8 @@ function submit() {
   height: 50px;
   border: none;
   border-radius: 14px;
-  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 52%, #0369a1 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--color-login-accent) 0%, var(--color-login-accent-end) 52%, var(--color-login-accent-dark) 100%);
+  color: var(--color-surface);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;

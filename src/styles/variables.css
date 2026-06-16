@@ -1,0 +1,249 @@
+/* ═══════════════════════════════════════════════════════════
+   全局主题变量 — 修改此处即可统一调整圆角/字号/间距/色彩
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* ── 圆角系列 ── */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 10px;
+  --radius-circle: 50%;
+  --radius-pill: 999px;
+  /* 卡片圆角（内容 panel / hero 等） */
+  --radius-card: var(--radius-lg);
+  /* 顶栏 / 底部 nav 毛玻璃外壳圆角（矮条 12px 视觉约等于 card 18px） */
+  --radius-header-shell: var(--radius-md);
+  /* 顶栏内部控件（菜单项、下拉框等，不影响毛玻璃外壳） */
+  --radius-header-inner: var(--radius-sm);
+  /* 顶栏圆角毛玻璃外壳距浏览器左右的边距（底部页内 nav 用） */
+  --header-shell-margin-inline: clamp(20px, 2vw, 32px);
+  /* 顶栏 logo / 菜单 / 图标距浏览器左右 — 与 card 内标题左对齐 */
+  --header-content-inline: 25px;
+
+  /* ── 字号系列 ── */
+  --font-size-title-lg: clamp(22px, 3.5vw, 28px);
+  --font-size-title: 20px;
+  --font-size-subtitle: 17px;
+  --font-size-body: 14px;
+  --font-size-small: 12px;
+  --font-size-hint: 11px;
+  --font-size-tiny: 10px;
+
+  /* ── 间距系列 ── */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --gap-section: 22px;
+  --gap-card: 18px;
+  /* 页面内容区距浏览器左右 */
+  --page-content-inline: 9px;
+  --page-inline: var(--page-content-inline);
+  --padding-app: var(--spacing-lg) var(--page-inline) var(--spacing-sm);
+  --panel-padding-inline: var(--spacing-lg);
+  --padding-panel: var(--spacing-xl) var(--panel-padding-inline);
+  --padding-modal: var(--spacing-3xl) var(--spacing-2xl) var(--spacing-2xl);
+  /* 底部页内 nav 浮层预留高度（仅 nav 显示时使用） */
+  --page-nav-reserve: calc(2.5rem + var(--spacing-lg));
+
+  /* ── 色彩：基础 ── */
+  --color-white: #ffffff;
+  --color-black: #0f172a;
+  --bg: #f5f7fb;
+  --bg-soft: #eef2f8;
+  --card: var(--color-white);
+  --text: #1e293b;
+  --text-soft: #475569;
+  --text-dim: #94a3b8;
+  --text-on-primary: var(--color-white);
+
+  /* ── 色彩：品牌与功能 ── */
+  --primary: #e11d48;
+  --primary-light: #f43f5e;
+  --primary-dark: #be123c;
+  --primary-bg: #fff1f2;
+  --primary-border: #fecdd3;
+  --accent: #4f46e5;
+  --accent-light: #6366f1;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+  --warning: #d48806;
+  --warning-bg: #fff7e6;
+  --warning-border: #ffc53d;
+  --warning-strong: #ca8a04;
+  --warning-surface: #fef9c3;
+  --warning-surface-border: #facc15;
+  --warning-text: #a16207;
+  --info: #2563eb;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+  --info-border-light: #93c5fd;
+  --info-text: #1d4ed8;
+  --link: #1677ff;
+  --link-hover-border: #7cb3ff;
+  --link-border: #91caff;
+  --link-bg: #f0f7ff;
+  --link-bg-active: #e6f4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --purple-light: #8b5cf6;
+  --cyan: #0891b2;
+  --icon-muted: #64748b;
+
+  /* ── 色彩：球号分类 ── */
+  --a-from: #fb923c;
+  --a-to: #ea580c;
+  --b-from: #22c55e;
+  --b-to: #16a34a;
+  --c-from: #8b5cf6;
+  --c-to: #7c3aed;
+  --draw-from: #818cf8;
+  --draw-to: #4f46e5;
+  --ball-draw: var(--draw-to);
+  --ball-a: var(--a-to);
+  --ball-b: var(--b-to);
+  --ball-c: var(--c-to);
+  --ball-cold: var(--info);
+  --ball-mini: #cbd5e1;
+  --ball-mini-text: #334155;
+  --ball-mini-latest: var(--primary);
+  --ball-adjacent-ring: #ffedd5;
+  --ball-source-ring: #dbeafe;
+  --ball-draw-default: #e2e8f0;
+  --ball-draw-default-text: var(--text-soft);
+
+  /* ── 色彩：边框/分割/背景 ── */
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-input: #d8dee9;
+  --border-summary: #c7d2fe;
+  --color-surface: var(--color-white);
+  --color-surface-muted: #f1f5f9;
+  --color-surface-alt: #f8fafc;
+  --color-row-hover: var(--color-surface-alt);
+  --color-row-latest: var(--primary-bg);
+  --color-surface-skip: #fffbeb;
+  --color-summary-bg: #eef2ff;
+  --color-neutral-bg: var(--color-surface-alt);
+  --color-neutral-border: var(--border);
+  --color-overlay: rgba(15, 23, 42, 0.5);
+  --color-overlay-light: rgba(15, 23, 42, 0.45);
+  --color-overlay-subtle: rgba(15, 23, 42, 0.28);
+  --color-tooltip-bg: var(--text);
+  --color-tooltip-fg: var(--color-surface-alt);
+  --color-btn-neutral-bg: var(--color-surface-muted);
+  --color-btn-neutral-hover: var(--border);
+  --color-btn-love: #fb7185;
+  --color-spinner-track: #fecdd3;
+  --color-class-a-bg-start: #fff7ed;
+  --color-class-b-bg-start: #f0fdf4;
+  --color-class-c-bg-start: #f5f3ff;
+  --color-current-draw-start: #f8fafc;
+  --color-current-draw-end: var(--color-surface-muted);
+  --color-stat-c: var(--c-to);
+  --color-stat-a: var(--a-to);
+  --color-stat-b: var(--b-to);
+  --color-status-hit: #059669;
+  --color-status-hit-bg: #ecfdf5;
+  --color-status-hit-row: var(--success-bg);
+  --color-status-miss: var(--color-surface);
+  --color-status-miss-bg: var(--color-surface-alt);
+  --color-status-miss-text: var(--icon-muted);
+  --color-status-skip-bg: #fff7ed;
+  --color-status-skip-text: var(--a-to);
+  --color-nav-bg: #fafbfc;
+  --color-surface-glass: rgba(255, 255, 255, 0.92);
+  --color-dark-bg: #0f172a;
+  --color-dark-text: #e2e8f0;
+
+  /* ── 走势图/遗漏色阶 ── */
+  --chart-freeze-bg: #eef2f8;
+  --chart-freeze-border: #dbe3ef;
+  --chart-zone-border: #94a3b8;
+  --chart-omission-0: #eef2f7;
+  --chart-omission-1: #e4eaf1;
+  --chart-omission-2: #d8e0ea;
+  --chart-omission-3: #cad4e0;
+  --chart-omission-4: #bcc7d6;
+  --chart-omission-text-1: #5c6b80;
+  --chart-omission-text-2: #536275;
+  --chart-omission-text-3: #4a5869;
+  --chart-omission-text-4: #3f4d5e;
+  --chart-hit-warm-1: #fed7aa;
+  --chart-hit-warm-2: #fdba74;
+  --chart-hit-warm-3: #fb923c;
+  --chart-miss-bg: #fff5f5;
+  --chart-miss-strong: #fef2f2;
+  --chart-edge-bg: #fefce8;
+  --chart-zone-a: #f0f9ff;
+  --chart-zone-b: #e0f2fe;
+  --chart-zone-c: #bae6fd;
+  --chart-mark-repeat: #fca5a5;
+  --chart-mark-repeat-ring: #ef4444;
+  --chart-mark-edge: #eab308;
+  --chart-mark-consecutive: #f87171;
+  --chart-legend-pink-from: #fb7185;
+  --chart-legend-bose-red: #fecaca;
+  --chart-warn-text: #d97706;
+  --chart-pink-bg: #ffe4e6;
+  --chart-zone-highlight: #e8f4ff;
+  --chart-danger-bg: #fee2e2;
+  --chart-pink-mark: #f472b6;
+  --chart-text-deep: #334155;
+  --color-login-accent-end: #0284c7;
+  --color-login-accent-dark: #0369a1;
+  --color-draw-active: #e53935;
+
+  /* ── 阴影 ── */
+  --shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 2px 12px rgba(15, 23, 42, 0.05);
+  --shadow-btn-primary: 0 4px 14px rgba(225, 29, 72, 0.28);
+  --shadow-btn-primary-hover: 0 6px 20px rgba(225, 29, 72, 0.35);
+  --shadow-tooltip: 0 8px 24px rgba(15, 23, 42, 0.22);
+  --shadow-modal: 0 20px 50px rgba(15, 23, 42, 0.22);
+  --shadow-modal-sm: 0 16px 40px rgba(15, 23, 42, 0.2);
+  --shadow-sticky-bottom: 0 -4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 8px 32px rgba(15, 23, 42, 0.06);
+  --shadow-surface: 0 8px 32px rgba(15, 23, 42, 0.08);
+
+  /* ── 边框宽度 ── */
+  --border-width: 1px;
+  --border-width-thick: 2px;
+  --border-width-spinner: 3px;
+  --border-width-accent: 3px;
+  --border-width-label: 3px;
+
+  /* ── 过渡动画 ── */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.5s ease;
+  --ease-shake: ease;
+
+  /* ── 图标/控件尺寸 ── */
+  --icon-btn-size-md: 28px;
+  --icon-btn-size-sm: 24px;
+  --icon-size-md: 15px;
+  --icon-size-sm: 13px;
+  --icon-size-lg: 17px;
+  --control-height-md: 30px;
+  --control-height-sm: 28px;
+  --ball-size-md: 42px;
+  --ball-size-sm: 36px;
+  --ball-size-mini: 28px;
+  --ball-font-md: var(--font-size-body);
+  --ball-font-sm: 13px;
+  --ball-font-mini: var(--font-size-hint);
+
+  /* ── 层级 ── */
+  --z-modal: 10000;
+  --z-modal-secondary: 9999;
+  --z-dialog: 10020;
+  --z-tooltip: 10001;
+
+}

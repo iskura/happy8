@@ -1,11 +1,12 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import ChartToolbar from './ChartToolbar.vue'
 import TrendTable from './trend/TrendTable.vue'
 import OmissionSummary from './OmissionSummary.vue'
 import { filterRecords } from '../utils/recordFilter.js'
 import { buildChart } from '../utils/charts/index.js'
 import { useDrawTool } from '../composables/useDrawTool.js'
+import { useFullscreen } from '../composables/useFullscreen.js'
 
 const props = defineProps({
   records: {
@@ -37,7 +38,7 @@ const props = defineProps({
 const emit = defineEmits(['refresh'])
 
 const sectionRef = ref(null)
-const isFullscreen = ref(false)
+const { isFullscreen, toggleFullscreen } = useFullscreen(sectionRef)
 
 const activeChart = ref('hmfb')
 
@@ -83,37 +84,14 @@ const availableDates = computed(() => {
 function applyFilters() {
   // 保留钩子
 }
-
-function onFullscreenChange() {
-  isFullscreen.value = document.fullscreenElement === sectionRef.value
-}
-
-async function toggleFullscreen() {
-  const el = sectionRef.value
-  if (!el) return
-
-  try {
-    if (document.fullscreenElement === el) {
-      await document.exitFullscreen()
-    } else {
-      await el.requestFullscreen()
-    }
-  } catch {
-    // 浏览器可能拒绝全屏
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('fullscreenchange', onFullscreenChange)
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('fullscreenchange', onFullscreenChange)
-})
 </script>
 
 <template>
-  <section ref="sectionRef" class="panel chart-section" :class="{ 'is-fullscreen': isFullscreen }">
+  <section
+    ref="sectionRef"
+    class="panel chart-section"
+    :class="{ 'is-fullscreen': isFullscreen }"
+  >
     <header class="section-title">
       <div class="section-title-text">
         <h2>{{ chart.title }}</h2>
@@ -125,7 +103,10 @@ onBeforeUnmount(() => {
         </p>
       </div>
       <div class="section-title-actions">
-        <p v-if="dataUpdatedAt" class="section-data-meta">
+        <p
+          v-if="dataUpdatedAt"
+          class="section-data-meta"
+        >
           更新于 {{ dataUpdatedAt }}
           <template v-if="dataSourceLabel"> · {{ dataSourceLabel }}</template>
           <template v-if="refreshScheduleLabel"> · {{ refreshScheduleLabel }} 自动更新</template>
@@ -137,7 +118,12 @@ onBeforeUnmount(() => {
           :title="refreshing ? '更新中...' : '刷新数据'"
           @click="emit('refresh')"
         >
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            aria-hidden="true"
+          >
             <path
               d="M21 12a9 9 0 1 1-2.64-6.36"
               fill="none"
@@ -163,26 +149,38 @@ onBeforeUnmount(() => {
           :aria-label="isFullscreen ? '退出全屏' : '全屏'"
           @click="toggleFullscreen"
         >
-        <svg v-if="!isFullscreen" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <path
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"
-          />
-        </svg>
-        <svg v-else viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <path
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"
-          />
-        </svg>
+          <svg
+            v-if="!isFullscreen"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            aria-hidden="true"
+          >
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"
+            />
+          </svg>
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            aria-hidden="true"
+          >
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"
+            />
+          </svg>
         </button>
       </div>
     </header>
@@ -198,20 +196,23 @@ onBeforeUnmount(() => {
       @apply="applyFilters"
     />
 
-    <OmissionSummary v-if="isSummary" :data="chart" />
+    <OmissionSummary
+      v-if="isSummary"
+      :data="chart"
+    />
     <TrendTable
       v-else
+      v-model:row-order="rowOrder"
       :chart="chart"
       :marks="marks"
       :draw-tool="drawTool"
-      v-model:row-order="rowOrder"
     />
   </section>
 </template>
 
 <style scoped>
 .chart-section {
-  padding-top: 16px;
+  padding-top: var(--spacing-lg);
   --chart-scroll-max-height: 92vh;
 }
 
@@ -222,9 +223,9 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: 12px;
+  padding: var(--spacing-md);
   overflow: hidden;
-  background: #fff;
+  background: var(--color-surface);
   box-sizing: border-box;
   border: none;
   border-radius: 0;
@@ -235,37 +236,39 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
 .section-title-text h2 {
-  margin: 0 0 4px;
-  font-size: 20px;
+  margin: 0 0 var(--spacing-xs);
+  font-size: var(--font-size-title);
   font-weight: 700;
 }
 
 .section-title .panel-desc {
   margin: 0;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 .section-title-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--spacing-sm);
   flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .section-data-meta {
   margin: 0;
-  max-width: 280px;
-  font-size: 12px;
+  flex-shrink: 0;
+  font-size: var(--font-size-small);
   line-height: 1.4;
   color: var(--text-dim);
   text-align: right;
+  white-space: nowrap;
 }
 
 .chart-refresh-btn {
@@ -273,22 +276,25 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  height: var(--control-height-md);
+  padding: 0 var(--spacing-md);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.92);
   color: var(--text-soft);
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
 }
 
 .chart-refresh-btn:hover:not(:disabled) {
-  color: #1677ff;
-  border-color: #91caff;
-  background: #f0f7ff;
+  color: var(--link);
+  border-color: var(--link-border);
+  background: var(--link-bg);
 }
 
 .chart-refresh-btn:disabled {
@@ -306,15 +312,18 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 30px;
-  height: 30px;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.92);
   color: var(--text-dim);
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
 }
 
 .chart-fullscreen-btn svg {
@@ -325,15 +334,15 @@ onBeforeUnmount(() => {
 }
 
 .chart-fullscreen-btn:hover {
-  color: #1677ff;
-  border-color: #91caff;
-  background: #f0f7ff;
+  color: var(--link);
+  border-color: var(--link-border);
+  background: var(--link-bg);
 }
 
 .chart-section:fullscreen :deep(.chart-toolbar),
 .chart-section.is-fullscreen :deep(.chart-toolbar) {
   flex-shrink: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .chart-section:fullscreen :deep(.distribution-wrap),
@@ -349,12 +358,12 @@ onBeforeUnmount(() => {
   max-height: none;
   flex: 1;
   min-height: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .chart-section:fullscreen :deep(.empty-chart),
 .chart-section.is-fullscreen :deep(.empty-chart) {
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .chart-section:fullscreen :deep(.omission-summary),

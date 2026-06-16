@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════════
+   全局通用样式 — 跨组件复用的结构类
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 模态框 ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  background: var(--color-overlay);
+}
+
+.modal-backdrop--secondary {
+  z-index: var(--z-modal-secondary);
+  background: var(--color-overlay-light);
+}
+
+.modal-backdrop--subtle {
+  z-index: var(--z-dialog);
+  background: var(--color-overlay-subtle);
+  padding: var(--spacing-lg);
+}
+
+.modal-dialog {
+  width: min(100%, 360px);
+  padding: var(--padding-modal);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-modal);
+  text-align: center;
+}
+
+.modal-dialog--compact {
+  width: min(320px, 100%);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal-sm);
+}
+
+.modal-text {
+  margin: 0 0 var(--spacing-2xl);
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.modal-text--sm {
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-subtitle);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+}
+
+.modal-btn {
+  min-width: 100px;
+}
+
+.modal-btn--wide {
+  min-width: 120px;
+}
+
+.modal-btn--love-yes {
+  background: linear-gradient(135deg, var(--color-btn-love), var(--primary));
+  border: none;
+  color: var(--text-on-primary);
+}
+
+.modal-btn--love-yes:hover {
+  filter: brightness(1.05);
+}
+
+.modal-btn--love-no {
+  background: var(--color-btn-neutral-bg);
+  border: var(--border-width) solid var(--border);
+  color: var(--text-soft);
+}
+
+.modal-btn--love-no:hover {
+  background: var(--color-btn-neutral-hover);
+}
+
+.modal-shake {
+  animation: modal-shake var(--transition-normal) var(--ease-shake);
+}
+
+@keyframes modal-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(calc(-1 * var(--spacing-sm)));
+  }
+  40%,
+  80% {
+    transform: translateX(var(--spacing-sm));
+  }
+}
+
+/* ── 统计帮助气泡 ── */
+.stat-help-popover {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  width: max-content;
+  max-width: min(280px, calc(100vw - var(--spacing-xl)));
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  background: var(--color-tooltip-bg);
+  color: var(--color-tooltip-fg);
+  font-size: var(--font-size-small);
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  box-shadow: var(--shadow-tooltip);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - var(--spacing-sm)));
+}
+
+.stat-help-popover--compact {
+  font-size: var(--font-size-hint);
+  white-space: pre-line;
+}
+
+.stat-help-popover.is-bottom {
+  transform: translate(-50%, var(--spacing-sm));
+}
+
+.stat-help-popover::after {
+  content: '';
+  position: absolute;
+  left: calc(50% + var(--arrow-offset, 0px));
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-tooltip-bg);
+}
+
+.stat-help-popover.is-bottom::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--color-tooltip-bg);
+}
+
+/* ── 图标操作按钮 ── */
+.icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--icon-muted);
+  cursor: pointer;
+  overflow: visible;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.icon-action-btn--md {
+  width: var(--icon-btn-size-md);
+  height: var(--icon-btn-size-md);
+}
+
+.icon-action-btn--sm {
+  width: var(--icon-btn-size-sm);
+  height: var(--icon-btn-size-sm);
+}
+
+.icon-action-btn__svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.icon-action-btn--md .icon-action-btn__svg {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+}
+
+.icon-action-btn--sm .icon-action-btn__svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+.icon-action-btn--md.icon-action-btn--prediction .icon-action-btn__svg {
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
+}
+
+.icon-action-btn--sm.icon-action-btn--prediction .icon-action-btn__svg {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+}
+
+.icon-action-btn--info:hover:not(:disabled) {
+  color: var(--info);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+.icon-action-btn--purple:hover:not(:disabled) {
+  color: var(--purple);
+  background: var(--purple-bg);
+  border-color: var(--purple-border);
+}
+
+.icon-action-btn.is-active {
+  color: var(--success);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.icon-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 工具栏按钮（筛选/导航） ── */
+.toolbar-btn {
+  border: var(--border-width) solid var(--border-input);
+  background: var(--color-surface);
+  color: var(--text-soft);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-xs);
+  font-size: var(--font-size-small);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.toolbar-btn:hover {
+  border-color: var(--link);
+  color: var(--link);
+}
+
+.toolbar-btn.is-active {
+  background: var(--link-bg-active);
+  border-color: var(--link);
+  color: var(--link);
+  font-weight: 600;
+}
+
+.toolbar-btn--primary {
+  background: var(--link);
+  border-color: var(--link);
+  color: var(--text-on-primary);
+}
+
+.toolbar-btn--mark.is-active {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--warning);
+}
+
+.toolbar-btn--nav {
+  color: var(--text);
+  padding: 5px var(--spacing-md);
+  font-size: 13px;
+}
+
+.toolbar-btn--nav:hover {
+  border-color: var(--link-hover-border);
+}
+
+.toolbar-btn--sm {
+  min-width: 36px;
+  padding: 3px 6px;
+}

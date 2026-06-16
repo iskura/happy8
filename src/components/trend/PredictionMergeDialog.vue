@@ -46,15 +46,15 @@ defineEmits(['merge', 'delete-merge', 'cancel'])
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(15, 23, 42, 0.28);
+  background: var(--color-overlay-subtle);
 }
 
 .pred-merge-dialog {
   width: min(320px, 100%);
   padding: 18px 20px;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: 0 16px 40px var(--shadow-modal-sm);
 }
 
 .pred-merge-dialog-title {
@@ -65,7 +65,7 @@ defineEmits(['merge', 'delete-merge', 'cancel'])
 }
 
 .pred-merge-dialog-title strong {
-  color: #ca8a04;
+  color: var(--warning-strong);
 }
 
 .pred-merge-dialog-desc {
@@ -84,7 +84,7 @@ defineEmits(['merge', 'delete-merge', 'cancel'])
   flex: 1;
   min-width: 88px;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   border: 1px solid transparent;
   font-size: 13px;
   font-weight: 600;
@@ -92,20 +92,20 @@ defineEmits(['merge', 'delete-merge', 'cancel'])
 }
 
 .pred-merge-action.merge {
-  background: #fef9c3;
-  border-color: #facc15;
-  color: #a16207;
+  background: var(--warning-surface);
+  border-color: var(--warning-surface-border);
+  color: var(--warning-text);
 }
 
 .pred-merge-action.delete-merge {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
+  background: var(--info-bg);
+  border-color: var(--info-border-light);
+  color: var(--info-text);
 }
 
 .pred-merge-action.cancel {
-  background: #f8fafc;
-  border-color: #e2e8f0;
+  background: var(--color-surface-alt);
+  border-color: var(--border);
   color: var(--text-soft);
 }
 

@@ -243,21 +243,21 @@ function statusClass(status) {
 }
 
 .detail-toggle-all-btn {
-  border: 1px solid #d8dee9;
-  background: #fff;
+  border: 1px solid var(--border-input);
+  background: var(--color-surface);
   color: var(--text-soft);
   padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-small);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .detail-toggle-all-btn:hover {
-  border-color: #1677ff;
-  color: #1677ff;
-  background: #f0f7ff;
+  border-color: var(--link);
+  color: var(--link);
+  background: var(--link-bg);
 }
 
 .source-list {
@@ -270,7 +270,7 @@ function statusClass(status) {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .source-card-header {
@@ -280,7 +280,7 @@ function statusClass(status) {
   width: 100%;
   padding: 12px 14px;
   border: none;
-  background: #fafbfc;
+  background: var(--color-nav-bg);
   cursor: pointer;
   text-align: left;
 }
@@ -293,14 +293,14 @@ function statusClass(status) {
 }
 
 .source-meta {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--text-dim);
 }
 
 .source-toggle {
   flex-shrink: 0;
-  font-size: 12px;
-  color: #1677ff;
+  font-size: var(--font-size-small);
+  color: var(--link);
 }
 
 .table-wrap {
@@ -315,46 +315,46 @@ function statusClass(status) {
 
 .sub-text {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--font-size-hint);
   color: var(--text-dim);
 }
 
 .status-tag {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-hint);
   font-weight: 600;
 }
 
 .status-hit .status-tag,
 .status-tag.status-hit {
-  background: #ecfdf5;
-  color: #059669;
+  background: var(--color-status-hit-bg);
+  color: var(--color-status-hit);
 }
 
 .status-miss .status-tag,
 .status-tag.status-miss {
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--color-surface-alt);
+  color: var(--icon-muted);
 }
 
 .status-skip .status-tag,
 .status-tag.status-skip {
-  background: #fff7ed;
-  color: #ea580c;
+  background: var(--color-status-skip-bg);
+  color: var(--a-to);
 }
 
 tbody tr.status-hit {
-  background: #f0fdf4;
+  background: var(--success-bg);
 }
 
 tbody tr.status-miss {
-  background: #fff;
+  background: var(--color-surface);
 }
 
 tbody tr.status-skip {
-  background: #fffbeb;
+  background: var(--color-surface-skip);
 }
 
 .numbers-cell {
@@ -404,13 +404,13 @@ tbody tr.status-skip {
 }
 
 .source-ref-label {
-  font-size: 11px;
+  font-size: var(--font-size-hint);
   font-weight: 600;
-  color: #4f46e5;
+  color: var(--accent);
 }
 
 .next-draw-arrow {
-  font-size: 11px;
+  font-size: var(--font-size-hint);
   color: var(--text-dim);
 }
 
@@ -426,31 +426,31 @@ tbody tr.status-skip {
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  color: #475569;
-  font-size: 11px;
+  border-radius: var(--radius-circle);
+  background: var(--border);
+  color: var(--text-soft);
+  font-size: var(--font-size-hint);
   font-weight: 700;
   line-height: 1;
 }
 
 .draw-ball.is-adjacent {
-  background: #ea580c;
-  color: #fff;
-  box-shadow: 0 0 0 2px #ffedd5;
+  background: var(--a-to);
+  color: var(--color-surface);
+  box-shadow: 0 0 0 2px var(--ball-adjacent-ring);
 }
 
 .draw-ball.is-source-ref {
-  background: #2563eb;
-  color: #fff;
-  box-shadow: 0 0 0 2px #dbeafe;
+  background: var(--info);
+  color: var(--color-surface);
+  box-shadow: 0 0 0 2px var(--ball-source-ring);
 }
 
 .legend-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: var(--font-size-tiny);
   color: var(--text-dim);
 }
 
@@ -458,16 +458,16 @@ tbody tr.status-skip {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 50%;
-  background: #e2e8f0;
+  border-radius: var(--radius-circle);
+  background: var(--border);
 }
 
 .legend-dot.is-adjacent {
-  background: #ea580c;
+  background: var(--a-to);
 }
 
 .legend-dot.is-source-ref {
-  background: #2563eb;
+  background: var(--info);
 }
 
 .pick-group {
