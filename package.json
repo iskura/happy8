@@ -8,7 +8,7 @@
     "dev": "vite",
     "dev:5500": "vite --port 5500",
     "build": "vite build",
-    "cf:deploy": "npm run build && wrangler pages deploy dist --project-name=happy8",
+    "cf:deploy": "npm run build && wrangler deploy",
     "preview": "vite preview",
     "preview:5500": "vite preview --port 5500",
     "serve": "node scripts/serve.mjs",
