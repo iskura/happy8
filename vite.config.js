@@ -11,13 +11,11 @@ const liveProxy = {
   },
 }
 
-/** build 时把 _worker.js 写入 dist，CF Pages Git 部署自动启用 Advanced Mode */
 function cloudflarePagesWorker() {
   const workerSource = readFileSync(
     join(import.meta.dirname, 'scripts/cf-worker.js'),
     'utf8',
   )
-
   return {
     name: 'cloudflare-pages-worker',
     closeBundle() {
@@ -29,10 +27,6 @@ function cloudflarePagesWorker() {
 export default defineConfig({
   plugins: [vue(), cloudflarePagesWorker()],
   base: './',
-  server: {
-    proxy: liveProxy,
-  },
-  preview: {
-    proxy: liveProxy,
-  },
+  server: { proxy: liveProxy },
+  preview: { proxy: liveProxy },
 })
