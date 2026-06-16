@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 const liveProxy = {
   '/api/kl8': {
     target: 'https://data.17500.cn',
@@ -10,7 +12,7 @@ const liveProxy = {
 }
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), cloudflare()],
   base: './',
   server: {
     proxy: liveProxy,
