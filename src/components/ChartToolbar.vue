@@ -25,6 +25,11 @@ const props = defineProps({
 const emit = defineEmits(['update:filters', 'update:marks', 'update:activeChart', 'apply'])
 
 const showSamePeriod = ref(false)
+const showChartNav = ref(false)
+
+const activeChartLabel = computed(
+  () => CHART_TYPES.find((chart) => chart.id === props.activeChart)?.label || '号码分布',
+)
 
 const periodCount = computed({
   get: () => props.filters.periodCount,
@@ -33,6 +38,9 @@ const periodCount = computed({
 
 function selectChart(chart) {
   emit('update:activeChart', chart.id)
+  if (window.matchMedia('(max-width: 640px)').matches) {
+    showChartNav.value = false
+  }
 }
 
 function patchFilters(patch) {
@@ -110,8 +118,24 @@ function applyFilters() {
 
 <template>
   <div class="chart-toolbar">
-    <div class="chart-nav">
-      <span class="nav-label">常用</span>
+    <div
+      class="chart-nav"
+      :class="{ 'is-expanded': showChartNav }"
+    >
+      <button
+        type="button"
+        class="nav-toggle"
+        :aria-expanded="showChartNav"
+        @click="showChartNav = !showChartNav"
+      >
+        <span class="nav-label">常用</span>
+        <span class="nav-current">{{ activeChartLabel }}</span>
+        <span
+          class="nav-chevron"
+          aria-hidden="true"
+        />
+      </button>
+      <span class="nav-label nav-label--desktop">常用</span>
       <div class="nav-items">
         <button
           v-for="chart in CHART_TYPES"
@@ -248,10 +272,91 @@ function applyFilters() {
   color: var(--text);
 }
 
+.nav-toggle {
+  display: none;
+}
+
+.nav-label--desktop {
+  display: block;
+}
+
+.nav-current {
+  display: none;
+}
+
+.nav-chevron {
+  display: none;
+}
+
 .nav-items {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .chart-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .nav-label--desktop {
+    display: none;
+  }
+
+  .nav-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .nav-current {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--link);
+  }
+
+  .nav-chevron {
+    display: block;
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--text-dim);
+    border-bottom: 2px solid var(--text-dim);
+    transform: rotate(45deg);
+    margin-top: -3px;
+    transition: transform var(--transition-fast);
+  }
+
+  .chart-nav.is-expanded .nav-chevron {
+    transform: rotate(-135deg);
+    margin-top: 3px;
+  }
+
+  .nav-label {
+    padding-top: 0;
+  }
+
+  .nav-items {
+    display: none;
+  }
+
+  .chart-nav.is-expanded .nav-items {
+    display: flex;
+  }
 }
 
 .filter-bar,

@@ -6,13 +6,10 @@
   "scripts": {
     "fetch-data": "node scripts/fetch-data.mjs",
     "dev": "vite",
-    "dev:5500": "vite --port 5500",
     "build": "vite build",
     "cf:deploy": "npm run build && wrangler deploy",
     "preview": "vite preview",
-    "preview:5500": "vite preview --port 5500",
-    "serve": "node scripts/serve.mjs",
-    "serve:5500": "node scripts/serve.mjs 5500"
+    "serve": "node scripts/serve.mjs"
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",

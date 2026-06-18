@@ -93,94 +93,94 @@ function applyFilters() {
     :class="{ 'is-fullscreen': isFullscreen }"
   >
     <header class="section-title">
-      <div class="section-title-text">
+      <div class="section-title-row">
         <h2>{{ chart.title }}</h2>
-        <p class="panel-desc">
-          {{ chart.desc }} · 显示 {{ chart.periodCount || filteredRecords.length }} 期
-          <template v-if="filteredRecords.length !== records.length">
-            （已筛选，原始 {{ records.length }} 期）
-          </template>
-        </p>
+        <div class="section-title-actions">
+          <p
+            v-if="dataUpdatedAt"
+            class="section-data-meta"
+          >
+            更新于 {{ dataUpdatedAt }}
+            <template v-if="dataSourceLabel"> · {{ dataSourceLabel }}</template>
+            <template v-if="refreshScheduleLabel"> · {{ refreshScheduleLabel }} 自动更新</template>
+          </p>
+          <button
+            type="button"
+            class="chart-refresh-btn"
+            :disabled="loading || refreshing"
+            :title="refreshing ? '更新中...' : '刷新数据'"
+            @click="emit('refresh')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              aria-hidden="true"
+            >
+              <path
+                d="M21 12a9 9 0 1 1-2.64-6.36"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <path
+                d="M21 3v6h-6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="chart-refresh-btn__label">{{ refreshing ? '更新中' : '刷新数据' }}</span>
+          </button>
+          <button
+            type="button"
+            class="icon-action-btn icon-action-btn--md icon-action-btn--info"
+            :title="isFullscreen ? '退出全屏' : '全屏'"
+            :aria-label="isFullscreen ? '退出全屏' : '全屏'"
+            @click="toggleFullscreen"
+          >
+            <svg
+              v-if="!isFullscreen"
+              class="icon-action-btn__svg"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"
+              />
+            </svg>
+            <svg
+              v-else
+              class="icon-action-btn__svg"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="section-title-actions">
-        <p
-          v-if="dataUpdatedAt"
-          class="section-data-meta"
-        >
-          更新于 {{ dataUpdatedAt }}
-          <template v-if="dataSourceLabel"> · {{ dataSourceLabel }}</template>
-          <template v-if="refreshScheduleLabel"> · {{ refreshScheduleLabel }} 自动更新</template>
-        </p>
-        <button
-          type="button"
-          class="chart-refresh-btn"
-          :disabled="loading || refreshing"
-          :title="refreshing ? '更新中...' : '刷新数据'"
-          @click="emit('refresh')"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            aria-hidden="true"
-          >
-            <path
-              d="M21 12a9 9 0 1 1-2.64-6.36"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-            <path
-              d="M21 3v6h-6"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-          <span>{{ refreshing ? '更新中' : '刷新数据' }}</span>
-        </button>
-        <button
-          type="button"
-          class="icon-action-btn icon-action-btn--md icon-action-btn--info"
-          :title="isFullscreen ? '退出全屏' : '全屏'"
-          :aria-label="isFullscreen ? '退出全屏' : '全屏'"
-          @click="toggleFullscreen"
-        >
-          <svg
-            v-if="!isFullscreen"
-            class="icon-action-btn__svg"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"
-            />
-          </svg>
-          <svg
-            v-else
-            class="icon-action-btn__svg"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"
-            />
-          </svg>
-        </button>
-      </div>
+      <p class="panel-desc">
+        {{ chart.desc }} · 显示 {{ chart.periodCount || filteredRecords.length }} 期
+        <template v-if="filteredRecords.length !== records.length">
+          （已筛选，原始 {{ records.length }} 期）
+        </template>
+      </p>
     </header>
 
     <ChartToolbar
@@ -232,16 +232,37 @@ function applyFilters() {
 
 .section-title {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--spacing-md);
+  flex-direction: column;
+  gap: var(--spacing-xs);
   margin-bottom: var(--spacing-md);
 }
 
-.section-title-text h2 {
-  margin: 0 0 var(--spacing-xs);
+.section-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.section-title-row h2 {
+  margin: 0;
+  flex-shrink: 0;
   font-size: var(--font-size-title);
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.section-data-meta {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-small);
+  line-height: 1.4;
+  color: var(--text-dim);
 }
 
 .section-title .panel-desc {
@@ -253,20 +274,15 @@ function applyFilters() {
 .section-title-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: var(--spacing-sm);
-  flex-shrink: 0;
-  flex-wrap: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  margin-left: auto;
 }
 
-.section-data-meta {
-  margin: 0;
+.section-title-actions .chart-refresh-btn,
+.section-title-actions .icon-action-btn {
   flex-shrink: 0;
-  font-size: var(--font-size-small);
-  line-height: 1.4;
-  color: var(--text-dim);
-  text-align: right;
-  white-space: nowrap;
 }
 
 .chart-refresh-btn {
@@ -304,6 +320,20 @@ function applyFilters() {
 .chart-refresh-btn svg {
   display: block;
   flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .section-title-row h2 {
+    font-size: var(--font-size-body);
+  }
+
+  .chart-refresh-btn {
+    padding: 0 var(--spacing-sm);
+  }
+
+  .chart-refresh-btn__label {
+    display: none;
+  }
 }
 
 .chart-section:fullscreen :deep(.chart-toolbar),

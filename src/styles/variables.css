@@ -248,6 +248,13 @@
   --z-dialog: 10020;
   --z-tooltip: 10001;
 
+  /* ── 滚动条 ── */
+  --scrollbar-size: 5px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(148, 163, 184, 0.42);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.62);
+  --scrollbar-radius: var(--radius-pill);
+
 }
 
 /* ── 深色模式：覆盖语义色，card / table / 走势图等自动跟随 ── */
@@ -353,4 +360,7 @@
 
   --icon-muted: #94a3b8;
   --color-spinner-track: rgba(254, 205, 211, 0.25);
+
+  --scrollbar-thumb: rgba(148, 163, 184, 0.28);
+  --scrollbar-thumb-hover: rgba(148, 163, 184, 0.48);
 }

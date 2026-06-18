@@ -626,7 +626,6 @@
   mask-image: var(--thyuu--mask-scroll-y);
   overscroll-behavior-y: contain;
   overflow: hidden auto;
-  scrollbar-width: thin;
 }
 
 #global-panel .toggle-area.side-area > .side-switch {

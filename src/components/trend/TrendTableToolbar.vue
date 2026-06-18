@@ -92,6 +92,7 @@ function setRowOrder(order) {
 .toolbar-right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
   margin-left: auto;
@@ -139,10 +140,35 @@ function setRowOrder(order) {
 
 .legend-items {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 16px;
   flex: 1;
   min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.legend-items::-webkit-scrollbar {
+  display: none;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.legend-dot {
+  display: block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-xs);
 }
 
 .legend-order {
@@ -184,19 +210,6 @@ function setRowOrder(order) {
   color: var(--link);
 }
 
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border-radius: var(--radius-xs);
-}
-
 .legend-dot.hit { background: linear-gradient(135deg, var(--chart-legend-pink-from), var(--primary)); }
 .legend-dot.miss { background: var(--color-surface-muted); border: 1px solid var(--border); }
 .legend-dot.mark-repeat { background: var(--ball-source-ring); border: 2px solid var(--info); }
@@ -204,4 +217,31 @@ function setRowOrder(order) {
 .legend-dot.bose-red { background: var(--chart-legend-bose-red); }
 .legend-dot.bose-blue { background: var(--info-border); }
 .legend-dot.bose-green { background: var(--success-border); }
+
+@media (max-width: 640px) {
+  .distribution-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .legend-items {
+    flex: none;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .toolbar-right {
+    margin-left: 0;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .legend-freeze,
+  .legend-order {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+}
 </style>

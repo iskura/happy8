@@ -214,7 +214,6 @@
   width: max-content;
   max-width: 100%;
   overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .stat-help-popover__group-gap {
