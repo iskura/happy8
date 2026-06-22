@@ -1,18 +1,19 @@
 <script setup>
-import { onMounted } from 'vue'
-import BaseModal from './common/BaseModal.vue'
-import { useLoveModal, useRestReminder } from '../composables/useAppModals.js'
+// import { onMounted } from 'vue'
+// import BaseModal from './common/BaseModal.vue'
+// import { useLoveModal, useRestReminder } from '../composables/useAppModals.js'
 
-const { showLoveModal, loveModalShake, setupLoveModal, answerLove } = useLoveModal()
-const { showRestReminder, setupRestReminder, dismissRestReminder } = useRestReminder()
+// const { showLoveModal, loveModalShake, setupLoveModal, answerLove } = useLoveModal()
+// const { showRestReminder, setupRestReminder, dismissRestReminder } = useRestReminder()
 
-onMounted(() => {
-  setupLoveModal()
-  setupRestReminder()
-})
+// onMounted(() => {
+//   setupLoveModal()
+//   setupRestReminder()
+// })
 </script>
 
 <template>
+  <!--
   <Teleport to="body">
     <BaseModal
       :show="showLoveModal"
@@ -103,4 +104,5 @@ onMounted(() => {
       </button>
     </BaseModal>
   </Teleport>
+  -->
 </template>
