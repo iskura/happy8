@@ -28,6 +28,11 @@ export const DEFAULT_STAT_ROWS = [
     label: '欲出几率',
     help: '当前遗漏 / 平均遗漏（除不尽四舍五入取整）。',
   },
+  {
+    key: 'classANonOverlap',
+    label: 'A 类号对比',
+    help: '选号结果 C 类对比中，所选预测行与 A 类不重复的号码。',
+  },
 ]
 
 export const BASE_LEGEND_ITEMS = [

@@ -1,12 +1,53 @@
-import { computed, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getCellMarkClass } from '../../utils/chartMarks.js'
 import { getOmissionLayer } from '../../utils/charts/index.js'
 import { buildCurrentOmissionStreak } from '../../utils/omissionLayer.js'
 import { isZoneBoundaryCol } from '../../utils/chartZone.js'
 import { formatBall } from '../../utils/format.js'
+import { getClassNonOverlapNums } from '../../utils/classCompare.js'
+import {
+  C_CLASS_ROW_UPDATE_EVENT,
+  loadCClassRowIndex,
+  loadPredictionRows,
+  PREDICTION_CHART_ID,
+  PREDICTION_UPDATE_EVENT,
+} from '../../utils/predictionStorage.js'
+
+const DYNAMIC_STAT_KEYS = new Set(['classANonOverlap'])
 
 export function useTrendStats(chart, ui) {
   const statMode = ref('page')
+  const pickerResult = inject('pickerResult', null)
+  const selectedPredIndex = ref(loadCClassRowIndex())
+  const predictionRevision = ref(0)
+
+  function bumpPredictionRevision() {
+    predictionRevision.value += 1
+  }
+
+  function onPredictionUpdate() {
+    bumpPredictionRevision()
+  }
+
+  function onCClassRowUpdate(event) {
+    const index = Number(event.detail?.index)
+    if (Number.isFinite(index) && index > 0) {
+      selectedPredIndex.value = index
+    } else {
+      selectedPredIndex.value = loadCClassRowIndex()
+    }
+    bumpPredictionRevision()
+  }
+
+  onMounted(() => {
+    window.addEventListener(PREDICTION_UPDATE_EVENT, onPredictionUpdate)
+    window.addEventListener(C_CLASS_ROW_UPDATE_EVENT, onCClassRowUpdate)
+  })
+
+  onBeforeUnmount(() => {
+    window.removeEventListener(PREDICTION_UPDATE_EVENT, onPredictionUpdate)
+    window.removeEventListener(C_CLASS_ROW_UPDATE_EVENT, onCClassRowUpdate)
+  })
 
   watch(
     () => chart.value.id,
@@ -14,6 +55,17 @@ export function useTrendStats(chart, ui) {
       statMode.value = 'page'
     },
   )
+
+  const classANonOverlapSet = computed(() => {
+    predictionRevision.value
+    const result = pickerResult?.value
+    if (!result?.classA) return new Set()
+
+    const rows = loadPredictionRows(PREDICTION_CHART_ID)
+    const row = rows?.[selectedPredIndex.value - 1]
+    const numbers = getClassNonOverlapNums(result.classA, row?.numbers || [])
+    return new Set(numbers)
+  })
 
   const activeStats = computed(() => {
     if (statMode.value === 'history' && chart.value.historyStats) {
@@ -31,7 +83,19 @@ export function useTrendStats(chart, ui) {
   function statCellValue(statKey, colNum) {
     const { start, end } = statsRange.value
     if (colNum < start || colNum > end) return ''
+
+    if (statKey === 'classANonOverlap') {
+      return classANonOverlapSet.value.has(colNum) ? formatBall(colNum) : ''
+    }
+
+    if (DYNAMIC_STAT_KEYS.has(statKey)) return ''
+
     return activeStats.value?.[statKey]?.[colNum] ?? ''
+  }
+
+  function statCellExtraClass(statKey, colNum) {
+    if (statKey !== 'classANonOverlap') return ''
+    return classANonOverlapSet.value.has(colNum) ? 'stat-class-a-compare' : ''
   }
 
   const indicatorHelpItem = computed(() => {
@@ -47,6 +111,7 @@ export function useTrendStats(chart, ui) {
     statRows,
     indicatorHelpItem,
     statCellValue,
+    statCellExtraClass,
   }
 }
 

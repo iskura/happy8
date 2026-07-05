@@ -6,6 +6,24 @@ export function formatBalls(nums) {
   return nums.map((num) => formatBall(num)).join(' ')
 }
 
+export function parseBallInput(text, max = 80) {
+  const tokens = String(text || '')
+    .trim()
+    .split(/[\s,，;；]+/)
+    .filter(Boolean)
+  const numbers = []
+  const seen = new Set()
+
+  for (const token of tokens) {
+    const num = Number.parseInt(token, 10)
+    if (!Number.isFinite(num) || num < 1 || num > max || seen.has(num)) continue
+    seen.add(num)
+    numbers.push(num)
+  }
+
+  return numbers.sort((a, b) => a - b)
+}
+
 export async function copyText(text) {
   if (!text) return false
   try {

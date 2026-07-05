@@ -547,6 +547,45 @@ tfoot .sticky-col {
   box-shadow: inset 3px 0 0 var(--chart-mark-consecutive);
 }
 
+.prediction-row.is-drop-target .sticky-col {
+  box-shadow: inset 0 3px 0 var(--primary);
+}
+
+.prediction-zone.is-row-dragging .pred-drag-handle {
+  cursor: grabbing;
+}
+
+.pred-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.pred-drag-handle:hover {
+  color: var(--link);
+  background: var(--color-surface-alt);
+}
+
+.pred-drag-handle:active {
+  cursor: grabbing;
+}
+
+.pred-drag-grip {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: -1px;
+  user-select: none;
+}
+
 .pred-controls :is(.icon-copy-btn) {
   width: 16px;
   height: 16px;
@@ -735,9 +774,83 @@ tfoot .sticky-col {
   background: var(--color-surface-alt);
 }
 
+.stat-settings-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.stat-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-circle);
+  background: var(--color-surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.stat-settings-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+.stat-settings-btn:hover,
+.stat-settings-btn.is-open,
+.stat-settings-wrap:focus-within .stat-settings-btn {
+  border-color: var(--link);
+  color: var(--link);
+  background: var(--link-bg-active);
+}
+
+.stat-settings-panel {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  min-width: 148px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-modal-sm);
+}
+
+.stat-settings-title {
+  margin: 0 0 6px;
+  font-size: var(--font-size-tiny);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.stat-settings-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: var(--font-size-tiny);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.stat-settings-item input {
+  margin: 0;
+  accent-color: var(--primary);
+}
+
 .stat-cell {
   font-variant-numeric: tabular-nums;
   text-align: center !important;
+}
+
+.stat-cell.stat-class-a-compare {
+  background: var(--chart-zone-a) !important;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .stat-omit-hot {

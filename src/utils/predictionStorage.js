@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'happy8-prediction-rows'
 const C_CLASS_ROW_KEY = 'happy8-c-class-row-index'
 export const PREDICTION_UPDATE_EVENT = 'happy8-prediction-update'
+export const C_CLASS_ROW_UPDATE_EVENT = 'happy8-c-class-row-update'
 export const PREDICTION_CHART_ID = 'hmfb'
 
 function readStore() {
@@ -60,8 +61,29 @@ export function appendPredictionRow(chartId, numbers = []) {
   const existing = loadPredictionRows(chartId) || [createPredictionRow()]
   const newRow = createPredictionRow([...numbers].sort((a, b) => a - b))
   const rows = [...existing, newRow]
-  savePredictionRows(chartId, rows, newRow.id)
+  const activeRowId = loadActivePredictionRowId(chartId)
+  const hasActive = rows.some((row) => row.id === activeRowId)
+  savePredictionRows(
+    chartId,
+    rows,
+    hasActive ? activeRowId : existing[0]?.id || newRow.id,
+  )
   return { row: newRow, index: rows.length }
+}
+
+export function setFirstPredictionRowNumbers(chartId, numbers = []) {
+  if (!chartId) return null
+
+  const existing = loadPredictionRows(chartId) || [createPredictionRow()]
+  const firstRow = createPredictionRow(
+    [...numbers].sort((a, b) => a - b),
+    existing[0]?.id,
+  )
+  const rows = [firstRow, ...existing.slice(1)]
+  const activeRowId = loadActivePredictionRowId(chartId)
+  const hasActive = rows.some((row) => row.id === activeRowId)
+  savePredictionRows(chartId, rows, hasActive ? activeRowId : rows[0]?.id || '')
+  return { row: firstRow, index: 1 }
 }
 
 export function loadCClassRowIndex() {
@@ -76,6 +98,9 @@ export function loadCClassRowIndex() {
 export function saveCClassRowIndex(index) {
   try {
     localStorage.setItem(C_CLASS_ROW_KEY, String(index))
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(C_CLASS_ROW_UPDATE_EVENT, { detail: { index } }))
+    }
   } catch {
     // 存储失败时静默忽略
   }

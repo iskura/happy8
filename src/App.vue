@@ -41,6 +41,7 @@ const pageMeta = computed(() => ({
 
 provide('pageMeta', pageMeta)
 provide('lotteryRecords', records)
+provide('pickerResult', result)
 
 let autoRefreshRunning = false
 

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { formatBall, copyText } from '../utils/format.js'
+import { formatBall, copyText, parseBallInput } from '../utils/format.js'
 import { notifyError, notifySuccess } from '../utils/uiMessage.js'
 import {
   appendPredictionRow,
@@ -10,6 +10,7 @@ import {
   PREDICTION_CHART_ID,
   PREDICTION_UPDATE_EVENT,
   saveCClassRowIndex,
+  setFirstPredictionRowNumbers,
 } from '../utils/predictionStorage.js'
 import IssueSelect from './IssueSelect.vue'
 import LookbackSelect from './LookbackSelect.vue'
@@ -87,6 +88,7 @@ function isColdNumber(num) {
 
 const { trigger: triggerCopied, isActive: isCopied } = useActionFeedback()
 const { trigger: triggerAdded, isActive: isAdded } = useActionFeedback()
+const summaryInput = ref('')
 const predictionRows = ref([createPredictionRow()])
 const selectedPredIndex = ref(loadCClassRowIndex())
 
@@ -184,12 +186,27 @@ function addNumbersToPrediction(key, numbers) {
   const result = appendPredictionRow(PREDICTION_CHART_ID, numbers)
   if (!result) return
 
-  selectedPredIndex.value = result.index
-  saveCClassRowIndex(result.index)
   reloadPredictionRows()
 
   triggerAdded(key)
   notifySuccess(`已生成预测第 ${result.index} 行（${numbers.length} 个号码）`)
+}
+
+function addSummaryToFirstRow() {
+  if (props.disabled) return
+
+  const numbers = parseBallInput(summaryInput.value)
+  if (!numbers.length) {
+    notifyError('请输入有效号码（01–80）')
+    return
+  }
+
+  const result = setFirstPredictionRowNumbers(PREDICTION_CHART_ID, numbers)
+  if (!result) return
+
+  reloadPredictionRows()
+  triggerAdded('summary-pred')
+  notifySuccess(`已填入预测第 1 行（${numbers.length} 个号码）`)
 }
 
 function addClassToPrediction(key, classItems) {
@@ -503,11 +520,21 @@ function addClassToPrediction(key, classItems) {
       </article>
     </div>
 
-    <div class="summary">
-      共产生 <strong>{{ result.totalPicks }}</strong> 个候选号码，
-      A 类 <strong>{{ result.classA.length }}</strong> 个，
-      B 类 <strong>{{ result.classB.length }}</strong> 个，
-      C 类重复合计 <strong>{{ overlapA.length + overlapB.length }}</strong> 个
+    <div class="summary summary-input">
+      <input
+        v-model="summaryInput"
+        type="text"
+        class="summary-input-field"
+        placeholder="输入号码，空格分隔"
+        :disabled="disabled"
+        @keydown.enter.prevent="addSummaryToFirstRow"
+      />
+      <PredictionRowButton
+        :added="isAdded('summary-pred')"
+        :disabled="disabled || !summaryInput.trim()"
+        title="填入预测行第一行"
+        @click="addSummaryToFirstRow"
+      />
     </div>
 
     <StatHelpPopover
@@ -640,5 +667,36 @@ function addClassToPrediction(key, classItems) {
 
 .overlap-empty {
   margin: 0;
+}
+
+.summary-input {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.summary-input-field {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--text);
+  font-size: var(--font-size-body);
+  line-height: 1.4;
+}
+
+.summary-input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+.summary-input-field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

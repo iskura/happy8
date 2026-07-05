@@ -233,6 +233,23 @@ export function usePredictionRows(chartId) {
     clearMergeSelection()
   }
 
+  function reorderPredictionRows(fromIndex, toIndex) {
+    if (fromIndex === toIndex) return
+    const next = [...predictionRows.value]
+    if (
+      fromIndex < 0
+      || toIndex < 0
+      || fromIndex >= next.length
+      || toIndex >= next.length
+    ) {
+      return
+    }
+
+    const [moved] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, moved)
+    predictionRows.value = next
+  }
+
   return {
     predictionRows,
     activeRowId,
@@ -252,5 +269,6 @@ export function usePredictionRows(chartId) {
     mergeRowsKeepSources,
     mergeRowsAndDeleteSources,
     cancelMergeSelection,
+    reorderPredictionRows,
   }
 }

@@ -6,6 +6,7 @@ const props = defineProps({
   columnHeaders: { type: Array, required: true },
   statRows: { type: Array, required: true },
   statCellValue: { type: Function, required: true },
+  statCellExtraClass: { type: Function, default: null },
   marks: { type: Object, default: () => ({}) },
 })
 
@@ -43,6 +44,7 @@ function statCellClass(index) {
         class="col-num stat-cell"
         :class="[
           statCellClass(index),
+          statCellExtraClass?.(stat.key, index + 1),
           { 'stat-empty': !statCellValue(stat.key, index + 1) },
         ]"
       >

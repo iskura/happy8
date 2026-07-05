@@ -6,6 +6,7 @@ import { useTrendTableLayout } from '../../composables/trend/useTrendTableLayout
 import { useFreezePanels } from '../../composables/trend/useFreezePanels.js'
 import { useStatTip } from '../../composables/trend/useStatTip.js'
 import { usePredictionRows } from '../../composables/trend/usePredictionRows.js'
+import { useChartStatVisibility } from '../../composables/trend/useChartStatVisibility.js'
 import { useTrendStats, useTrendCellClasses } from '../../composables/trend/useTrendCellClasses.js'
 import TrendTableToolbar from './TrendTableToolbar.vue'
 import TrendTableColgroup from './TrendTableColgroup.vue'
@@ -60,12 +61,19 @@ const { statTip, statTipRef, showStatTip, hideStatTip } = useStatTip()
 
 const {
   statMode,
-  statRows,
+  statRows: allStatRows,
   indicatorHelpItem,
   statCellValue,
+  statCellExtraClass,
 } = useTrendStats(chartRef, ui)
 
 const chartId = computed(() => props.chart.id)
+const {
+  visibleStatRows,
+  isStatVisible,
+  toggleStatVisible,
+} = useChartStatVisibility(chartId, allStatRows)
+
 const {
   predictionRows,
   activeRowId,
@@ -83,6 +91,7 @@ const {
   mergeRowsKeepSources,
   mergeRowsAndDeleteSources,
   cancelMergeSelection,
+  reorderPredictionRows,
   showMergeDialog,
   mergeSelectedRowIds,
 } = usePredictionRows(chartId)
@@ -194,6 +203,7 @@ const showDrawOverlay = computed(() => {
               @copy-row="copyPredictionRow"
               @toggle-merge-row="toggleMergeRowSelect"
               @toggle-omit-row="toggleOmissionRowSelect"
+              @reorder-row="reorderPredictionRows"
             />
           </table>
 
@@ -201,15 +211,19 @@ const showDrawOverlay = computed(() => {
             v-if="!freeze.stats"
             :chart="chart"
             :column-headers="columnHeaders"
-            :stat-rows="statRows"
+            :stat-rows="visibleStatRows"
+            :all-stat-rows="allStatRows"
+            :is-stat-visible="isStatVisible"
             :indicator-help-item="indicatorHelpItem"
             :stat-cell-value="statCellValue"
+            :stat-cell-extra-class="statCellExtraClass"
             :stat-mode="statMode"
             :marks="marks"
             col-key-prefix="col-stats"
             @show-tip="showStatTip"
             @hide-tip="hideStatTip"
             @update:stat-mode="statMode = $event"
+            @toggle-stat-visible="toggleStatVisible"
           />
 
           <div
@@ -242,6 +256,7 @@ const showDrawOverlay = computed(() => {
                 @copy-row="copyPredictionRow"
                 @toggle-merge-row="toggleMergeRowSelect"
                 @toggle-omit-row="toggleOmissionRowSelect"
+                @reorder-row="reorderPredictionRows"
               />
             </table>
 
@@ -249,15 +264,19 @@ const showDrawOverlay = computed(() => {
               v-if="freeze.stats"
               :chart="chart"
               :column-headers="columnHeaders"
-              :stat-rows="statRows"
+              :stat-rows="visibleStatRows"
+              :all-stat-rows="allStatRows"
+              :is-stat-visible="isStatVisible"
               :indicator-help-item="indicatorHelpItem"
               :stat-cell-value="statCellValue"
+              :stat-cell-extra-class="statCellExtraClass"
               :stat-mode="statMode"
               :marks="marks"
               col-key-prefix="col-foot"
               @show-tip="showStatTip"
               @hide-tip="hideStatTip"
               @update:stat-mode="statMode = $event"
+              @toggle-stat-visible="toggleStatVisible"
             />
           </div>
 
