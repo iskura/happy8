@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import ChartToolbar from './ChartToolbar.vue'
 import TrendTable from './trend/TrendTable.vue'
 import OmissionSummary from './OmissionSummary.vue'
+import SummaryInputBar from './SummaryInputBar.vue'
 import { filterRecords } from '../utils/recordFilter.js'
 import { buildChart } from '../utils/charts/index.js'
 import { useDrawTool } from '../composables/useDrawTool.js'
@@ -32,6 +33,10 @@ const props = defineProps({
   refreshScheduleLabel: {
     type: String,
     default: '',
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -205,6 +210,8 @@ function applyFilters() {
       :marks="marks"
       :draw-tool="drawTool"
     />
+
+    <SummaryInputBar :disabled="disabled || loading" />
   </section>
 </template>
 

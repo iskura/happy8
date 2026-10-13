@@ -195,6 +195,7 @@ onMounted(async () => {
             :data-updated-at="dataUpdatedAt"
             :data-source-label="dataSourceLabel"
             :refresh-schedule-label="refreshScheduleLabel"
+            :disabled="loading"
             @refresh="refreshData()"
           />
         </div>
