@@ -170,6 +170,29 @@ const overlapBText = computed(() => overlapB.value.map((num) => formatBall(num))
 const nonOverlapAText = computed(() => nonOverlapA.value.map((num) => formatBall(num)).join(' '))
 const nonOverlapBText = computed(() => nonOverlapB.value.map((num) => formatBall(num)).join(' '))
 
+// C 内合并：与A重复 + 与B重复
+const overlapAB = computed(() => {
+  const set = new Set([...overlapA.value, ...overlapB.value])
+  return [...set].sort((a, b) => a - b)
+})
+// C 内合并：与A不重复 + 与B不重复
+const nonOverlapAB = computed(() => {
+  const set = new Set([...nonOverlapA.value, ...nonOverlapB.value])
+  return [...set].sort((a, b) => a - b)
+})
+const overlapABText = computed(() => overlapAB.value.map((num) => formatBall(num)).join(' '))
+const nonOverlapABText = computed(() => nonOverlapAB.value.map((num) => formatBall(num)).join(' '))
+
+// D类：80 - A - B - C
+const classD = computed(() => {
+  const all80 = Array.from({ length: 80 }, (_, i) => i + 1)
+  const setA = new Set(props.result.classA.map((item) => item.num))
+  const setB = new Set(props.result.classB.map((item) => item.num))
+  const setC = new Set(selectedPredictionNumbers.value)
+  return all80.filter((num) => !setA.has(num) && !setB.has(num) && !setC.has(num))
+})
+const classDText = computed(() => classD.value.map((num) => formatBall(num)).join(' '))
+
 async function copyNumbers(key, text) {
   const ok = await copyText(text)
   if (!ok) {
@@ -359,7 +382,7 @@ function addClassToPrediction(key, classItems) {
 
       <article class="class-card class-c">
         <div class="class-title">
-          <h3>C 类对比</h3>
+          <h3>C 类号码</h3>
           <div class="class-title-meta">
             <CopyButton
               v-if="selectedPredictionNumbers.length"
@@ -397,26 +420,26 @@ function addClassToPrediction(key, classItems) {
         <div class="overlap-grid">
           <div class="overlap-section">
             <div class="overlap-head">
-              <h4>与 A 类重复</h4>
+              <h4>与 A / B 重复</h4>
               <div class="overlap-head-meta">
                 <PredictionRowButton
-                  v-if="overlapA.length"
-                  :added="isAdded('c-a-pred')"
+                  v-if="overlapAB.length"
+                  :added="isAdded('c-ab-pred')"
                   :disabled="disabled"
-                  title="生成预测行并填入与 A 类重复号码"
-                  @click="addNumbersToPrediction('c-a-pred', overlapA)"
+                  title="生成预测行并填入与 A/B 类重复号码"
+                  @click="addNumbersToPrediction('c-ab-pred', overlapAB)"
                 />
                 <CopyButton
-                  v-if="overlapA.length"
-                  :copied="isCopied('c-a')"
-                  title="复制与 A 类重复号码"
-                  @click="copyNumbers('c-a', overlapAText)"
+                  v-if="overlapAB.length"
+                  :copied="isCopied('c-ab')"
+                  title="复制与 A/B 类重复号码"
+                  @click="copyNumbers('c-ab', overlapABText)"
                 />
-                <span class="overlap-count">{{ overlapA.length }} 个</span>
+                <span class="overlap-count">{{ overlapAB.length }} 个</span>
               </div>
             </div>
-            <div v-if="overlapA.length" class="ball-row">
-              <span v-for="num in overlapA" :key="`ca-${num}`" class="ball ball-a">
+            <div v-if="overlapAB.length" class="ball-row">
+              <span v-for="num in overlapAB" :key="`cab-${num}`" class="ball ball-c">
                 {{ formatBall(num) }}
               </span>
             </div>
@@ -425,98 +448,61 @@ function addClassToPrediction(key, classItems) {
 
           <div class="overlap-section">
             <div class="overlap-head">
-              <h4>与 A 类不重复</h4>
+              <h4>与 A / B 不重复</h4>
               <div class="overlap-head-meta">
                 <PredictionRowButton
-                  v-if="nonOverlapA.length"
-                  :added="isAdded('c-not-a-pred')"
+                  v-if="nonOverlapAB.length"
+                  :added="isAdded('c-not-ab-pred')"
                   :disabled="disabled"
-                  title="生成预测行并填入与 A 类不重复号码"
-                  @click="addNumbersToPrediction('c-not-a-pred', nonOverlapA)"
+                  title="生成预测行并填入与 A/B 类不重复号码"
+                  @click="addNumbersToPrediction('c-not-ab-pred', nonOverlapAB)"
                 />
                 <CopyButton
-                  v-if="nonOverlapA.length"
-                  :copied="isCopied('c-not-a')"
-                  title="复制与 A 类不重复号码"
-                  @click="copyNumbers('c-not-a', nonOverlapAText)"
+                  v-if="nonOverlapAB.length"
+                  :copied="isCopied('c-not-ab')"
+                  title="复制与 A/B 类不重复号码"
+                  @click="copyNumbers('c-not-ab', nonOverlapABText)"
                 />
-                <span class="overlap-count">{{ nonOverlapA.length }} 个</span>
+                <span class="overlap-count">{{ nonOverlapAB.length }} 个</span>
               </div>
             </div>
-            <div v-if="nonOverlapA.length" class="ball-row">
-              <span v-for="num in nonOverlapA" :key="`cna-${num}`" class="ball ball-a">
-                {{ formatBall(num) }}
-              </span>
-            </div>
-            <p v-else class="empty overlap-empty">无不重复号码</p>
-          </div>
-
-          <div class="overlap-section">
-            <div class="overlap-head">
-              <h4>与 B 类重复</h4>
-              <div class="overlap-head-meta">
-                <PredictionRowButton
-                  v-if="overlapB.length"
-                  :added="isAdded('c-b-pred')"
-                  :disabled="disabled"
-                  title="生成预测行并填入与 B 类重复号码"
-                  @click="addNumbersToPrediction('c-b-pred', overlapB)"
-                />
-                <CopyButton
-                  v-if="overlapB.length"
-                  :copied="isCopied('c-b')"
-                  title="复制与 B 类重复号码"
-                  @click="copyNumbers('c-b', overlapBText)"
-                />
-                <span class="overlap-count">{{ overlapB.length }} 个</span>
-              </div>
-            </div>
-            <div v-if="overlapB.length" class="ball-row">
-              <span
-                v-for="num in overlapB"
-                :key="`cb-${num}`"
-                class="ball"
-                :class="isColdNumber(num) ? 'ball-cold' : 'ball-b'"
-              >
-                {{ formatBall(num) }}
-              </span>
-            </div>
-            <p v-else class="empty overlap-empty">无重复号码</p>
-          </div>
-
-          <div class="overlap-section">
-            <div class="overlap-head">
-              <h4>与 B 类不重复</h4>
-              <div class="overlap-head-meta">
-                <PredictionRowButton
-                  v-if="nonOverlapB.length"
-                  :added="isAdded('c-not-b-pred')"
-                  :disabled="disabled"
-                  title="生成预测行并填入与 B 类不重复号码"
-                  @click="addNumbersToPrediction('c-not-b-pred', nonOverlapB)"
-                />
-                <CopyButton
-                  v-if="nonOverlapB.length"
-                  :copied="isCopied('c-not-b')"
-                  title="复制与 B 类不重复号码"
-                  @click="copyNumbers('c-not-b', nonOverlapBText)"
-                />
-                <span class="overlap-count">{{ nonOverlapB.length }} 个</span>
-              </div>
-            </div>
-            <div v-if="nonOverlapB.length" class="ball-row">
-              <span
-                v-for="num in nonOverlapB"
-                :key="`cnb-${num}`"
-                class="ball"
-                :class="isColdNumber(num) ? 'ball-cold' : 'ball-b'"
-              >
+            <div v-if="nonOverlapAB.length" class="ball-row">
+              <span v-for="num in nonOverlapAB" :key="`cnab-${num}`" class="ball ball-c">
                 {{ formatBall(num) }}
               </span>
             </div>
             <p v-else class="empty overlap-empty">无不重复号码</p>
           </div>
         </div>
+      </article>
+
+      <article class="class-card class-d">
+        <div class="class-title">
+          <h3>D 类号码</h3>
+          <div class="class-title-meta">
+            <PredictionRowButton
+              v-if="classD.length"
+              :added="isAdded('d-pred')"
+              :disabled="disabled"
+              title="生成预测行并填入 D 类号码"
+              @click="addNumbersToPrediction('d-pred', classD)"
+            />
+            <CopyButton
+              v-if="classD.length"
+              :copied="isCopied('d')"
+              title="复制 D 类号码"
+              @click="copyNumbers('d', classDText)"
+            />
+            <span class="badge">{{ classD.length }} 个</span>
+          </div>
+        </div>
+        <p class="class-tip">80 个号码减去 A / B / C 类号码</p>
+        <div v-if="classD.length" class="ball-row">
+          <span v-for="num in classD" :key="`d-${num}`" class="ball ball-d">
+            {{ formatBall(num) }}
+          </span>
+        </div>
+        <p v-else class="empty">无剩余号码</p>
       </article>
     </div>
 

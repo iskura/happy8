@@ -15,6 +15,7 @@ export function usePredictionRows(chartId) {
   const copiedKey = ref('')
   const mergeSelectedRowIds = ref([])
   const omissionDisplayRowIds = ref([])
+  let suppressSelfPredictionSync = false
 
   const showMergeDialog = computed(
     () => mergeSelectedRowIds.value.length >= 2,
@@ -44,6 +45,10 @@ export function usePredictionRows(chartId) {
     const id = chartId.value
     if (!id) return
     if (event.detail?.chartId && event.detail.chartId !== id) return
+    if (suppressSelfPredictionSync) {
+      suppressSelfPredictionSync = false
+      return
+    }
 
     const saved = loadPredictionRows(id)
     const nextRows = saved?.length ? saved : [createPredictionRow()]
@@ -247,6 +252,7 @@ export function usePredictionRows(chartId) {
 
     const [moved] = next.splice(fromIndex, 1)
     next.splice(toIndex, 0, moved)
+    suppressSelfPredictionSync = true
     predictionRows.value = next
   }
 

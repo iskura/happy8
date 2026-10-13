@@ -391,6 +391,11 @@ body::before {
   color: var(--text-on-primary);
 }
 
+.ball-d {
+  background: var(--ball-d);
+  color: var(--text-on-primary);
+}
+
 .ball-source {
   width: var(--ball-size-sm);
   height: var(--ball-size-sm);
@@ -435,8 +440,10 @@ body::before {
   gap: var(--gap-card);
 }
 
-.class-card.class-c {
-  grid-column: 1 / -1;
+@media (max-width: 600px) {
+  .class-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .class-card {
@@ -478,6 +485,14 @@ body::before {
 
 .class-c::before {
   background: linear-gradient(90deg, var(--c-from), var(--c-to));
+}
+
+.class-d {
+  background: linear-gradient(160deg, var(--color-class-d-bg-start) 0%, var(--card) 100%);
+}
+
+.class-d::before {
+  background: linear-gradient(90deg, var(--d-from), var(--d-to));
 }
 
 .class-title {

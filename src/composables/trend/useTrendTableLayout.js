@@ -28,7 +28,7 @@ export function useTrendTableLayout({
     el.scrollLeft = 0
   }
 
-  function syncTableLayout() {
+  function syncTableLayoutNow() {
     updateScrollGutter()
 
     const wrap = tableWrapRef.value
@@ -44,15 +44,36 @@ export function useTrendTableLayout({
         ? (ui.value?.narrowColWidth ?? 36)
         : (ui.value?.defaultColWidth ?? 22)
     const tableWidth = bodyEl.clientWidth
-    const numColW = Math.max(minNumW, (tableWidth - issueColWidth) / count)
 
+    wrap.style.setProperty('--scrollport-w', `${tableWidth}px`)
+
+    if (
+      lastSyncedWidth > 0
+      && Math.abs(tableWidth - lastSyncedWidth) <= 2
+    ) {
+      return
+    }
+
+    lastSyncedWidth = tableWidth
+    const numColW = Math.max(minNumW, (tableWidth - issueColWidth) / count)
     wrap.style.setProperty('--num-col-w', `${numColW}px`)
-    wrap.style.setProperty('--scrollport-w', `${bodyEl.clientWidth}px`)
+  }
+
+  let lastSyncedWidth = 0
+  let syncRaf = 0
+
+  function syncTableLayout() {
+    if (syncRaf) cancelAnimationFrame(syncRaf)
+    syncRaf = requestAnimationFrame(() => {
+      syncRaf = 0
+      syncTableLayoutNow()
+    })
   }
 
   watch(
     () => chart.value.rows?.length,
     () => nextTick(() => {
+      lastSyncedWidth = 0
       resetBodyScroll()
       syncTableLayout()
     }),
@@ -65,7 +86,10 @@ export function useTrendTableLayout({
       freeze.value.stats,
       chart.value.columnCount,
     ],
-    () => nextTick(syncTableLayout),
+    () => nextTick(() => {
+      lastSyncedWidth = 0
+      syncTableLayout()
+    }),
   )
 
   onMounted(() => {
@@ -76,7 +100,10 @@ export function useTrendTableLayout({
         bodyResizeObserver.observe(bodyScrollRef.value)
       }
     })
-    window.addEventListener('resize', syncTableLayout)
+    window.addEventListener('resize', () => {
+      lastSyncedWidth = 0
+      syncTableLayout()
+    })
   })
 
   onBeforeUnmount(() => {

@@ -568,6 +568,7 @@ tfoot .sticky-col {
   color: var(--text-dim);
   cursor: grab;
   flex-shrink: 0;
+  touch-action: none;
 }
 
 .pred-drag-handle:hover {

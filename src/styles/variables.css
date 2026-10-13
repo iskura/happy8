@@ -104,12 +104,15 @@
   --b-to: #16a34a;
   --c-from: #8b5cf6;
   --c-to: #7c3aed;
+  --d-from: #64748b;
+  --d-to: #475569;
   --draw-from: #818cf8;
   --draw-to: #4f46e5;
   --ball-draw: var(--draw-to);
   --ball-a: var(--a-to);
   --ball-b: var(--b-to);
   --ball-c: var(--c-to);
+  --ball-d: var(--d-to);
   --ball-cold: var(--info);
   --ball-mini: #cbd5e1;
   --ball-mini-text: #334155;
@@ -145,11 +148,13 @@
   --color-class-a-bg-start: #fff7ed;
   --color-class-b-bg-start: #f0fdf4;
   --color-class-c-bg-start: #f5f3ff;
+  --color-class-d-bg-start: #f1f5f9;
   --color-current-draw-start: #f8fafc;
   --color-current-draw-end: var(--color-surface-muted);
   --color-stat-c: var(--c-to);
   --color-stat-a: var(--a-to);
   --color-stat-b: var(--b-to);
+  --color-stat-d: var(--d-to);
   --color-status-hit: #059669;
   --color-status-hit-bg: #ecfdf5;
   --color-status-hit-row: var(--success-bg);
@@ -310,6 +315,7 @@
   --color-class-a-bg-start: rgba(251, 146, 60, 0.12);
   --color-class-b-bg-start: rgba(34, 197, 94, 0.12);
   --color-class-c-bg-start: rgba(139, 92, 246, 0.12);
+  --color-class-d-bg-start: rgba(100, 116, 139, 0.12);
   --color-current-draw-start: #162032;
   --color-current-draw-end: #1e293b;
 

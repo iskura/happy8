@@ -30,55 +30,52 @@ const emit = defineEmits([
   'reorder-row',
 ])
 
-const draggingRowIndex = ref(-1)
-const dragOverRowIndex = ref(-1)
+const dragState = ref(null)
 
-function onRowDragStart(event, rowIndex) {
-  draggingRowIndex.value = rowIndex
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/plain', String(rowIndex))
-  const ghost = new Image()
-  ghost.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-  event.dataTransfer.setDragImage(ghost, 0, 0)
-}
-
-function rowIndexFromEvent(event) {
-  const row = event.target.closest?.('tr.prediction-row')
+function rowIndexFromElement(element) {
+  const row = element?.closest?.('tr.prediction-row')
   if (!row) return -1
   const index = Number.parseInt(row.dataset.rowIndex, 10)
   return Number.isFinite(index) ? index : -1
 }
 
-function onZoneDragOver(event) {
+function startRowDrag(event, rowIndex) {
+  if (event.button !== 0) return
   event.preventDefault()
-  event.dataTransfer.dropEffect = 'move'
-  const rowIndex = rowIndexFromEvent(event)
-  if (rowIndex < 0 || rowIndex === draggingRowIndex.value) {
-    if (dragOverRowIndex.value !== -1) dragOverRowIndex.value = -1
-    return
-  }
-  if (dragOverRowIndex.value !== rowIndex) {
-    dragOverRowIndex.value = rowIndex
+  event.currentTarget.setPointerCapture(event.pointerId)
+  dragState.value = {
+    fromIndex: rowIndex,
+    overIndex: rowIndex,
+    pointerId: event.pointerId,
   }
 }
 
-function onZoneDrop(event) {
-  event.preventDefault()
-  const rowIndex = rowIndexFromEvent(event)
-  const fromIndex = Number.parseInt(event.dataTransfer.getData('text/plain'), 10)
-  if (Number.isFinite(fromIndex) && rowIndex >= 0 && fromIndex !== rowIndex) {
-    emit('reorder-row', fromIndex, rowIndex)
+function moveRowDrag(event) {
+  const state = dragState.value
+  if (!state || event.pointerId !== state.pointerId) return
+
+  const overIndex = rowIndexFromElement(document.elementFromPoint(event.clientX, event.clientY))
+  if (overIndex < 0 || overIndex === state.overIndex) return
+
+  dragState.value = {
+    ...state,
+    overIndex,
   }
-  resetRowDrag()
 }
 
-function onRowDragEnd() {
-  resetRowDrag()
-}
+function endRowDrag(event) {
+  const state = dragState.value
+  if (!state || event.pointerId !== state.pointerId) return
 
-function resetRowDrag() {
-  draggingRowIndex.value = -1
-  dragOverRowIndex.value = -1
+  if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+    event.currentTarget.releasePointerCapture(event.pointerId)
+  }
+
+  if (state.fromIndex !== state.overIndex) {
+    emit('reorder-row', state.fromIndex, state.overIndex)
+  }
+
+  dragState.value = null
 }
 
 function shouldShowRowOmit(rowId, num) {
@@ -101,9 +98,7 @@ function isZoneBoundary(num) {
 <template>
   <tbody
     class="prediction-zone"
-    :class="{ 'is-row-dragging': draggingRowIndex >= 0 }"
-    @dragover="onZoneDragOver"
-    @drop="onZoneDrop"
+    :class="{ 'is-row-dragging': dragState }"
   >
     <tr
       v-for="(predRow, rowIndex) in predictionRows"
@@ -114,7 +109,9 @@ function isZoneBoundary(num) {
         active: activeRowId === predRow.id,
         'merge-marked': isMergeRowSelected(predRow.id),
         'omit-marked': isOmissionRowSelected(predRow.id),
-        'is-drop-target': dragOverRowIndex === rowIndex && draggingRowIndex !== rowIndex,
+        'is-drop-target': dragState
+          && dragState.overIndex === rowIndex
+          && dragState.fromIndex !== rowIndex,
       }"
     >
       <td class="sticky-col col-issue">
@@ -122,11 +119,12 @@ function isZoneBoundary(num) {
           <button
             type="button"
             class="pred-drag-handle"
-            draggable="true"
             title="拖拽调整行顺序"
             aria-label="拖拽调整行顺序"
-            @dragstart="onRowDragStart($event, rowIndex)"
-            @dragend="onRowDragEnd"
+            @pointerdown="startRowDrag($event, rowIndex)"
+            @pointermove="moveRowDrag"
+            @pointerup="endRowDrag"
+            @pointercancel="endRowDrag"
           >
             <span class="pred-drag-grip" aria-hidden="true">⋮⋮</span>
           </button>
