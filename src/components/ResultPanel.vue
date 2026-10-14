@@ -153,30 +153,24 @@ function getOverlap(classItems) {
   return selectedPredictionNumbers.value.filter((num) => set.has(num))
 }
 
-function getNonOverlap(classItems) {
-  const set = new Set(classItems.map((item) => item.num))
-  return selectedPredictionNumbers.value.filter((num) => !set.has(num))
-}
-
 const overlapA = computed(() => getOverlap(props.result.classA))
 const overlapB = computed(() => getOverlap(props.result.classB))
-const nonOverlapA = computed(() => getNonOverlap(props.result.classA))
-const nonOverlapB = computed(() => getNonOverlap(props.result.classB))
 
-const overlapAText = computed(() => overlapA.value.map((num) => formatBall(num)).join(' '))
-const overlapBText = computed(() => overlapB.value.map((num) => formatBall(num)).join(' '))
-const nonOverlapAText = computed(() => nonOverlapA.value.map((num) => formatBall(num)).join(' '))
-const nonOverlapBText = computed(() => nonOverlapB.value.map((num) => formatBall(num)).join(' '))
-
-// C 内合并：与A重复 + 与B重复
+// C 内合并：与 A 或 B 重复（即与 A∪B 重复）
 const overlapAB = computed(() => {
-  const set = new Set([...overlapA.value, ...overlapB.value])
-  return [...set].sort((a, b) => a - b)
+  const setA = new Set(props.result.classA.map((item) => item.num))
+  const setB = new Set(props.result.classB.map((item) => item.num))
+  return selectedPredictionNumbers.value.filter(
+    (num) => setA.has(num) || setB.has(num),
+  )
 })
-// C 内合并：与A不重复 + 与B不重复
+// C 内合并：与 A、B 都不重复（即 C \ (A+B)）
 const nonOverlapAB = computed(() => {
-  const set = new Set([...nonOverlapA.value, ...nonOverlapB.value])
-  return [...set].sort((a, b) => a - b)
+  const setA = new Set(props.result.classA.map((item) => item.num))
+  const setB = new Set(props.result.classB.map((item) => item.num))
+  return selectedPredictionNumbers.value.filter(
+    (num) => !setA.has(num) && !setB.has(num),
+  )
 })
 const overlapABText = computed(() => overlapAB.value.map((num) => formatBall(num)).join(' '))
 const nonOverlapABText = computed(() => nonOverlapAB.value.map((num) => formatBall(num)).join(' '))
@@ -429,19 +423,19 @@ function addClassToPrediction(key, classItems) {
 
           <div class="overlap-section">
             <div class="overlap-head">
-              <h4>与 A / B 不重复</h4>
+              <h4>与 A+B 不重复</h4>
               <div class="overlap-head-meta">
                 <PredictionRowButton
                   v-if="nonOverlapAB.length"
                   :added="isAdded('c-not-ab-pred')"
                   :disabled="disabled"
-                  title="生成预测行并填入与 A/B 类不重复号码"
+                  title="生成预测行并填入与 A+B 不重复的号码"
                   @click="addNumbersToPrediction('c-not-ab-pred', nonOverlapAB)"
                 />
                 <CopyButton
                   v-if="nonOverlapAB.length"
                   :copied="isCopied('c-not-ab')"
-                  title="复制与 A/B 类不重复号码"
+                  title="复制与 A+B 不重复的号码"
                   @click="copyNumbers('c-not-ab', nonOverlapABText)"
                 />
                 <span class="overlap-count">{{ nonOverlapAB.length }} 个</span>
